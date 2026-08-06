@@ -1,0 +1,60 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+enum Role {
+  LANDLORD
+  ADMIN
+}
+
+enum ListingStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  RENTED
+  EXPIRED
+}
+
+model User {
+  id           String     @id @default(uuid())
+  fullName     String
+  email        String     @unique
+  passwordHash String
+  role         Role       @default(LANDLORD)
+  createdAt    DateTime   @default(now())
+  properties   Property[]
+}
+
+model Property {
+  id            String         @id @default(uuid())
+  title         String
+  description   String
+  price         Float
+  category      String
+  rooms         Int
+  furnished     Boolean        @default(false)
+  location      String
+  status        ListingStatus  @default(PENDING)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  expiresAt     DateTime?
+  landlord      User           @relation(fields: [landlordId], references: [id])
+  landlordId    String
+  images        PropertyImage[]
+}
+
+model PropertyImage {
+  id         String   @id @default(uuid())
+  url        String
+  property   Property @relation(fields: [propertyId], references: [id])
+  propertyId String
+}
