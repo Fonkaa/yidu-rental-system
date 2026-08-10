@@ -32,6 +32,8 @@ model User {
   role         Role       @default(LANDLORD)
   createdAt    DateTime   @default(now())
   properties   Property[]
+  resetToken       String?
+resetTokenExpiry DateTime?
 }
 
 model Property {
