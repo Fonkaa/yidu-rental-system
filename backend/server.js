@@ -10,6 +10,7 @@ const authRoutes = require('./routes/authRoutes');
 app.use('/api/auth', authRoutes);
 const propertyRoutes = require('./routes/propertyRoutes');
 app.use('/api/properties', propertyRoutes);
+app.use('/uploads', express.static('uploads'));
 
 app.get('/', (req, res) => {
   res.send('House Rental API is running');

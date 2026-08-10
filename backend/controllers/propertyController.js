@@ -31,4 +31,37 @@ async function createProperty(req, res) {
     res.status(500).json({ error: 'Something went wrong creating the property' });
   }
 }
-module.exports = { createProperty };
+async function uploadImages(req, res) {
+  try {
+    const { id } = req.params;
+
+    const property = await prisma.property.findUnique({ where: { id } });
+    if (!property) {
+      return res.status(404).json({ error: 'Property not found' });
+    }
+    if (property.landlordId !== req.user.userId) {
+      return res.status(403).json({ error: 'You do not own this property' });
+    }
+
+    if (!req.files || req.files.length === 0) {
+      return res.status(400).json({ error: 'At least one image is required' });
+    }
+
+    const imageRecords = await Promise.all(
+      req.files.map((file) =>
+        prisma.propertyImage.create({
+          data: {
+            url: `/uploads/${file.filename}`,
+            propertyId: id,
+          },
+        })
+      )
+    );
+
+    res.status(201).json(imageRecords);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Something went wrong uploading images' });
+  }
+}
+module.exports = { createProperty, uploadImages };
