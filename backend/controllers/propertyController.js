@@ -1,22 +1,26 @@
 const prisma = require('../prisma/client');
-
 async function createProperty(req, res) {
   try {
-    const { title, description, price, category, rooms, furnished, location } = req.body;
+    const { titleEn, titleAm, descriptionEn, descriptionAm, price, rooms, furnished, categoryId, locationId, landmarkDescription, gpsLat, gpsLng } = req.body;
 
-    if (!title || !description || !price || !category || !rooms || !location) {
-      return res.status(400).json({ error: 'title, description, price, category, rooms, and location are required' });
+    if (!titleEn || !descriptionEn || !price || !rooms || !categoryId || !locationId) {
+      return res.status(400).json({ error: 'titleEn, descriptionEn, price, rooms, categoryId, and locationId are required' });
     }
 
     const property = await prisma.property.create({
       data: {
-        title,
-        description,
+        titleEn,
+        titleAm,
+        descriptionEn,
+        descriptionAm,
         price: parseFloat(price),
-        category,
         rooms: parseInt(rooms),
         furnished: furnished === true || furnished === 'true',
-        location,
+        categoryId,
+        locationId,
+        landmarkDescription,
+        gpsLat: gpsLat ? parseFloat(gpsLat) : null,
+        gpsLng: gpsLng ? parseFloat(gpsLng) : null,
         landlordId: req.user.userId,
       },
     });
@@ -27,5 +31,4 @@ async function createProperty(req, res) {
     res.status(500).json({ error: 'Something went wrong creating the property' });
   }
 }
-
 module.exports = { createProperty };

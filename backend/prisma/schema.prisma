@@ -1,8 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Get a free hosted Postgres database in seconds: `npx create-db`
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -11,7 +6,9 @@ datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
+
 enum Role {
+  TENANT
   LANDLORD
   ADMIN
 }
@@ -20,38 +17,58 @@ enum ListingStatus {
   PENDING
   APPROVED
   REJECTED
+  UNAVAILABLE
   RENTED
   EXPIRED
 }
 
+// ==========================================
+// Shared model — ask before changing
+// ==========================================
 model User {
-  id           String     @id @default(uuid())
-  fullName     String
-  email        String     @unique
-  passwordHash String
-  role         Role       @default(LANDLORD)
-  createdAt    DateTime   @default(now())
-  properties   Property[]
+  id               String     @id @default(uuid())
+  fullName         String
+  email            String     @unique
+  passwordHash     String
+  role             Role      @default(TENANT)
   resetToken       String?
-resetTokenExpiry DateTime?
+  resetTokenExpiry DateTime?
+  createdAt        DateTime   @default(now())
+  updatedAt        DateTime   @updatedAt
+  properties       Property[]
 }
 
+// ==========================================
+// Developer A models — Landlord & Admin side
+// ==========================================
 model Property {
-  id            String         @id @default(uuid())
-  title         String
-  description   String
-  price         Float
-  category      String
-  rooms         Int
-  furnished     Boolean        @default(false)
-  location      String
-  status        ListingStatus  @default(PENDING)
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
-  expiresAt     DateTime?
-  landlord      User           @relation(fields: [landlordId], references: [id])
-  landlordId    String
-  images        PropertyImage[]
+  id                  String         @id @default(uuid())
+  titleEn             String
+  titleAm             String?
+  descriptionEn       String
+  descriptionAm       String?
+  price               Float
+  rooms               Int
+  furnished           Boolean        @default(false)
+  landmarkDescription String?
+  gpsLat              Float?
+  gpsLng              Float?
+  status              ListingStatus  @default(PENDING)
+  publishedAt         DateTime?
+  expiresAt           DateTime?
+  createdAt           DateTime       @default(now())
+  updatedAt           DateTime       @updatedAt
+
+  landlord   User     @relation(fields: [landlordId], references: [id])
+  landlordId String
+
+  category   Category @relation(fields: [categoryId], references: [id])
+  categoryId String
+
+  location   Location @relation(fields: [locationId], references: [id])
+  locationId String
+
+  images PropertyImage[]
 }
 
 model PropertyImage {
@@ -59,4 +76,46 @@ model PropertyImage {
   url        String
   property   Property @relation(fields: [propertyId], references: [id])
   propertyId String
+  createdAt  DateTime @default(now())
 }
+
+model Category {
+  id          String     @id @default(uuid())
+  name        String     @unique
+  description String?
+  properties  Property[]
+}
+
+model Location {
+  id             String     @id @default(uuid())
+  city           String
+  subCity        String?
+  kebeleOrWoreda String?
+  region         String?
+  properties     Property[]
+}
+
+model Notification {
+  id               String    @id @default(uuid())
+  userId           String
+  type             String
+  title            String
+  message          String
+  relatedEntityType String?
+  relatedEntityId  String?
+  isRead           Boolean   @default(false)
+  createdAt        DateTime  @default(now())
+  readAt           DateTime?
+}
+
+model CommissionSetting {
+  id                String   @id @default(uuid())
+  ratePercent        Float    @default(10)
+  updatedByAdminId   String?
+  updatedAt          DateTime @updatedAt
+}
+
+// ==========================================
+// Developer B models — Tenant & Rental Workflow side
+// (placeholders so Dev B isn't blocked; he owns these)
+// ==========================================
