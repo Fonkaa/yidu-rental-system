@@ -110,4 +110,74 @@ async function updateProperty(req, res) {
     res.status(500).json({ error: 'Something went wrong updating the property' });
   }
 }
-module.exports = { createProperty, uploadImages, updateProperty };
+async function updatePropertyStatus(req, res) {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+
+    const allowedStatuses = ['UNAVAILABLE', 'RENTED'];
+    if (!allowedStatuses.includes(status)) {
+      return res.status(400).json({ error: 'status must be UNAVAILABLE or RENTED' });
+    }
+
+    const property = await prisma.property.findUnique({ where: { id } });
+    if (!property) {
+      return res.status(404).json({ error: 'Property not found' });
+    }
+    if (property.landlordId !== req.user.userId) {
+      return res.status(403).json({ error: 'You do not own this property' });
+    }
+
+    // FR-12: this takes effect immediately, no admin re-review needed
+    const updated = await prisma.property.update({
+      where: { id },
+      data: { status },
+    });
+
+    res.json(updated);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Something went wrong updating the status' });
+  }
+}
+async function checkAndExpireListings() {
+  const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+
+  await prisma.property.updateMany({
+    where: {
+      status: 'APPROVED',
+      publishedAt: { lte: thirtyDaysAgo },
+    },
+    data: { status: 'EXPIRED' },
+  });
+}
+async function renewProperty(req, res) {
+  try {
+    const { id } = req.params;
+    const property = await prisma.property.findUnique({ where: { id } });
+
+    if (!property) {
+      return res.status(404).json({ error: 'Property not found' });
+    }
+    if (property.landlordId !== req.user.userId) {
+      return res.status(403).json({ error: 'You do not own this property' });
+    }
+    if (property.status !== 'EXPIRED') {
+      return res.status(400).json({ error: 'Only expired listings can be renewed' });
+    }
+
+    const renewed = await prisma.property.update({
+      where: { id },
+      data: {
+        status: 'PENDING',
+        publishedAt: null,
+      },
+    });
+
+    res.json(renewed);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Something went wrong renewing the property' });
+  }
+}
+module.exports = { createProperty, uploadImages, updateProperty, updatePropertyStatus, checkAndExpireListings, renewProperty };
