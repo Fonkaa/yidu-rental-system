@@ -18,12 +18,15 @@ async function register(req, res) {
 
     const passwordHash = await bcrypt.hash(password, 10);
 
+    const allowedRoles = ['TENANT', 'LANDLORD', 'ADMIN'];
+    const finalRole = allowedRoles.includes(role) ? role : 'TENANT';
+
     const user = await prisma.user.create({
       data: {
         fullName,
         email,
         passwordHash,
-        role: role === 'ADMIN' ? 'ADMIN' : 'LANDLORD',
+        role: finalRole,
       },
     });
 
@@ -38,6 +41,7 @@ async function register(req, res) {
     res.status(500).json({ error: 'Something went wrong during registration' });
   }
 }
+
 async function login(req, res) {
   try {
     const { email, password } = req.body;
@@ -54,6 +58,10 @@ async function login(req, res) {
     const passwordMatches = await bcrypt.compare(password, user.passwordHash);
     if (!passwordMatches) {
       return res.status(401).json({ error: 'Invalid email or password' });
+    }
+
+    if (!user.isActive) {
+      return res.status(403).json({ error: 'This account has been deactivated' });
     }
 
     const token = jwt.sign(
@@ -76,6 +84,7 @@ async function login(req, res) {
     res.status(500).json({ error: 'Something went wrong during login' });
   }
 }
+
 async function forgotPassword(req, res) {
   try {
     const { email } = req.body;
