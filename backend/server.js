@@ -17,6 +17,8 @@ app.use('/uploads', express.static('uploads'));
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 const adminRoutes = require('./routes/adminRoutes');
 app.use('/api/admin', adminRoutes);
+const settingsRoutes = require('./routes/settingsRoutes');
+app.use('/api/admin/settings', settingsRoutes);
 
 app.get('/', (req, res) => {
   res.send('House Rental API is running');

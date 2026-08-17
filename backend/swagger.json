@@ -234,6 +234,30 @@
         "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }],
         "responses": { "200": { "description": "User active status toggled" } }
       }
+    },
+    "/api/admin/settings/commission-rate": {
+      "get": {
+        "summary": "View the current platform commission rate (Admin only, FR-48)",
+        "security": [{ "bearerAuth": [] }],
+        "responses": { "200": { "description": "Returns current commission rate" } }
+      },
+      "patch": {
+        "summary": "Update the platform commission rate (Admin only, FR-48)",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "ratePercent": { "type": "number" }
+                }
+              }
+            }
+          }
+        },
+        "responses": { "200": { "description": "Commission rate updated" } }
+      }
     }
   }
 }
