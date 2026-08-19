@@ -3,8 +3,8 @@ async function createProperty(req, res) {
   try {
     const { titleEn, titleAm, descriptionEn, descriptionAm, price, rooms, furnished, categoryId, locationId, landmarkDescription, gpsLat, gpsLng } = req.body;
 
-    if (!titleEn || !descriptionEn || !price || !rooms || !categoryId || !locationId) {
-      return res.status(400).json({ error: 'titleEn, descriptionEn, price, rooms, categoryId, and locationId are required' });
+        if ((!titleEn && !titleAm) || (!descriptionEn && !descriptionAm) || !price || !rooms || !categoryId || !locationId) {
+      return res.status(400).json({ error: 'title (English or Amharic), description (English or Amharic), price, rooms, categoryId, and locationId are required' });
     }
 
     const property = await prisma.property.create({
