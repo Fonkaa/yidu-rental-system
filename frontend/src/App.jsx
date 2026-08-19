@@ -5,6 +5,7 @@ import Register from './pages/Register';
 import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
 import PropertyForm from './pages/PropertyForm';
+import LandlordDashboard from './pages/LandlordDashboard';
 
 function App() {
   return (
@@ -16,7 +17,7 @@ function App() {
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/properties/new" element={<PropertyForm />} />
-        <Route path="/dashboard" element={<div className="p-8">Dashboard coming soon...</div>} />
+        <Route path="/dashboard" element={<LandlordDashboard />} />
       </Routes>
     </AuthProvider>
   );

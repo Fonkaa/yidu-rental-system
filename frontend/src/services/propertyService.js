@@ -9,3 +9,4 @@ export const uploadPropertyImages = (id, formData) =>
 export const updatePropertyStatus = (id, status) =>
   api.patch(`/properties/${id}/status`, { status });
 export const renewProperty = (id) => api.patch(`/properties/${id}/renew`);
+export const getMyProperties = () => api.get('/properties/mine');

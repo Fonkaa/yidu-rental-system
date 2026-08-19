@@ -241,4 +241,17 @@ async function renewProperty(req, res) {
     res.status(500).json({ error: 'Something went wrong renewing the property' });
   }
 }
-module.exports = { createProperty, uploadImages, updateProperty, updatePropertyStatus, checkAndExpireListings, renewProperty };
+async function getMyProperties(req, res) {
+  try {
+    const properties = await prisma.property.findMany({
+      where: { landlordId: req.user.userId },
+      include: { category: true, location: true, images: true },
+      orderBy: { createdAt: 'desc' },
+    });
+    res.json(properties);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Something went wrong fetching your properties' });
+  }
+}
+module.exports = { createProperty, uploadImages, updateProperty, updatePropertyStatus, checkAndExpireListings, renewProperty, getMyProperties };
