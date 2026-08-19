@@ -1,22 +1,22 @@
-import { useEffect, useState } from 'react';
-import { login } from './services/authService';
+import { Routes, Route, Navigate } from 'react-router-dom';
+import { AuthProvider } from './context/AuthContext';
+import Login from './pages/Login';
+import Register from './pages/Register';
+import ForgotPassword from './pages/ForgotPassword';
+import ResetPassword from './pages/ResetPassword';
 
 function App() {
-  const [result, setResult] = useState('Testing connection...');
-
-  useEffect(() => {
-    login({ email: 'test@example.com', password: 'password123' })
-      .then((res) => setResult('Connected! Token received: ' + res.data.token.slice(0, 20) + '...'))
-      .catch((err) => setResult('Error: ' + (err.response?.data?.error || err.message)));
-  }, []);
-
   return (
-    <div className="min-h-screen bg-gray-100 flex items-center justify-center">
-      <div className="bg-white p-8 rounded-lg shadow-lg text-center">
-        <h1 className="text-2xl font-bold text-purple-600">Backend Connection Test</h1>
-        <p className="mt-2 text-gray-600">{result}</p>
-      </div>
-    </div>
+    <AuthProvider>
+      <Routes>
+        <Route path="/" element={<Navigate to="/login" />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
+        <Route path="/dashboard" element={<div className="p-8">Dashboard coming soon...</div>} />
+      </Routes>
+    </AuthProvider>
   );
 }
 
