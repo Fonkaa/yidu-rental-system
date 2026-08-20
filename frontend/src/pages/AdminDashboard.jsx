@@ -124,16 +124,44 @@ function AdminDashboard() {
                 No pending listings right now.
               </div>
             )}
-            <div className="space-y-3">
+            <div className="space-y-4">
               {pending.map((p) => (
-                <div key={p.id} className="bg-white rounded-lg shadow p-4 flex justify-between items-center">
-                  <div>
-                    <p className="font-semibold text-gray-800">{p.titleEn || p.titleAm}</p>
-                    <p className="text-sm text-gray-500">
-                      By {p.landlord?.fullName} ({p.landlord?.email}) · {p.category?.name} · {p.location?.city}, {p.location?.subCity} · {p.price} Birr/month
-                    </p>
-                  </div>
-                  <div className="flex gap-2">
+                <div key={p.id} className="bg-white rounded-lg shadow p-4">
+                  {p.images && p.images.length > 0 && (
+                    <div className="flex gap-2 overflow-x-auto mb-3 pb-1">
+                      {p.images.map((img) => (
+                        <img
+                          key={img.id}
+                          src={`http://localhost:5000${img.url}`}
+                          alt={p.titleEn || p.titleAm}
+                          className="h-32 w-44 object-cover rounded flex-shrink-0 border border-gray-200"
+                        />
+                      ))}
+                    </div>
+                  )}
+                  {(!p.images || p.images.length === 0) && (
+                    <p className="text-xs text-red-500 mb-3">⚠ No images uploaded for this listing.</p>
+                  )}
+
+                  <p className="font-semibold text-gray-800">{p.titleEn || p.titleAm}</p>
+                  {p.titleAm && p.titleEn && <p className="text-sm text-gray-500">{p.titleAm}</p>}
+
+                  <p className="text-sm text-gray-700 mt-2 whitespace-pre-wrap">{p.descriptionEn}</p>
+                  {p.descriptionAm && (
+                    <p className="text-sm text-gray-500 mt-1 whitespace-pre-wrap">{p.descriptionAm}</p>
+                  )}
+
+                  <p className="text-sm text-gray-500 mt-2">
+                    By {p.landlord?.fullName} ({p.landlord?.email}) · {p.category?.name} · {p.location?.city}, {p.location?.subCity} · {p.price} Birr/month
+                  </p>
+                  {p.landmarkDescription && (
+                    <p className="text-sm text-gray-500">Landmark: {p.landmarkDescription}</p>
+                  )}
+                  {p.gpsLat && p.gpsLng && (
+                    <p className="text-sm text-gray-500">GPS: {p.gpsLat}, {p.gpsLng}</p>
+                  )}
+
+                  <div className="flex gap-2 mt-3">
                     <button onClick={() => handleApprove(p.id)}
                       disabled={processingId === p.id}
                       className="text-sm bg-green-50 text-green-700 px-3 py-1 rounded hover:bg-green-100 disabled:opacity-50 disabled:cursor-not-allowed">
