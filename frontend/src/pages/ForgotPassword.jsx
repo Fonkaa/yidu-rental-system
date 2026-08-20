@@ -6,9 +6,11 @@ function ForgotPassword() {
   const [email, setEmail] = useState('');
   const [message, setMessage] = useState('');
   const [resetToken, setResetToken] = useState('');
+  const [submitting, setSubmitting] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setSubmitting(true);
     try {
       const res = await forgotPassword({ email });
       setMessage(res.data.message);
@@ -17,6 +19,8 @@ function ForgotPassword() {
       }
     } catch (err) {
       setMessage(err.response?.data?.error || 'Something went wrong');
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -32,20 +36,23 @@ function ForgotPassword() {
           </p>
         )}
 
-        <label className="block text-sm text-gray-700 mb-1">Email</label>
-        <input
-          type="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          className="w-full border border-gray-300 rounded px-3 py-2 mb-4"
-          required
-        />
+        <fieldset disabled={submitting} className="disabled:opacity-60">
+          <label className="block text-sm text-gray-700 mb-1">Email</label>
+          <input
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="w-full border border-gray-300 rounded px-3 py-2 mb-4"
+            required
+          />
+        </fieldset>
 
         <button
           type="submit"
-          className="w-full bg-purple-600 text-white py-2 rounded hover:bg-purple-700"
+          disabled={submitting}
+          className="w-full bg-purple-600 text-white py-2 rounded hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          Send Reset Link
+          {submitting ? 'Sending...' : 'Send Reset Link'}
         </button>
 
         <p className="text-sm text-gray-600 mt-4 text-center">

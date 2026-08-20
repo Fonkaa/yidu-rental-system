@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { getMyProperties, updatePropertyStatus, renewProperty } from '../services/propertyService';
 import { useAuth } from '../context/AuthContext';
 
@@ -15,7 +15,9 @@ const statusColors = {
 function LandlordDashboard() {
   const [properties, setProperties] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [processingId, setProcessingId] = useState(null);
   const { user, logoutUser } = useAuth();
+  const navigate = useNavigate();
 
   const loadProperties = () => {
     setLoading(true);
@@ -29,19 +31,39 @@ function LandlordDashboard() {
     loadProperties();
   }, []);
 
+  const handleLogout = () => {
+    logoutUser();
+    navigate('/login');
+  };
+
   const handleMarkRented = async (id) => {
-    await updatePropertyStatus(id, 'RENTED');
-    loadProperties();
+    setProcessingId(id);
+    try {
+      await updatePropertyStatus(id, 'RENTED');
+      loadProperties();
+    } finally {
+      setProcessingId(null);
+    }
   };
 
   const handleMarkUnavailable = async (id) => {
-    await updatePropertyStatus(id, 'UNAVAILABLE');
-    loadProperties();
+    setProcessingId(id);
+    try {
+      await updatePropertyStatus(id, 'UNAVAILABLE');
+      loadProperties();
+    } finally {
+      setProcessingId(null);
+    }
   };
 
   const handleRenew = async (id) => {
-    await renewProperty(id);
-    loadProperties();
+    setProcessingId(id);
+    try {
+      await renewProperty(id);
+      loadProperties();
+    } finally {
+      setProcessingId(null);
+    }
   };
 
   const grouped = {
@@ -65,7 +87,7 @@ function LandlordDashboard() {
             <Link to="/properties/new" className="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700">
               + New Listing
             </Link>
-            <button onClick={logoutUser} className="text-gray-600 border border-gray-300 px-4 py-2 rounded hover:bg-gray-50">
+            <button onClick={handleLogout} className="text-gray-600 border border-gray-300 px-4 py-2 rounded hover:bg-gray-50">
               Log Out
             </button>
           </div>
@@ -99,19 +121,22 @@ function LandlordDashboard() {
                       {p.status === 'APPROVED' && (
                         <>
                           <button onClick={() => handleMarkRented(p.id)}
-                            className="text-sm bg-blue-50 text-blue-700 px-3 py-1 rounded hover:bg-blue-100">
-                            Mark Rented
+                            disabled={processingId === p.id}
+                            className="text-sm bg-blue-50 text-blue-700 px-3 py-1 rounded hover:bg-blue-100 disabled:opacity-50 disabled:cursor-not-allowed">
+                            {processingId === p.id ? 'Processing...' : 'Mark Rented'}
                           </button>
                           <button onClick={() => handleMarkUnavailable(p.id)}
-                            className="text-sm bg-gray-50 text-gray-700 px-3 py-1 rounded hover:bg-gray-100">
-                            Mark Unavailable
+                            disabled={processingId === p.id}
+                            className="text-sm bg-gray-50 text-gray-700 px-3 py-1 rounded hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed">
+                            {processingId === p.id ? 'Processing...' : 'Mark Unavailable'}
                           </button>
                         </>
                       )}
                       {p.status === 'EXPIRED' && (
                         <button onClick={() => handleRenew(p.id)}
-                          className="text-sm bg-purple-50 text-purple-700 px-3 py-1 rounded hover:bg-purple-100">
-                          Renew
+                          disabled={processingId === p.id}
+                          className="text-sm bg-purple-50 text-purple-700 px-3 py-1 rounded hover:bg-purple-100 disabled:opacity-50 disabled:cursor-not-allowed">
+                          {processingId === p.id ? 'Processing...' : 'Renew'}
                         </button>
                       )}
                     </div>

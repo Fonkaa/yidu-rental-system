@@ -9,6 +9,7 @@ function PropertyForm() {
   const [images, setImages] = useState([]);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
   const navigate = useNavigate();
 
   const [form, setForm] = useState({
@@ -40,7 +41,7 @@ function PropertyForm() {
     e.preventDefault();
     setError('');
 
-  if ((!form.titleEn && !form.titleAm) || (!form.descriptionEn && !form.descriptionAm) || !form.price || !form.rooms || !form.categoryId || !form.locationId) {
+    if ((!form.titleEn && !form.titleAm) || (!form.descriptionEn && !form.descriptionAm) || !form.price || !form.rooms || !form.categoryId || !form.locationId) {
       setError('Please fill in all required fields.');
       return;
     }
@@ -53,6 +54,7 @@ function PropertyForm() {
       return;
     }
 
+    setSubmitting(true);
     try {
       const res = await createProperty(form);
       const propertyId = res.data.id;
@@ -65,6 +67,7 @@ function PropertyForm() {
       setTimeout(() => navigate('/dashboard'), 1500);
     } catch (err) {
       setError(err.response?.data?.error || 'Something went wrong creating the listing');
+      setSubmitting(false);
     }
   };
 
@@ -76,88 +79,91 @@ function PropertyForm() {
         {error && <p className="text-red-600 text-sm mb-4">{error}</p>}
         {success && <p className="text-green-600 text-sm mb-4">Listing created! It's pending admin review.</p>}
 
-        <label className="block text-sm text-gray-700 mb-1">Title (English) *</label>
-        <input name="titleEn" value={form.titleEn} onChange={handleChange}
-          className="w-full border border-gray-300 rounded px-3 py-2 mb-4" required />
+        <fieldset disabled={submitting || success} className="disabled:opacity-60">
+          <label className="block text-sm text-gray-700 mb-1">Title (English)</label>
+          <input name="titleEn" value={form.titleEn} onChange={handleChange}
+            className="w-full border border-gray-300 rounded px-3 py-2 mb-4" />
 
-        <label className="block text-sm text-gray-700 mb-1">Title (Amharic)</label>
-        <p className="text-xs text-gray-500 mb-1">At least one language (English or Amharic) is required for title and description.</p>
-        <input name="titleAm" value={form.titleAm} onChange={handleChange}
-          className="w-full border border-gray-300 rounded px-3 py-2 mb-4" />
+          <label className="block text-sm text-gray-700 mb-1">Title (Amharic)</label>
+          <input name="titleAm" value={form.titleAm} onChange={handleChange}
+            className="w-full border border-gray-300 rounded px-3 py-2 mb-1" />
+          <p className="text-xs text-gray-500 mb-4">At least one language is required for title and description.</p>
 
-        <label className="block text-sm text-gray-700 mb-1">Description (English)</label>
-        <textarea name="descriptionEn" value={form.descriptionEn} onChange={handleChange}
-          className="w-full border border-gray-300 rounded px-3 py-2 mb-4" rows="3" required />
+          <label className="block text-sm text-gray-700 mb-1">Description (English)</label>
+          <textarea name="descriptionEn" value={form.descriptionEn} onChange={handleChange}
+            className="w-full border border-gray-300 rounded px-3 py-2 mb-4" rows="3" />
 
-        <label className="block text-sm text-gray-700 mb-1">Description (Amharic)</label>
-        <textarea name="descriptionAm" value={form.descriptionAm} onChange={handleChange}
-          className="w-full border border-gray-300 rounded px-3 py-2 mb-4" rows="3" />
+          <label className="block text-sm text-gray-700 mb-1">Description (Amharic)</label>
+          <textarea name="descriptionAm" value={form.descriptionAm} onChange={handleChange}
+            className="w-full border border-gray-300 rounded px-3 py-2 mb-4" rows="3" />
 
-        <div className="grid grid-cols-2 gap-4 mb-4">
-          <div>
-            <label className="block text-sm text-gray-700 mb-1">Price (Birr/month) *</label>
-            <input type="number" name="price" value={form.price} onChange={handleChange}
-              className="w-full border border-gray-300 rounded px-3 py-2" required />
+          <div className="grid grid-cols-2 gap-4 mb-4">
+            <div>
+              <label className="block text-sm text-gray-700 mb-1">Price (Birr/month) *</label>
+              <input type="number" name="price" value={form.price} onChange={handleChange}
+                className="w-full border border-gray-300 rounded px-3 py-2" required />
+            </div>
+            <div>
+              <label className="block text-sm text-gray-700 mb-1">Number of Rooms *</label>
+              <input type="number" name="rooms" value={form.rooms} onChange={handleChange}
+                className="w-full border border-gray-300 rounded px-3 py-2" required />
+            </div>
           </div>
-          <div>
-            <label className="block text-sm text-gray-700 mb-1">Number of Rooms</label>
-            <input type="number" name="rooms" value={form.rooms} onChange={handleChange}
-              className="w-full border border-gray-300 rounded px-3 py-2" required />
+
+          <label className="flex items-center gap-2 mb-4">
+            <input type="checkbox" name="furnished" checked={form.furnished} onChange={handleChange} />
+            <span className="text-sm text-gray-700">Furnished</span>
+          </label>
+
+          <label className="block text-sm text-gray-700 mb-1">Category *</label>
+          <select name="categoryId" value={form.categoryId} onChange={handleChange}
+            className="w-full border border-gray-300 rounded px-3 py-2 mb-4" required>
+            <option value="">Select a category</option>
+            {categories.map((c) => (
+              <option key={c.id} value={c.id}>{c.name}</option>
+            ))}
+          </select>
+
+          <label className="block text-sm text-gray-700 mb-1">Sub-city *</label>
+          <select name="locationId" value={form.locationId} onChange={handleChange}
+            className="w-full border border-gray-300 rounded px-3 py-2 mb-4" required>
+            <option value="">Select a sub-city</option>
+            {locations.map((l) => (
+              <option key={l.id} value={l.id}>{l.city} - {l.subCity}</option>
+            ))}
+          </select>
+
+          <label className="block text-sm text-gray-700 mb-1">Landmark Description</label>
+          <input name="landmarkDescription" value={form.landmarkDescription} onChange={handleChange}
+            placeholder="e.g. Near Bole Medhanealem Church"
+            className="w-full border border-gray-300 rounded px-3 py-2 mb-4" />
+
+          <p className="text-xs text-gray-500 mb-4">
+            Provide either a landmark description above, or GPS coordinates below.
+          </p>
+
+          <div className="grid grid-cols-2 gap-4 mb-4">
+            <div>
+              <label className="block text-sm text-gray-700 mb-1">GPS Latitude</label>
+              <input type="number" step="any" name="gpsLat" value={form.gpsLat} onChange={handleChange}
+                className="w-full border border-gray-300 rounded px-3 py-2" />
+            </div>
+            <div>
+              <label className="block text-sm text-gray-700 mb-1">GPS Longitude</label>
+              <input type="number" step="any" name="gpsLng" value={form.gpsLng} onChange={handleChange}
+                className="w-full border border-gray-300 rounded px-3 py-2" />
+            </div>
           </div>
-        </div>
 
-        <label className="flex items-center gap-2 mb-4">
-          <input type="checkbox" name="furnished" checked={form.furnished} onChange={handleChange} />
-          <span className="text-sm text-gray-700">Furnished</span>
-        </label>
+          <label className="block text-sm text-gray-700 mb-1">Photos * (at least 1, JPEG/PNG/WEBP, max 5MB each)</label>
+          <input type="file" accept="image/jpeg,image/png,image/webp" multiple
+            onChange={(e) => setImages(Array.from(e.target.files))}
+            className="w-full border border-gray-300 rounded px-3 py-2 mb-6" />
+        </fieldset>
 
-        <label className="block text-sm text-gray-700 mb-1">Category *</label>
-        <select name="categoryId" value={form.categoryId} onChange={handleChange}
-          className="w-full border border-gray-300 rounded px-3 py-2 mb-4" required>
-          <option value="">Select a category</option>
-          {categories.map((c) => (
-            <option key={c.id} value={c.id}>{c.name}</option>
-          ))}
-        </select>
-
-        <label className="block text-sm text-gray-700 mb-1">Sub-city *</label>
-        <select name="locationId" value={form.locationId} onChange={handleChange}
-          className="w-full border border-gray-300 rounded px-3 py-2 mb-4" required>
-          <option value="">Select a sub-city</option>
-          {locations.map((l) => (
-            <option key={l.id} value={l.id}>{l.city} - {l.subCity}</option>
-          ))}
-        </select>
-
-        <label className="block text-sm text-gray-700 mb-1">Landmark Description *</label>
-        <input name="landmarkDescription" value={form.landmarkDescription} onChange={handleChange}
-          placeholder="e.g. Near Bole Medhanealem Church"
-          className="w-full border border-gray-300 rounded px-3 py-2 mb-4" />
-
-        <p className="text-xs text-gray-500 mb-4">
-          Provide either a landmark description above, or GPS coordinates below.
-        </p>
-
-        <div className="grid grid-cols-2 gap-4 mb-4">
-          <div>
-            <label className="block text-sm text-gray-700 mb-1">GPS Latitude</label>
-            <input type="number" step="any" name="gpsLat" value={form.gpsLat} onChange={handleChange}
-              className="w-full border border-gray-300 rounded px-3 py-2" />
-          </div>
-          <div>
-            <label className="block text-sm text-gray-700 mb-1">GPS Longitude</label>
-            <input type="number" step="any" name="gpsLng" value={form.gpsLng} onChange={handleChange}
-              className="w-full border border-gray-300 rounded px-3 py-2" />
-          </div>
-        </div>
-
-        <label className="block text-sm text-gray-700 mb-1">Photos * (at least 1, JPEG/PNG/WEBP, max 5MB each)</label>
-        <input type="file" accept="image/jpeg,image/png,image/webp" multiple
-          onChange={(e) => setImages(Array.from(e.target.files))}
-          className="w-full border border-gray-300 rounded px-3 py-2 mb-6" />
-
-        <button type="submit" className="w-full bg-purple-600 text-white py-2 rounded hover:bg-purple-700">
-          Submit Listing
+        <button type="submit" disabled={submitting || success}
+          className="w-full bg-purple-600 text-white py-2 rounded hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed">
+          {submitting ? 'Submitting...' : success ? 'Submitted' : 'Submit Listing'}
         </button>
       </form>
     </div>
