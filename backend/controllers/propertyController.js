@@ -6,6 +6,10 @@ async function createProperty(req, res) {
         if ((!titleEn && !titleAm) || (!descriptionEn && !descriptionAm) || !price || !rooms || !categoryId || !locationId) {
       return res.status(400).json({ error: 'title (English or Amharic), description (English or Amharic), price, rooms, categoryId, and locationId are required' });
     }
+        const landlord = await prisma.user.findUnique({ where: { id: req.user.userId } });
+    if (!landlord.idNumber) {
+      return res.status(403).json({ error: 'You must add your ID number to your profile before creating a listing.', code: 'ID_REQUIRED' });
+    }
 
     const property = await prisma.property.create({
       data: {

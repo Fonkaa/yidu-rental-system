@@ -53,6 +53,7 @@ model User {
   role             Role       @default(TENANT)
   isActive         Boolean    @default(true)
   phone            String?
+  idNumber         String?
   resetToken       String?
   resetTokenExpiry DateTime?
   createdAt        DateTime   @default(now())

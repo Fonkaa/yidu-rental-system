@@ -132,4 +132,42 @@ async function resetPassword(req, res) {
   }
 }
 
-module.exports = { register, login, forgotPassword, resetPassword };
+async function updateIdNumber(req, res) {
+  try {
+    const { idNumber } = req.body;
+    if (!idNumber) {
+      return res.status(400).json({ error: 'idNumber is required' });
+    }
+
+    const updated = await prisma.user.update({
+      where: { id: req.user.userId },
+      data: { idNumber },
+      select: { id: true, fullName: true, email: true, idNumber: true },
+    });
+
+    res.json(updated);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Something went wrong updating your ID number' });
+  }
+}
+
+async function getMe(req, res) {
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id: req.user.userId },
+      select: { id: true, fullName: true, email: true, role: true, idNumber: true, phone: true },
+    });
+
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    res.json({ user });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Something went wrong fetching your profile' });
+  }
+}
+
+module.exports = { register, login, forgotPassword, resetPassword, updateIdNumber, getMe };

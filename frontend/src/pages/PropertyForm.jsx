@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { createProperty, uploadPropertyImages } from '../services/propertyService';
 import { getCategories, getLocations } from '../services/lookupService';
+import { getMe, updateIdNumber } from '../services/authService';
 
 function PropertyForm() {
   const [categories, setCategories] = useState([]);
@@ -11,6 +12,12 @@ function PropertyForm() {
   const [success, setSuccess] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const navigate = useNavigate();
+
+  const [checkingId, setCheckingId] = useState(true);
+  const [hasId, setHasId] = useState(false);
+  const [idNumberInput, setIdNumberInput] = useState('');
+  const [idError, setIdError] = useState('');
+  const [savingId, setSavingId] = useState(false);
 
   const [form, setForm] = useState({
     titleEn: '',
@@ -30,11 +37,33 @@ function PropertyForm() {
   useEffect(() => {
     getCategories().then((res) => setCategories(res.data));
     getLocations().then((res) => setLocations(res.data));
+    getMe()
+      .then((res) => setHasId(!!res.data.user.idNumber))
+      .catch(() => setHasId(false))
+      .finally(() => setCheckingId(false));
   }, []);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
     setForm((prev) => ({ ...prev, [name]: type === 'checkbox' ? checked : value }));
+  };
+
+  const handleSaveId = async (e) => {
+    e.preventDefault();
+    setIdError('');
+    if (!idNumberInput.trim()) {
+      setIdError('Please enter your ID number.');
+      return;
+    }
+    setSavingId(true);
+    try {
+      await updateIdNumber(idNumberInput.trim());
+      setHasId(true);
+    } catch (err) {
+      setIdError(err.response?.data?.error || 'Something went wrong saving your ID number');
+    } finally {
+      setSavingId(false);
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -66,10 +95,52 @@ function PropertyForm() {
       setSuccess(true);
       setTimeout(() => navigate('/dashboard'), 1500);
     } catch (err) {
+      if (err.response?.data?.code === 'ID_REQUIRED') {
+        setHasId(false);
+      }
       setError(err.response?.data?.error || 'Something went wrong creating the listing');
       setSubmitting(false);
     }
   };
+
+  if (checkingId) {
+    return (
+      <div className="min-h-screen bg-gray-100 flex items-center justify-center">
+        <p className="text-gray-600">Loading...</p>
+      </div>
+    );
+  }
+
+  if (!hasId) {
+    return (
+      <div className="min-h-screen bg-gray-100 flex items-center justify-center px-4">
+        <form onSubmit={handleSaveId} className="bg-white p-8 rounded-lg shadow-lg w-full max-w-sm">
+          <h1 className="text-xl font-bold text-purple-600 mb-2">Verify Your Identity</h1>
+          <p className="text-sm text-gray-600 mb-4">
+            Before creating a listing, please provide your national ID number. This helps us keep the platform accountable and safe for tenants.
+          </p>
+
+          {idError && <p className="text-red-600 text-sm mb-4">{idError}</p>}
+
+          <label className="block text-sm text-gray-700 mb-1">National ID Number *</label>
+          <input
+            value={idNumberInput}
+            onChange={(e) => setIdNumberInput(e.target.value)}
+            className="w-full border border-gray-300 rounded px-3 py-2 mb-4"
+            required
+          />
+
+          <button
+            type="submit"
+            disabled={savingId}
+            className="w-full bg-purple-600 text-white py-2 rounded hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {savingId ? 'Saving...' : 'Save and Continue'}
+          </button>
+        </form>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-100 py-10 px-4">
