@@ -1,0 +1,1382 @@
+/* =========================================================
+   HOUSE RENTAL SYSTEM
+   PROFESSIONAL TENANT LAYOUT
+   FIXED SIDEBAR + MAIN CONTENT
+========================================================= */
+
+* {
+  box-sizing: border-box;
+}
+
+:root {
+  --primary: #1769ff;
+  --primary-dark: #063b9f;
+
+  --navy: #062b67;
+  --navy-dark: #031d47;
+
+  --text: #101b35;
+  --text-secondary: #5d6980;
+  --text-light: #8c97aa;
+
+  --background: #f6f8fc;
+  --white: #ffffff;
+  --border: #e7ebf2;
+
+  --green: #16b878;
+  --orange: #ffae18;
+  --purple: #7b42e8;
+  --red: #ef4444;
+
+  --shadow-sm:
+    0 3px 12px rgba(16, 27, 53, 0.05);
+
+  --shadow-md:
+    0 8px 30px rgba(16, 27, 53, 0.08);
+
+  --navbar-height: 74px;
+  --sidebar-width: 260px;
+
+  font-family:
+    Inter,
+    "Segoe UI",
+    Roboto,
+    Arial,
+    sans-serif;
+}
+
+
+/* =========================================================
+   BASE
+========================================================= */
+
+html {
+  scroll-behavior: smooth;
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+
+  background: var(--background);
+
+  color: var(--text);
+
+  font-family:
+    Inter,
+    "Segoe UI",
+    Roboto,
+    Arial,
+    sans-serif;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+
+/* =========================================================
+   TENANT LAYOUT
+========================================================= */
+
+.tenant-layout {
+  min-height: 100vh;
+
+  background: var(--background);
+
+  color: var(--text);
+
+  font-family:
+    Inter,
+    "Segoe UI",
+    Roboto,
+    Arial,
+    sans-serif;
+}
+
+
+/* =========================================================
+   TOP NAVBAR
+========================================================= */
+
+.tenant-navbar {
+  position: fixed;
+
+  top: 0;
+  left: 0;
+  right: 0;
+
+  width: 100%;
+  height: var(--navbar-height);
+
+  display: flex;
+  align-items: center;
+
+  padding: 0 24px;
+
+  background: rgba(255, 255, 255, 0.97);
+
+  border-bottom: 1px solid var(--border);
+
+  box-shadow: var(--shadow-sm);
+
+  backdrop-filter: blur(14px);
+
+  z-index: 1000;
+}
+
+
+/* =========================================================
+   NAVBAR LEFT
+========================================================= */
+
+.tenant-navbar-left {
+  display: flex;
+  align-items: center;
+
+  gap: 12px;
+
+  flex-shrink: 0;
+}
+
+.tenant-mobile-menu {
+  display: none;
+
+  width: 40px;
+  height: 40px;
+
+  align-items: center;
+  justify-content: center;
+
+  border: none;
+  border-radius: 9px;
+
+  background: #edf4ff;
+
+  color: var(--primary);
+
+  transition: 0.2s ease;
+}
+
+.tenant-mobile-menu:hover {
+  background: #e1edff;
+}
+
+
+/* =========================================================
+   LOGO
+========================================================= */
+
+.tenant-logo {
+  display: flex;
+  align-items: center;
+
+  gap: 10px;
+
+  padding: 0;
+
+  border: none;
+
+  background: transparent;
+
+  color: var(--text);
+}
+
+.tenant-logo-icon {
+  width: 42px;
+  height: 42px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 12px;
+
+  background: #edf4ff;
+
+  color: var(--primary);
+
+  flex-shrink: 0;
+}
+
+.tenant-logo-text {
+  display: flex;
+  flex-direction: column;
+
+  align-items: flex-start;
+
+  line-height: 1.05;
+}
+
+.tenant-logo-text strong {
+  color: var(--text);
+
+  font-size: 15px;
+
+  font-weight: 800;
+}
+
+.tenant-logo-text span {
+  margin-top: 3px;
+
+  color: var(--text-secondary);
+
+  font-size: 13px;
+}
+
+
+/* =========================================================
+   TOP NAVIGATION
+========================================================= */
+
+.tenant-top-nav {
+  display: flex;
+  align-items: center;
+
+  gap: 2px;
+
+  margin-left: auto;
+  margin-right: 28px;
+}
+
+.tenant-top-link {
+  position: relative;
+
+  height: var(--navbar-height);
+
+  display: flex;
+  align-items: center;
+
+  gap: 7px;
+
+  padding: 0 15px;
+
+  border: none;
+  border-radius: 0;
+
+  background: transparent;
+
+  color: #27324a;
+
+  font-size: 14px;
+  font-weight: 600;
+
+  white-space: nowrap;
+
+  transition: 0.2s ease;
+}
+
+.tenant-top-link:hover {
+  color: var(--primary);
+}
+
+.tenant-top-link.active {
+  color: var(--primary);
+}
+
+.tenant-top-link.active::after {
+  content: "";
+
+  position: absolute;
+
+  left: 13px;
+  right: 13px;
+  bottom: 0;
+
+  height: 3px;
+
+  background: var(--primary);
+
+  border-radius: 4px 4px 0 0;
+}
+
+
+/* =========================================================
+   NAVBAR RIGHT
+========================================================= */
+
+.tenant-navbar-right {
+  display: flex;
+  align-items: center;
+
+  gap: 8px;
+
+  flex-shrink: 0;
+}
+
+
+/* =========================================================
+   LANGUAGE
+========================================================= */
+
+.tenant-language {
+  position: relative;
+}
+
+.tenant-language-button {
+  height: 40px;
+
+  display: flex;
+  align-items: center;
+
+  justify-content: center;
+
+  gap: 7px;
+
+  padding: 0 9px;
+
+  border: none;
+  border-radius: 8px;
+
+  background: transparent;
+
+  color: var(--text);
+
+  font-size: 14px;
+  font-weight: 600;
+
+  white-space: nowrap;
+
+  transition: 0.2s ease;
+}
+
+.tenant-language-button:hover {
+  background: #f1f5fa;
+
+  color: var(--primary);
+}
+
+.tenant-language-dropdown {
+  position: absolute;
+
+  top: 48px;
+  right: 0;
+
+  width: 130px;
+
+  padding: 7px;
+
+  background: var(--white);
+
+  border: 1px solid var(--border);
+
+  border-radius: 10px;
+
+  box-shadow: var(--shadow-md);
+
+  z-index: 1100;
+}
+
+.tenant-language-dropdown button {
+  width: 100%;
+
+  padding: 10px 12px;
+
+  border: none;
+  border-radius: 7px;
+
+  background: transparent;
+
+  color: var(--text);
+
+  text-align: left;
+
+  font-size: 13px;
+}
+
+.tenant-language-dropdown button:hover {
+  background: #f1f5ff;
+
+  color: var(--primary);
+}
+
+
+/* =========================================================
+   NOTIFICATION ICON
+========================================================= */
+
+.tenant-nav-icon {
+  position: relative;
+
+  width: 40px;
+  height: 40px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border: none;
+  border-radius: 50%;
+
+  background: transparent;
+
+  color: #24314b;
+
+  transition: 0.2s ease;
+}
+
+.tenant-nav-icon:hover {
+  background: #f1f5fa;
+
+  color: var(--primary);
+}
+
+.tenant-nav-icon span {
+  position: absolute;
+
+  top: 2px;
+  right: 1px;
+
+  min-width: 17px;
+  height: 17px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 0 4px;
+
+  background: var(--red);
+
+  color: #ffffff;
+
+  border: 2px solid #ffffff;
+
+  border-radius: 20px;
+
+  font-size: 9px;
+  font-weight: 800;
+}
+
+
+/* =========================================================
+   USER
+========================================================= */
+
+.tenant-user-button {
+  display: flex;
+  align-items: center;
+
+  gap: 8px;
+
+  padding: 5px 7px;
+
+  border: none;
+  border-radius: 9px;
+
+  background: transparent;
+
+  color: var(--text);
+
+  font-size: 13px;
+  font-weight: 700;
+
+  transition: 0.2s ease;
+}
+
+.tenant-user-button:hover {
+  background: #f5f7fa;
+}
+
+.tenant-user-avatar {
+  width: 35px;
+  height: 35px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 50%;
+
+  background: #e9f1ff;
+
+  color: var(--primary);
+
+  overflow: hidden;
+
+  flex-shrink: 0;
+}
+
+
+/* =========================================================
+   LOGOUT
+========================================================= */
+
+.tenant-logout {
+  height: 39px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  gap: 7px;
+
+  padding: 0 15px;
+
+  border: 1px solid #ff9b9b;
+
+  border-radius: 8px;
+
+  background: #ffffff;
+
+  color: #e52f35;
+
+  font-size: 13px;
+  font-weight: 600;
+
+  transition: 0.2s ease;
+}
+
+.tenant-logout:hover {
+  background: #fff2f2;
+}
+
+
+/* =========================================================
+   SIDEBAR
+========================================================= */
+
+.tenant-sidebar {
+  position: fixed;
+
+  top: var(--navbar-height);
+  left: 0;
+  bottom: 0;
+
+  width: var(--sidebar-width);
+
+  display: flex;
+  flex-direction: column;
+
+  padding: 17px 14px;
+
+  background:
+    linear-gradient(
+      180deg,
+      #082e6e 0%,
+      #06265c 55%,
+      #041f4c 100%
+    );
+
+  color: #ffffff;
+
+  z-index: 900;
+
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+
+/* =========================================================
+   SIDEBAR HEADER
+========================================================= */
+
+.tenant-sidebar-header {
+  display: none;
+
+  align-items: center;
+  justify-content: space-between;
+
+  margin-bottom: 18px;
+}
+
+.tenant-sidebar-brand {
+  display: flex;
+  align-items: center;
+
+  gap: 9px;
+}
+
+.tenant-sidebar-brand-icon {
+  width: 38px;
+  height: 38px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 10px;
+
+  background: #1769ff;
+
+  color: #ffffff;
+}
+
+.tenant-sidebar-brand > div:last-child {
+  display: flex;
+  flex-direction: column;
+
+  line-height: 1.1;
+}
+
+.tenant-sidebar-brand strong {
+  color: #ffffff;
+
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.tenant-sidebar-brand span {
+  color: #b8c9e4;
+
+  font-size: 10px;
+}
+
+.tenant-sidebar-close {
+  width: 36px;
+  height: 36px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border: none;
+  border-radius: 8px;
+
+  background: rgba(255, 255, 255, 0.08);
+
+  color: #ffffff;
+}
+
+.tenant-sidebar-close:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+
+/* =========================================================
+   SIDEBAR USER
+========================================================= */
+
+.tenant-sidebar-user {
+  display: flex;
+  align-items: center;
+
+  gap: 12px;
+
+  padding: 14px 13px;
+
+  margin-bottom: 18px;
+
+  background: rgba(255, 255, 255, 0.08);
+
+  border: 1px solid rgba(255, 255, 255, 0.07);
+
+  border-radius: 13px;
+}
+
+.tenant-sidebar-avatar {
+  width: 45px;
+  height: 45px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  flex-shrink: 0;
+
+  border-radius: 50%;
+
+  background: #e9f1ff;
+
+  color: var(--primary);
+}
+
+.tenant-sidebar-user-info {
+  min-width: 0;
+
+  display: flex;
+  flex-direction: column;
+}
+
+.tenant-sidebar-user-info strong {
+  overflow: hidden;
+
+  color: #ffffff;
+
+  font-size: 13px;
+  font-weight: 700;
+
+  white-space: nowrap;
+
+  text-overflow: ellipsis;
+}
+
+.tenant-sidebar-user-info > span {
+  margin-top: 2px;
+  margin-bottom: 5px;
+
+  color: #cbd8ee;
+
+  font-size: 11px;
+}
+
+.tenant-sidebar-user-info small {
+  display: flex;
+  align-items: center;
+
+  gap: 5px;
+
+  color: #b7eecf;
+
+  font-size: 10px;
+}
+
+.tenant-sidebar-user-info small i {
+  width: 7px;
+  height: 7px;
+
+  border-radius: 50%;
+
+  background: #1ed277;
+}
+
+
+/* =========================================================
+   MENU LABEL
+========================================================= */
+
+.tenant-menu-label {
+  padding: 0 12px 8px;
+
+  color: #8da8d0;
+
+  font-size: 9px;
+  font-weight: 800;
+
+  letter-spacing: 1.2px;
+}
+
+
+/* =========================================================
+   SIDEBAR NAVIGATION
+========================================================= */
+
+.tenant-sidebar-nav {
+  display: flex;
+  flex-direction: column;
+
+  gap: 3px;
+}
+
+.tenant-sidebar-item {
+  position: relative;
+
+  width: 100%;
+  min-height: 43px;
+
+  display: flex;
+  align-items: center;
+
+  gap: 12px;
+
+  padding: 0 13px;
+
+  border: none;
+  border-radius: 8px;
+
+  background: transparent;
+
+  color: #d8e3f5;
+
+  font-size: 13px;
+  font-weight: 550;
+
+  text-align: left;
+
+  transition:
+    background 0.2s ease,
+    color 0.2s ease,
+    transform 0.2s ease;
+}
+
+.tenant-sidebar-item:hover {
+  background: rgba(255, 255, 255, 0.09);
+
+  color: #ffffff;
+
+  transform: translateX(2px);
+}
+
+.tenant-sidebar-item-active {
+  background:
+    linear-gradient(
+      90deg,
+      #176fff,
+      #1e7bff
+    );
+
+  color: #ffffff;
+
+  font-weight: 650;
+
+  box-shadow:
+    0 6px 18px rgba(16, 105, 255, 0.28);
+}
+
+.tenant-sidebar-icon {
+  width: 21px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  flex-shrink: 0;
+}
+
+.tenant-sidebar-text {
+  flex: 1;
+
+  min-width: 0;
+
+  font-size: 13px;
+
+  white-space: nowrap;
+
+  overflow: hidden;
+
+  text-overflow: ellipsis;
+}
+
+.tenant-notification-count {
+  width: 20px;
+  height: 20px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  flex-shrink: 0;
+
+  border-radius: 50%;
+
+  background: var(--red);
+
+  color: #ffffff;
+
+  font-size: 9px;
+  font-weight: 800;
+}
+
+
+/* =========================================================
+   SIDEBAR BOTTOM
+========================================================= */
+
+.tenant-sidebar-bottom {
+  margin-top: auto;
+
+  padding-top: 16px;
+}
+
+
+/* =========================================================
+   SIDEBAR PROMO
+========================================================= */
+
+.tenant-sidebar-promo {
+  position: relative;
+
+  margin-bottom: 12px;
+
+  padding: 17px;
+
+  overflow: hidden;
+
+  border-radius: 12px;
+
+  background:
+    linear-gradient(
+      135deg,
+      rgba(15, 57, 145, 0.96),
+      rgba(91, 47, 184, 0.85)
+    );
+
+  color: #ffffff;
+}
+
+.tenant-sidebar-promo::after {
+  content: "";
+
+  position: absolute;
+
+  width: 100px;
+  height: 100px;
+
+  right: -35px;
+  top: -35px;
+
+  border-radius: 50%;
+
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.tenant-promo-icon {
+  width: 35px;
+  height: 35px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  margin-bottom: 11px;
+
+  border-radius: 9px;
+
+  background: rgba(255, 255, 255, 0.16);
+
+  color: #ffffff;
+}
+
+.tenant-sidebar-promo strong {
+  position: relative;
+  z-index: 1;
+
+  display: block;
+
+  margin-bottom: 4px;
+
+  color: #ffffff;
+
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.tenant-sidebar-promo > span {
+  position: relative;
+  z-index: 1;
+
+  display: block;
+
+  margin-bottom: 13px;
+
+  color: #dce9ff;
+
+  font-size: 10px;
+
+  opacity: 0.9;
+}
+
+.tenant-sidebar-promo button {
+  position: relative;
+  z-index: 2;
+
+  display: flex;
+  align-items: center;
+
+  gap: 4px;
+
+  padding: 9px 12px;
+
+  border: none;
+  border-radius: 7px;
+
+  background: #1973ff;
+
+  color: #ffffff;
+
+  font-size: 11px;
+  font-weight: 700;
+
+  transition: 0.2s ease;
+}
+
+.tenant-sidebar-promo button:hover {
+  background: #3b8aff;
+}
+
+
+/* =========================================================
+   SIDEBAR LOGOUT
+========================================================= */
+
+.tenant-sidebar-logout {
+  width: 100%;
+  min-height: 43px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  gap: 8px;
+
+  border: 1px solid rgba(255, 155, 155, 0.55);
+
+  border-radius: 9px;
+
+  background: rgba(255, 255, 255, 0.06);
+
+  color: #ffb5b5;
+
+  font-size: 13px;
+  font-weight: 600;
+
+  transition: 0.2s ease;
+}
+
+.tenant-sidebar-logout:hover {
+  background: rgba(239, 68, 68, 0.14);
+
+  color: #ffffff;
+}
+
+
+/* =========================================================
+   MAIN CONTENT
+   IMPORTANT:
+   MAIN STARTS DIRECTLY AFTER SIDEBAR
+========================================================= */
+
+.tenant-main {
+  width: calc(100% - var(--sidebar-width));
+
+  min-height: 100vh;
+
+  margin-left: var(--sidebar-width);
+
+  padding-top: var(--navbar-height);
+
+  background: var(--background);
+
+  overflow-x: hidden;
+}
+
+
+/* =========================================================
+   OUTLET DIRECT CHILD
+========================================================= */
+
+.tenant-main > * {
+  width: 100%;
+
+  max-width: none;
+}
+
+
+/* =========================================================
+   OVERLAY
+========================================================= */
+
+.tenant-overlay {
+  display: none;
+}
+
+
+/* =========================================================
+   SCROLLBAR
+========================================================= */
+
+.tenant-sidebar::-webkit-scrollbar {
+  width: 5px;
+}
+
+.tenant-sidebar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.tenant-sidebar::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.22);
+
+  border-radius: 10px;
+}
+
+.tenant-sidebar::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.35);
+}
+
+
+/* =========================================================
+   TABLET
+========================================================= */
+
+@media (max-width: 1250px) {
+  :root {
+    --sidebar-width: 230px;
+  }
+
+  .tenant-navbar {
+    padding: 0 20px;
+  }
+
+  .tenant-top-nav {
+    margin-right: 15px;
+  }
+
+  .tenant-top-link {
+    padding: 0 11px;
+  }
+
+  .tenant-navbar-right {
+    gap: 5px;
+  }
+}
+
+
+/* =========================================================
+   TABLET SMALL
+========================================================= */
+
+@media (max-width: 1050px) {
+  .tenant-top-nav {
+    display: none;
+  }
+
+  .tenant-user-button span {
+    display: none;
+  }
+
+  .tenant-user-button svg:last-child {
+    display: none;
+  }
+
+  .tenant-logout span {
+    display: none;
+  }
+
+  .tenant-logout {
+    width: 40px;
+
+    justify-content: center;
+
+    padding: 0;
+  }
+}
+
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media (max-width: 850px) {
+  :root {
+    --sidebar-width: 250px;
+    --navbar-height: 64px;
+  }
+
+  /* NAVBAR */
+
+  .tenant-navbar {
+    height: 64px;
+
+    padding: 0 15px;
+  }
+
+  .tenant-mobile-menu {
+    display: flex;
+  }
+
+  .tenant-logo-text {
+    display: none;
+  }
+
+  .tenant-logo-icon {
+    width: 40px;
+    height: 40px;
+  }
+
+  .tenant-navbar-right {
+    gap: 5px;
+  }
+
+  .tenant-language-button {
+    width: 40px;
+
+    padding: 0;
+
+    justify-content: center;
+  }
+
+  .tenant-language-button span,
+  .tenant-language-button svg:last-child {
+    display: none;
+  }
+
+  .tenant-user-button {
+    padding: 3px;
+  }
+
+  .tenant-user-button span,
+  .tenant-user-button > svg {
+    display: none;
+  }
+
+  .tenant-logout {
+    width: 40px;
+
+    padding: 0;
+
+    justify-content: center;
+  }
+
+  .tenant-logout span {
+    display: none;
+  }
+
+
+  /* SIDEBAR */
+
+  .tenant-sidebar {
+    top: 0;
+    bottom: 0;
+
+    width: 250px;
+
+    padding-top: 18px;
+
+    transform: translateX(-100%);
+
+    transition:
+      transform 0.25s ease;
+
+    box-shadow:
+      10px 0 30px rgba(0, 0, 0, 0.15);
+
+    z-index: 1200;
+  }
+
+  .tenant-sidebar-open {
+    transform: translateX(0);
+  }
+
+  .tenant-sidebar-header {
+    display: flex;
+  }
+
+
+  /* OVERLAY */
+
+  .tenant-overlay {
+    position: fixed;
+
+    inset: 0;
+
+    display: block;
+
+    background: rgba(2, 16, 39, 0.55);
+
+    backdrop-filter: blur(2px);
+
+    z-index: 1100;
+  }
+
+
+  /* MAIN */
+
+  .tenant-main {
+    width: 100%;
+
+    margin-left: 0;
+
+    padding-top: 64px;
+  }
+}
+
+
+/* =========================================================
+   SMALL MOBILE
+========================================================= */
+
+@media (max-width: 680px) {
+  .tenant-navbar {
+    padding: 0 12px;
+  }
+
+  .tenant-sidebar {
+    width: 250px;
+  }
+
+  .tenant-nav-icon {
+    width: 36px;
+    height: 36px;
+  }
+
+  .tenant-user-avatar {
+    width: 32px;
+    height: 32px;
+  }
+}
+
+
+/* =========================================================
+   EXTRA SMALL MOBILE
+========================================================= */
+
+@media (max-width: 450px) {
+  .tenant-navbar {
+    padding: 0 10px;
+  }
+
+  .tenant-sidebar {
+    width: 275px;
+  }
+
+  .tenant-mobile-menu {
+    width: 36px;
+    height: 36px;
+  }
+
+  .tenant-logo-icon {
+    width: 38px;
+    height: 38px;
+  }
+
+  .tenant-nav-icon {
+    width: 34px;
+    height: 34px;
+  }
+
+  .tenant-user-avatar {
+    width: 32px;
+    height: 32px;
+  }
+
+  .tenant-language-button {
+    width: 34px;
+  }
+}
+
+
+/* =========================================================
+   ACCESSIBILITY
+========================================================= */
+
+.tenant-sidebar-item:focus-visible,
+.tenant-top-link:focus-visible,
+.tenant-logout:focus-visible,
+.tenant-language-button:focus-visible,
+.tenant-nav-icon:focus-visible,
+.tenant-user-button:focus-visible,
+.tenant-mobile-menu:focus-visible,
+.tenant-sidebar-close:focus-visible,
+.tenant-sidebar-promo button:focus-visible,
+.tenant-sidebar-logout:focus-visible {
+  outline: 2px solid var(--primary);
+
+  outline-offset: 2px;
+}
+
+
+/* =========================================================
+   SMOOTH TRANSITIONS
+========================================================= */
+
+button,
+a {
+  -webkit-tap-highlight-color: transparent;
+}

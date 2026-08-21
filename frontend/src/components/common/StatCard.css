@@ -1,0 +1,174 @@
+
+/* =========================================================
+   HOUSE RENTAL — PROFESSIONAL STAT CARD
+   ========================================================= */
+
+.stat-card {
+  position: relative;
+
+  min-height: 170px;
+
+  padding: 22px;
+
+  border: 1px solid #e5e7eb;
+  border-radius: 18px;
+
+  background: #ffffff;
+
+  box-shadow:
+    0 2px 6px rgba(15, 23, 42, 0.03);
+
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.stat-card:hover {
+  transform: translateY(-3px);
+
+  border-color: #dbe3ef;
+
+  box-shadow:
+    0 12px 30px rgba(15, 23, 42, 0.08);
+}
+
+/* =========================================================
+   TOP
+   ========================================================= */
+
+.stat-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  margin-bottom: 24px;
+}
+
+/* =========================================================
+   ICON
+   ========================================================= */
+
+.stat-icon {
+  width: 46px;
+  height: 46px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 13px;
+
+  background: #eff6ff;
+
+  color: #2563eb;
+
+  font-size: 20px;
+
+  box-shadow:
+    inset 0 0 0 1px rgba(37, 99, 235, 0.05);
+}
+
+/* =========================================================
+   TREND
+   ========================================================= */
+
+.stat-trend {
+  display: inline-flex;
+  align-items: center;
+
+  padding: 5px 9px;
+
+  border-radius: 20px;
+
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.stat-trend.up {
+  background: #ecfdf5;
+  color: #059669;
+}
+
+.stat-trend.down {
+  background: #fef2f2;
+  color: #dc2626;
+}
+
+/* =========================================================
+   CONTENT
+   ========================================================= */
+
+.stat-card-content {
+  display: flex;
+  flex-direction: column;
+}
+
+.stat-title {
+  margin-bottom: 6px;
+
+  color: #64748b;
+
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.stat-value {
+  margin: 0;
+
+  color: #0f172a;
+
+  font-size: 30px;
+  line-height: 1.1;
+
+  font-weight: 800;
+
+  letter-spacing: -1px;
+}
+
+.stat-subtitle {
+  margin-top: 8px;
+
+  color: #94a3b8;
+
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+/* =========================================================
+   RESPONSIVE
+   ========================================================= */
+
+@media (max-width: 768px) {
+  .stat-card {
+    min-height: 155px;
+    padding: 18px;
+  }
+
+  .stat-card-top {
+    margin-bottom: 20px;
+  }
+
+  .stat-icon {
+    width: 42px;
+    height: 42px;
+  }
+
+  .stat-value {
+    font-size: 26px;
+  }
+}
+
+@media (max-width: 480px) {
+  .stat-card {
+    min-height: 145px;
+  }
+
+  .stat-title {
+    font-size: 12px;
+  }
+
+  .stat-value {
+    font-size: 24px;
+  }
+}

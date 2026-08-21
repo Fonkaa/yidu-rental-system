@@ -1,0 +1,506 @@
+/* ==========================================================================
+   DARK MODE REGISTER - HOUSE RENTAL SYSTEM
+   ========================================================================== */
+
+:root {
+  --dm-bg: #13111c;
+  --dm-card: #1c1929;
+  --dm-input-bg: #232035;
+  --dm-input-border: #322e49;
+  --dm-input-focus: #7c66f5;
+  --dm-input-focus-glow: rgba(124, 102, 245, 0.25);
+  
+  --dm-primary: #7c66f5;
+  --dm-primary-hover: #6c54ec;
+  
+  --dm-text-white: #ffffff;
+  --dm-text-light: #f1f0f7;
+  --dm-text-muted: #9590ad;
+  --dm-text-dim: #6b6683;
+  
+  --dm-border-subtle: #29253d;
+  --dm-danger: #f87171;
+  --dm-danger-bg: rgba(239, 68, 68, 0.12);
+  --dm-success: #34d399;
+  --dm-success-bg: rgba(52, 211, 153, 0.12);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+/* ==========================================================================
+   PAGE CONTAINER & AMBIENT GLOW
+   ========================================================================== */
+
+.dark-register-page {
+  min-height: 100vh;
+  width: 100%;
+  background-color: var(--dm-bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  position: relative;
+  overflow: hidden;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+.ambient-glow {
+  position: absolute;
+  top: 15%;
+  left: 20%;
+  width: 500px;
+  height: 500px;
+  background: radial-gradient(circle, rgba(124, 102, 245, 0.12) 0%, rgba(19, 17, 28, 0) 70%);
+  pointer-events: none;
+  filter: blur(60px);
+  z-index: 0;
+}
+
+/* ==========================================================================
+   SPLIT CARD CONTAINER
+   ========================================================================== */
+
+.dark-register-container {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 1060px;
+  min-height: 640px;
+  background-color: var(--dm-card);
+  border: 1px solid var(--dm-border-subtle);
+  border-radius: 28px;
+  display: flex;
+  overflow: hidden;
+  box-shadow: 0 30px 60px -15px rgba(0, 0, 0, 0.5), 0 0 40px rgba(124, 102, 245, 0.05);
+}
+
+/* ==========================================================================
+   LEFT SIDE - CINEMATIC IMAGE PANEL
+   ========================================================================== */
+
+.dark-image-panel {
+  flex: 1.1;
+  padding: 16px;
+  display: flex;
+}
+
+.image-wrapper {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 580px;
+  border-radius: 20px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 28px;
+}
+
+.cinematic-image {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: brightness(0.7) contrast(1.1);
+  z-index: 0;
+  transition: transform 10s ease;
+}
+
+.image-wrapper:hover .cinematic-image {
+  transform: scale(1.05);
+}
+
+.image-gradient-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(
+    180deg, 
+    rgba(19, 17, 28, 0.4) 0%, 
+    rgba(19, 17, 28, 0.1) 40%, 
+    rgba(19, 17, 28, 0.85) 85%,
+    rgba(19, 17, 28, 0.98) 100%
+  );
+  z-index: 1;
+}
+
+.image-top-badge {
+  position: relative;
+  z-index: 2;
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(25, 22, 38, 0.65);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  padding: 6px 14px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--dm-text-white);
+  letter-spacing: 0.02em;
+}
+
+.badge-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: #10b981;
+  box-shadow: 0 0 8px #10b981;
+}
+
+.image-caption {
+  position: relative;
+  z-index: 2;
+}
+
+.image-caption h2 {
+  font-size: 1.85rem;
+  font-weight: 700;
+  color: var(--dm-text-white);
+  line-height: 1.25;
+  letter-spacing: -0.02em;
+  margin-bottom: 8px;
+}
+
+.image-caption p {
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.75);
+  line-height: 1.4;
+}
+
+/* ==========================================================================
+   RIGHT SIDE - FORM PANEL
+   ========================================================================== */
+
+.dark-form-panel {
+  flex: 1.05;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 40px;
+}
+
+.form-inner-content {
+  width: 100%;
+  max-width: 400px;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Header */
+.dark-header {
+  margin-bottom: 16px;
+  text-align: center;
+}
+
+.login-logo-wrapper {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 10px;
+}
+
+.login-logo-image {
+  width: 56px;
+  height: 56px;
+  object-fit: contain;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.05);
+  padding: 4px;
+}
+
+.main-title {
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: var(--dm-text-white);
+  letter-spacing: -0.03em;
+  line-height: 1.2;
+  text-align: center;
+}
+
+.sub-title {
+  font-size: 0.82rem;
+  color: var(--dm-text-muted);
+  margin-top: 2px;
+  text-align: center;
+}
+
+/* Form Styles */
+.dark-auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.dark-field {
+  position: relative;
+  width: 100%;
+}
+
+.dark-field input,
+.dark-field select {
+  width: 100%;
+  height: 44px;
+  background-color: var(--dm-input-bg);
+  border: 1.5px solid var(--dm-input-border);
+  border-radius: 10px;
+  padding: 0 14px;
+  font-size: 0.88rem;
+  color: var(--dm-text-white);
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s, background-color 0.2s;
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+.dark-field select {
+  cursor: pointer;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236b6683' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  padding-right: 36px;
+}
+
+.dark-field input:focus,
+.dark-field select:focus {
+  border-color: var(--dm-input-focus);
+  background-color: #27233c;
+  box-shadow: 0 0 0 3px var(--dm-input-focus-glow);
+}
+
+.dark-field input::placeholder {
+  color: var(--dm-text-dim);
+  font-size: 0.85rem;
+}
+
+.dark-field.password-field input {
+  padding-right: 46px;
+}
+
+.dark-eye-btn {
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: transparent;
+  border: none;
+  color: var(--dm-text-muted);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  transition: color 0.15s;
+}
+
+.dark-eye-btn:hover {
+  color: var(--dm-text-white);
+}
+
+.field-hint {
+  font-size: 0.7rem;
+  color: var(--dm-text-dim);
+  margin-top: 3px;
+}
+
+/* Options row */
+.dark-options-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 2px;
+  margin-bottom: 2px;
+}
+
+.dark-checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.dark-checkbox-label input[type="checkbox"] {
+  accent-color: var(--dm-primary);
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.label-text {
+  font-size: 0.8rem;
+  color: var(--dm-text-muted);
+}
+
+/* Error & Success Banners */
+.dark-error-banner {
+  background-color: var(--dm-danger-bg);
+  border: 1px solid rgba(248, 113, 113, 0.3);
+  color: var(--dm-danger);
+  padding: 9px 14px;
+  border-radius: 10px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  animation: fadeIn 0.2s ease;
+}
+
+.dark-success-banner {
+  background-color: var(--dm-success-bg);
+  border: 1px solid rgba(52, 211, 153, 0.3);
+  color: var(--dm-success);
+  padding: 9px 14px;
+  border-radius: 10px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  animation: fadeIn 0.2s ease;
+}
+
+/* Primary Button */
+.dark-primary-btn {
+  width: 100%;
+  height: 46px;
+  background-color: var(--dm-primary);
+  color: var(--dm-text-white);
+  border: none;
+  border-radius: 10px;
+  font-size: 0.92rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.2s ease;
+  margin-top: 2px;
+  box-shadow: 0 4px 14px rgba(124, 102, 245, 0.35);
+}
+
+.dark-primary-btn:hover:not(:disabled) {
+  background-color: var(--dm-primary-hover);
+  box-shadow: 0 6px 20px rgba(124, 102, 245, 0.45);
+  transform: translateY(-1px);
+}
+
+.dark-primary-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.dark-btn-spinner {
+  width: 18px;
+  height: 18px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: #ffffff;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Footer */
+.dark-panel-footer {
+  margin-top: 16px;
+  text-align: center;
+}
+
+.dark-panel-footer p {
+  font-size: 0.82rem;
+  color: var(--dm-text-dim);
+  line-height: 1.5;
+}
+
+.highlight-link {
+  color: var(--dm-primary);
+  text-decoration: none;
+  font-weight: 600;
+  transition: color 0.15s;
+}
+
+.highlight-link:hover {
+  color: #9d8df8;
+  text-decoration: underline;
+}
+
+/* ==========================================================================
+   RESPONSIVE DESIGN
+   ========================================================================== */
+
+@media (max-width: 900px) {
+  .dark-register-container {
+    flex-direction: column;
+    max-width: 480px;
+    min-height: auto;
+  }
+
+  .dark-image-panel {
+    display: none;
+  }
+
+  .dark-form-panel {
+    padding: 30px 20px;
+  }
+
+  .main-title {
+    font-size: 1.4rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .dark-form-panel {
+    padding: 20px 16px;
+  }
+
+  .dark-register-container {
+    border-radius: 20px;
+  }
+
+  .main-title {
+    font-size: 1.2rem;
+  }
+
+  .form-row {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .login-logo-image {
+    width: 48px;
+    height: 48px;
+  }
+
+  .dark-field input,
+  .dark-field select {
+    height: 40px;
+    font-size: 0.82rem;
+  }
+
+  .dark-primary-btn {
+    height: 42px;
+    font-size: 0.85rem;
+  }
+}

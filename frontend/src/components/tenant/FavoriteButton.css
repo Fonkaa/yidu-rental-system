@@ -1,0 +1,62 @@
+.favorite-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+
+  border: 1px solid #e2e8f0;
+  background: #ffffff;
+  color: #475569;
+
+  font-weight: 600;
+  border-radius: 12px;
+
+  cursor: pointer;
+
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease,
+    border-color 0.2s ease,
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.favorite-button:hover:not(:disabled) {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+  transform: translateY(-1px);
+}
+
+.favorite-button:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+.favorite-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.favorite-button-small {
+  min-height: 38px;
+  padding: 0 13px;
+  font-size: 13px;
+}
+
+.favorite-button-medium {
+  width: 100%;
+  min-height: 48px;
+  padding: 0 18px;
+  font-size: 15px;
+}
+
+.favorite-active {
+  background: #fff1f2;
+  color: #e11d48;
+  border-color: #fecdd3;
+}
+
+.favorite-active:hover:not(:disabled) {
+  background: #ffe4e6;
+  color: #be123c;
+  border-color: #fda4af;
+}
