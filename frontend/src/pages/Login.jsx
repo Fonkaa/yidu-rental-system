@@ -1,9 +1,12 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { login } from '../services/authService';
 import { useAuth } from '../context/AuthContext';
+import LanguageSwitcher from '../components/LanguageSwitcher';
 
 function Login() {
+  const { t } = useTranslation();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -32,12 +35,16 @@ function Login() {
   return (
     <div className="min-h-screen bg-gray-100 flex items-center justify-center">
       <form onSubmit={handleSubmit} className="bg-white p-8 rounded-lg shadow-lg w-full max-w-sm">
-        <h1 className="text-2xl font-bold text-purple-600 mb-6 text-center">Log In</h1>
+        <div className="flex justify-end mb-2">
+          <LanguageSwitcher />
+        </div>
+
+        <h1 className="text-2xl font-bold text-[#043658] mb-6 text-center">{t('login.title')}</h1>
 
         {error && <p className="text-red-600 text-sm mb-4">{error}</p>}
 
         <fieldset disabled={submitting} className="disabled:opacity-60">
-          <label className="block text-sm text-gray-700 mb-1">Email</label>
+          <label className="block text-sm text-gray-700 mb-1">{t('login.email')}</label>
           <input
             type="email"
             value={email}
@@ -46,7 +53,7 @@ function Login() {
             required
           />
 
-          <label className="block text-sm text-gray-700 mb-1">Password</label>
+          <label className="block text-sm text-gray-700 mb-1">{t('login.password')}</label>
           <input
             type="password"
             value={password}
@@ -59,16 +66,16 @@ function Login() {
         <button
           type="submit"
           disabled={submitting}
-          className="w-full bg-purple-600 text-white py-2 rounded hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full bg-[#043658] text-white py-2 rounded hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {submitting ? 'Logging in...' : 'Log In'}
+          {submitting ? t('login.submitting') : t('login.submit')}
         </button>
 
         <p className="text-sm text-gray-600 mt-4 text-center">
-          No account? <Link to="/register" className="text-purple-600">Register</Link>
+          {t('login.noAccount')} <Link to="/register" className="text-[#043658] font-medium">{t('login.register')}</Link>
         </p>
         <p className="text-sm text-gray-600 mt-2 text-center">
-          <Link to="/forgot-password" className="text-purple-600">Forgot password?</Link>
+          <Link to="/forgot-password" className="text-[#043658] font-medium">{t('login.forgotPassword')}</Link>
         </p>
       </form>
     </div>

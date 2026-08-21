@@ -1,0 +1,127 @@
+{
+  "appName": "የቤት ኪራይ ስርዓት",
+
+  "login": {
+    "title": "ግባ",
+    "email": "ኢሜይል",
+    "password": "የይለፍ ቃል",
+    "submit": "ግባ",
+    "submitting": "በመግባት ላይ...",
+    "noAccount": "መለያ የለዎትም?",
+    "register": "ይመዝገቡ",
+    "forgotPassword": "የይለፍ ቃል ረሱ?"
+  },
+
+  "register": {
+    "title": "ይመዝገቡ",
+    "fullName": "ሙሉ ስም",
+    "email": "ኢሜይል",
+    "password": "የይለፍ ቃል",
+    "iAmA": "እኔ...",
+    "landlord": "አከራይ",
+    "tenant": "ተከራይ",
+    "submit": "ይመዝገቡ",
+    "submitting": "መለያ በመፍጠር ላይ...",
+    "success": "መለያ ተፈጥሯል! ወደ መግቢያ በማዞር ላይ...",
+    "haveAccount": "አስቀድሞ መለያ አለዎት?",
+    "login": "ግባ"
+  },
+
+  "forgotPassword": {
+    "title": "የይለፍ ቃል ረሱ",
+    "email": "ኢሜይል",
+    "submit": "የማስተካከያ ማገናኛ ላክ",
+    "submitting": "በመላክ ላይ...",
+    "backToLogin": "ወደ መግቢያ ተመለስ"
+  },
+
+  "resetPassword": {
+    "title": "የይለፍ ቃል ቀይር",
+    "resetToken": "የማስተካከያ ኮድ",
+    "newPassword": "አዲስ የይለፍ ቃል",
+    "submit": "ቀይር",
+    "submitting": "በመቀየር ላይ...",
+    "backToLogin": "ወደ መግቢያ ተመለስ"
+  },
+
+  "propertyForm": {
+    "verifyTitle": "ማንነትዎን ያረጋግጡ",
+    "verifyDescription": "ዝርዝር ከመፍጠርዎ በፊት እባክዎ የመታወቂያ ቁጥርዎን ያስገቡ። ይህ መድረኩን ተጠያቂ እና ለተከራዮች ደህንነቱ የተጠበቀ እንዲሆን ይረዳል።",
+    "idNumber": "የመታወቂያ ቁጥር",
+    "saveAndContinue": "አስቀምጥ እና ቀጥል",
+    "saving": "በማስቀመጥ ላይ...",
+    "title": "የንብረት ዝርዝር ይፍጠሩ",
+    "titleEn": "ርዕስ (እንግሊዝኛ)",
+    "titleAm": "ርዕስ (አማርኛ)",
+    "languageHint": "ለርዕስ እና መግለጫ ቢያንስ አንድ ቋንቋ ያስፈልጋል።",
+    "descriptionEn": "መግለጫ (እንግሊዝኛ)",
+    "descriptionAm": "መግለጫ (አማርኛ)",
+    "price": "ዋጋ (ብር/ወር)",
+    "rooms": "የክፍሎች ብዛት",
+    "furnished": "የተሟላ እቃ ያለው",
+    "category": "ምድብ",
+    "selectCategory": "ምድብ ይምረጡ",
+    "subCity": "ክፍለ ከተማ",
+    "selectSubCity": "ክፍለ ከተማ ይምረጡ",
+    "landmark": "የመለያ ቦታ መግለጫ",
+    "landmarkPlaceholder": "ለምሳሌ በቦሌ መድሃኒዓለም አቅራቢያ",
+    "landmarkHint": "ከላይ የመለያ ቦታ መግለጫ ወይም ከታች የጂፒኤስ መጋጠሚያዎችን ያቅርቡ።",
+    "gpsLat": "የጂፒኤስ ኬክሮስ",
+    "gpsLng": "የጂፒኤስ ኬንትሮስ",
+    "photos": "ፎቶዎች (ቢያንስ 1, JPEG/PNG/WEBP, ከፍተኛ 5ሜባ)",
+    "submit": "ዝርዝር አስገባ",
+    "submitting": "በማስገባት ላይ...",
+    "submitted": "ገብቷል",
+    "success": "ዝርዝሩ ተፈጥሯል! ለአስተዳዳሪ ግምገማ በመጠባበቅ ላይ ነው።"
+  },
+
+  "landlordDashboard": {
+    "title": "የእኔ ዝርዝሮች",
+    "welcome": "እንኳን በደህና መጡ",
+    "newListing": "+ አዲስ ዝርዝር",
+    "logOut": "ውጣ",
+    "loading": "በመጫን ላይ...",
+    "noListings": "እስካሁን ምንም ዝርዝር የለም። የመጀመሪያዎን ይፍጠሩ!",
+    "markRented": "እንደተከራየ ምልክት አድርግ",
+    "markUnavailable": "እንደሌለ ምልክት አድርግ",
+    "renew": "አድስ",
+    "processing": "በሂደት ላይ..."
+  },
+
+  "adminDashboard": {
+    "title": "የአስተዳዳሪ ዳሽቦርድ",
+    "welcome": "እንኳን በደህና መጡ",
+    "logOut": "ውጣ",
+    "tabPending": "በመጠባበቅ ላይ ያሉ ዝርዝሮች",
+    "tabUsers": "ተጠቃሚዎች",
+    "tabCommission": "የኮሚሽን መጠን",
+    "loading": "በመጫን ላይ...",
+    "noPending": "በአሁኑ ጊዜ ምንም በመጠባበቅ ላይ ያለ ዝርዝር የለም።",
+    "noImagesWarning": "ለዚህ ዝርዝር ምንም ምስል አልተጫነም።",
+    "approve": "አጽድቅ",
+    "reject": "ውድቅ አድርግ",
+    "processing": "በሂደት ላይ...",
+    "name": "ስም",
+    "email": "ኢሜይል",
+    "role": "ሚና",
+    "status": "ሁኔታ",
+    "action": "ተግባር",
+    "active": "ንቁ",
+    "deactivated": "ቦዝኗል",
+    "activate": "አንቃ",
+    "deactivate": "አቦዝን",
+    "currentRate": "አሁን ያለው መጠን",
+    "newRate": "አዲስ የኮሚሽን መጠን (%)",
+    "updateRate": "መጠን አዘምን",
+    "rateUpdated": "የኮሚሽን መጠን በተሳካ ሁኔታ ዘምኗል።"
+  },
+
+  "status": {
+    "PENDING": "በመጠባበቅ ላይ",
+    "APPROVED": "ጸድቋል",
+    "REJECTED": "ውድቅ ሆኗል",
+    "UNAVAILABLE": "አይገኝም",
+    "RENTED": "ተከራይቷል",
+    "EXPIRED": "ጊዜው አልፏል"
+  }
+}

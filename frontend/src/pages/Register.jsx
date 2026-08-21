@@ -1,8 +1,11 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { register } from '../services/authService';
+import LanguageSwitcher from '../components/LanguageSwitcher';
 
 function Register() {
+  const { t } = useTranslation();
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -29,13 +32,17 @@ function Register() {
   return (
     <div className="min-h-screen bg-gray-100 flex items-center justify-center">
       <form onSubmit={handleSubmit} className="bg-white p-8 rounded-lg shadow-lg w-full max-w-sm">
-        <h1 className="text-2xl font-bold text-purple-600 mb-6 text-center">Register</h1>
+        <div className="flex justify-end mb-2">
+          <LanguageSwitcher />
+        </div>
+
+        <h1 className="text-2xl font-bold text-[#043658] mb-6 text-center">{t('register.title')}</h1>
 
         {error && <p className="text-red-600 text-sm mb-4">{error}</p>}
-        {success && <p className="text-green-600 text-sm mb-4">Account created! Redirecting to login...</p>}
+        {success && <p className="text-green-600 text-sm mb-4">{t('register.success')}</p>}
 
         <fieldset disabled={submitting || success} className="disabled:opacity-60">
-          <label className="block text-sm text-gray-700 mb-1">Full Name</label>
+          <label className="block text-sm text-gray-700 mb-1">{t('register.fullName')}</label>
           <input
             type="text"
             value={fullName}
@@ -44,7 +51,7 @@ function Register() {
             required
           />
 
-          <label className="block text-sm text-gray-700 mb-1">Email</label>
+          <label className="block text-sm text-gray-700 mb-1">{t('register.email')}</label>
           <input
             type="email"
             value={email}
@@ -53,7 +60,7 @@ function Register() {
             required
           />
 
-          <label className="block text-sm text-gray-700 mb-1">Password</label>
+          <label className="block text-sm text-gray-700 mb-1">{t('register.password')}</label>
           <input
             type="password"
             value={password}
@@ -62,27 +69,27 @@ function Register() {
             required
           />
 
-          <label className="block text-sm text-gray-700 mb-1">I am a...</label>
+          <label className="block text-sm text-gray-700 mb-1">{t('register.iAmA')}</label>
           <select
             value={role}
             onChange={(e) => setRole(e.target.value)}
             className="w-full border border-gray-300 rounded px-3 py-2 mb-4"
           >
-            <option value="LANDLORD">Landlord</option>
-            <option value="TENANT">Tenant</option>
+            <option value="LANDLORD">{t('register.landlord')}</option>
+            <option value="TENANT">{t('register.tenant')}</option>
           </select>
         </fieldset>
 
         <button
           type="submit"
           disabled={submitting || success}
-          className="w-full bg-purple-600 text-white py-2 rounded hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full bg-[#043658] text-white py-2 rounded hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {submitting ? 'Creating account...' : success ? 'Created' : 'Register'}
+          {submitting ? t('register.submitting') : success ? t('propertyForm.submitted') : t('register.submit')}
         </button>
 
         <p className="text-sm text-gray-600 mt-4 text-center">
-          Already have an account? <Link to="/login" className="text-purple-600">Log In</Link>
+          {t('register.haveAccount')} <Link to="/login" className="text-[#043658] font-medium">{t('register.login')}</Link>
         </p>
       </form>
     </div>
