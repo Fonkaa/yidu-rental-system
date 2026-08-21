@@ -224,7 +224,30 @@ enum ListingStatus {
   EXPIRED
 }
 
+<<<<<<< HEAD
 <<<<<<< Updated upstream
+=======
+enum RentalRequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  CANCELLED
+}
+
+enum LeaseStatus {
+  ACTIVE
+  EXPIRED
+  TERMINATED
+}
+
+enum PaymentStatus {
+  PENDING
+  SUCCESS
+  FAILED
+  REFUNDED
+}
+
+>>>>>>> origin/feature/developer-a-auth
 // ==========================================
 // Shared model — ask before changing
 // ==========================================
@@ -233,12 +256,21 @@ model User {
   fullName         String
   email            String     @unique
   passwordHash     String
-  role             Role      @default(TENANT)
+  role             Role       @default(TENANT)
+  isActive         Boolean    @default(true)
+  phone            String?
+  idNumber         String?
   resetToken       String?
   resetTokenExpiry DateTime?
   createdAt        DateTime   @default(now())
   updatedAt        DateTime   @updatedAt
+
   properties       Property[]
+  favorites        Favorite[]
+  leases           Lease[]
+  rentalRequests   RentalRequest[]
+  sentMessages     Message[] @relation("MessageSender")
+  receivedMessages Message[] @relation("MessageReceiver")
 }
 
 // ==========================================
@@ -271,7 +303,11 @@ model Property {
   location   Location @relation(fields: [locationId], references: [id])
   locationId String
 
-  images PropertyImage[]
+  images         PropertyImage[]
+  favorites      Favorite[]
+  leases         Lease[]
+  messages       Message[]
+  rentalRequests RentalRequest[]
 }
 
 model PropertyImage {
@@ -319,26 +355,111 @@ model Location {
 }
 
 model Notification {
-  id               String    @id @default(uuid())
-  userId           String
-  type             String
-  title            String
-  message          String
+  id                String    @id @default(uuid())
+  userId            String
+  type              String
+  title             String
+  message           String
   relatedEntityType String?
-  relatedEntityId  String?
-  isRead           Boolean   @default(false)
-  createdAt        DateTime  @default(now())
-  readAt           DateTime?
+  relatedEntityId   String?
+  isRead            Boolean   @default(false)
+  createdAt         DateTime  @default(now())
+  readAt            DateTime?
 }
 
 model CommissionSetting {
-  id                String   @id @default(uuid())
-  ratePercent        Float    @default(10)
-  updatedByAdminId   String?
-  updatedAt          DateTime @updatedAt
+  id               String   @id @default(uuid())
+  ratePercent      Float    @default(10)
+  updatedByAdminId String?
+  updatedAt        DateTime @updatedAt
 }
 
 // ==========================================
 // Developer B models — Tenant & Rental Workflow side
-// (placeholders so Dev B isn't blocked; he owns these)
+// (reconstructed from live database via introspection — ask him before changing)
 // ==========================================
+model RentalRequest {
+  id         String              @id @default(uuid())
+  tenantId   String
+  propertyId String
+  message    String?
+  status     RentalRequestStatus @default(PENDING)
+  createdAt  DateTime            @default(now())
+  updatedAt  DateTime            @updatedAt
+
+  tenant   User     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, propertyId])
+  @@index([propertyId])
+  @@index([status])
+  @@index([tenantId])
+}
+
+model Lease {
+  id         String      @id @default(uuid())
+  tenantId   String
+  propertyId String
+  startDate  DateTime
+  endDate    DateTime
+  rentAmount Float
+  status     LeaseStatus @default(ACTIVE)
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+
+  tenant   User     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+
+  @@index([propertyId])
+  @@index([status])
+  @@index([tenantId])
+}
+
+model Favorite {
+  id         String   @id @default(uuid())
+  userId     String
+  propertyId String
+  createdAt  DateTime @default(now())
+
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, propertyId])
+  @@index([propertyId])
+  @@index([userId])
+}
+
+model Message {
+  id         String    @id @default(uuid())
+  senderId   String
+  receiverId String
+  propertyId String?
+  text       String
+  isRead     Boolean   @default(false)
+  createdAt  DateTime  @default(now())
+
+  sender   User      @relation("MessageSender", fields: [senderId], references: [id], onDelete: Cascade)
+  receiver User      @relation("MessageReceiver", fields: [receiverId], references: [id], onDelete: Cascade)
+  property Property? @relation(fields: [propertyId], references: [id])
+
+  @@index([createdAt])
+  @@index([propertyId])
+  @@index([receiverId])
+  @@index([senderId])
+}
+
+// ==========================================
+// Developer C models — Payments (Chapa)
+// (reconstructed from live database via introspection — ask him before changing)
+// ==========================================
+model Payment {
+  id                   String        @id @default(uuid())
+  leaseId              String        @unique
+  amount               Decimal       @db.Decimal(10, 2)
+  commissionAmount     Decimal       @db.Decimal(10, 2)
+  gatewayTransactionId String?       @unique
+  method               String        @default("Telebirr")
+  status               PaymentStatus @default(PENDING)
+  paidAt               DateTime?
+  createdAt            DateTime      @default(now())
+}

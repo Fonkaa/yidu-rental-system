@@ -1,0 +1,263 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Online House Rental System API",
+    "version": "1.0.0"
+  },
+  "servers": [{ "url": "http://localhost:5000" }],
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    }
+  },
+  "paths": {
+    "/api/auth/register": {
+      "post": {
+        "summary": "Register a new user",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "fullName": { "type": "string" },
+                  "email": { "type": "string" },
+                  "password": { "type": "string" },
+                  "role": { "type": "string", "enum": ["TENANT", "LANDLORD", "ADMIN"] }
+                }
+              }
+            }
+          }
+        },
+        "responses": { "201": { "description": "User created" } }
+      }
+    },
+    "/api/auth/login": {
+      "post": {
+        "summary": "Log in",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "email": { "type": "string" },
+                  "password": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": { "200": { "description": "Returns JWT token" } }
+      }
+    },
+    "/api/auth/forgot-password": {
+      "post": {
+        "summary": "Request password reset token",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "type": "object", "properties": { "email": { "type": "string" } } }
+            }
+          }
+        },
+        "responses": { "200": { "description": "Reset token issued" } }
+      }
+    },
+    "/api/auth/reset-password": {
+      "post": {
+        "summary": "Reset password using token",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "resetToken": { "type": "string" },
+                  "newPassword": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": { "200": { "description": "Password updated" } }
+      }
+    },
+    "/api/auth/me": {
+      "get": {
+        "summary": "Check current logged-in user",
+        "security": [{ "bearerAuth": [] }],
+        "responses": { "200": { "description": "Returns current user info" } }
+      }
+    },
+    "/api/properties": {
+      "post": {
+        "summary": "Create a property listing",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "titleEn": { "type": "string" },
+                  "titleAm": { "type": "string" },
+                  "descriptionEn": { "type": "string" },
+                  "price": { "type": "number" },
+                  "rooms": { "type": "integer" },
+                  "furnished": { "type": "boolean" },
+                  "categoryId": { "type": "string" },
+                  "locationId": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": { "201": { "description": "Property created" } }
+      }
+    },
+    "/api/properties/{id}": {
+      "put": {
+        "summary": "Update a property (FR-07a re-review logic applies)",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "titleEn": { "type": "string" },
+                  "titleAm": { "type": "string" },
+                  "descriptionEn": { "type": "string" },
+                  "descriptionAm": { "type": "string" },
+                  "price": { "type": "number" },
+                  "categoryId": { "type": "string" },
+                  "locationId": { "type": "string" },
+                  "landmarkDescription": { "type": "string" },
+                  "gpsLat": { "type": "number" },
+                  "gpsLng": { "type": "number" }
+                }
+              }
+            }
+          }
+        },
+        "responses": { "200": { "description": "Property updated" } }
+      }
+    },
+    "/api/properties/{id}/images": {
+      "post": {
+        "summary": "Upload property images",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "images": { "type": "array", "items": { "type": "string", "format": "binary" } }
+                }
+              }
+            }
+          }
+        },
+        "responses": { "201": { "description": "Images uploaded" } }
+      }
+    },
+    "/api/properties/{id}/status": {
+      "patch": {
+        "summary": "Mark property as unavailable or rented (FR-08, FR-12)",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "status": { "type": "string", "enum": ["UNAVAILABLE", "RENTED"] }
+                }
+              }
+            }
+          }
+        },
+        "responses": { "200": { "description": "Status updated" } }
+      }
+    },
+    "/api/properties/{id}/renew": {
+      "patch": {
+        "summary": "Renew an expired listing (FR-34)",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "responses": { "200": { "description": "Listing renewed, status set to PENDING" } }
+      }
+    },
+    "/api/admin/properties/pending": {
+      "get": {
+        "summary": "View all pending property listings (Admin only)",
+        "security": [{ "bearerAuth": [] }],
+        "responses": { "200": { "description": "List of pending properties" } }
+      }
+    },
+    "/api/admin/properties/{id}/approve": {
+      "patch": {
+        "summary": "Approve a pending listing (Admin only, FR-09)",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "responses": { "200": { "description": "Property approved and published" } }
+      }
+    },
+    "/api/admin/properties/{id}/reject": {
+      "patch": {
+        "summary": "Reject a pending listing (Admin only, FR-09)",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "responses": { "200": { "description": "Property rejected" } }
+      }
+    },
+    "/api/admin/users": {
+      "get": {
+        "summary": "View all users (Admin only, FR-32)",
+        "security": [{ "bearerAuth": [] }],
+        "responses": { "200": { "description": "List of all users" } }
+      }
+    },
+    "/api/admin/users/{id}/toggle-active": {
+      "patch": {
+        "summary": "Activate or deactivate a user account (Admin only, FR-32)",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "responses": { "200": { "description": "User active status toggled" } }
+      }
+    },
+    "/api/admin/settings/commission-rate": {
+      "get": {
+        "summary": "View the current platform commission rate (Admin only, FR-48)",
+        "security": [{ "bearerAuth": [] }],
+        "responses": { "200": { "description": "Returns current commission rate" } }
+      },
+      "patch": {
+        "summary": "Update the platform commission rate (Admin only, FR-48)",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "ratePercent": { "type": "number" }
+                }
+              }
+            }
+          }
+        },
+        "responses": { "200": { "description": "Commission rate updated" } }
+      }
+    }
+  }
+}

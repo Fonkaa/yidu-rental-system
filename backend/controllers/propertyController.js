@@ -3,8 +3,12 @@ async function createProperty(req, res) {
   try {
     const { titleEn, titleAm, descriptionEn, descriptionAm, price, rooms, furnished, categoryId, locationId, landmarkDescription, gpsLat, gpsLng } = req.body;
 
-    if (!titleEn || !descriptionEn || !price || !rooms || !categoryId || !locationId) {
-      return res.status(400).json({ error: 'titleEn, descriptionEn, price, rooms, categoryId, and locationId are required' });
+        if ((!titleEn && !titleAm) || (!descriptionEn && !descriptionAm) || !price || !rooms || !categoryId || !locationId) {
+      return res.status(400).json({ error: 'title (English or Amharic), description (English or Amharic), price, rooms, categoryId, and locationId are required' });
+    }
+        const landlord = await prisma.user.findUnique({ where: { id: req.user.userId } });
+    if (!landlord.idNumber) {
+      return res.status(403).json({ error: 'You must add your ID number to your profile before creating a listing.', code: 'ID_REQUIRED' });
     }
 
     const property = await prisma.property.create({
@@ -64,4 +68,194 @@ async function uploadImages(req, res) {
     res.status(500).json({ error: 'Something went wrong uploading images' });
   }
 }
-module.exports = { createProperty, uploadImages };
+async function updateProperty(req, res) {
+  try {
+    const { id } = req.params;
+    const property = await prisma.property.findUnique({ where: { id } });
+
+    if (!property) {
+      return res.status(404).json({ error: 'Property not found' });
+    }
+    if (property.landlordId !== req.user.userId) {
+      return res.status(403).json({ error: 'You do not own this property' });
+    }
+
+    const { titleEn, titleAm, descriptionEn, descriptionAm, categoryId, locationId, landmarkDescription, gpsLat, gpsLng, price } = req.body;
+
+    const contentFieldsChanged =
+      (titleEn !== undefined && titleEn !== property.titleEn) ||
+      (descriptionEn !== undefined && descriptionEn !== property.descriptionEn) ||
+      (categoryId !== undefined && categoryId !== property.categoryId) ||
+      (locationId !== undefined && locationId !== property.locationId) ||
+      (landmarkDescription !== undefined && landmarkDescription !== property.landmarkDescription) ||
+      (gpsLat !== undefined && gpsLat !== property.gpsLat) ||
+      (gpsLng !== undefined && gpsLng !== property.gpsLng);
+
+    const updated = await prisma.property.update({
+      where: { id },
+      data: {
+        ...(titleEn !== undefined && { titleEn }),
+        ...(titleAm !== undefined && { titleAm }),
+        ...(descriptionEn !== undefined && { descriptionEn }),
+        ...(descriptionAm !== undefined && { descriptionAm }),
+        ...(categoryId !== undefined && { categoryId }),
+        ...(locationId !== undefined && { locationId }),
+        ...(landmarkDescription !== undefined && { landmarkDescription }),
+        ...(gpsLat !== undefined && { gpsLat: parseFloat(gpsLat) }),
+        ...(gpsLng !== undefined && { gpsLng: parseFloat(gpsLng) }),
+        ...(price !== undefined && { price: parseFloat(price) }),
+        ...(contentFieldsChanged && property.status === 'APPROVED' && { status: 'PENDING' }),
+      },
+    });
+
+    res.json(updated);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Something went wrong updating the property' });
+  }
+}
+async function updatePropertyStatus(req, res) {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+
+    const allowedStatuses = ['UNAVAILABLE', 'RENTED'];
+    if (!allowedStatuses.includes(status)) {
+      return res.status(400).json({ error: 'status must be UNAVAILABLE or RENTED' });
+    }
+
+    const property = await prisma.property.findUnique({ where: { id } });
+    if (!property) {
+      return res.status(404).json({ error: 'Property not found' });
+    }
+    if (property.landlordId !== req.user.userId) {
+      return res.status(403).json({ error: 'You do not own this property' });
+    }
+
+    // FR-12: this takes effect immediately, no admin re-review needed
+    const updated = await prisma.property.update({
+      where: { id },
+      data: { status },
+    });
+    async function approveProperty(req, res) {
+  try {
+    const { id } = req.params;
+    const property = await prisma.property.findUnique({ where: { id } });
+
+    if (!property) {
+      return res.status(404).json({ error: 'Property not found' });
+    }
+
+    const updated = await prisma.property.update({
+      where: { id },
+      data: {
+        status: 'APPROVED',
+        publishedAt: new Date(),
+      },
+    });
+
+    await notifyUser(
+      property.landlordId,
+      'LISTING_APPROVED',
+      'Listing Approved',
+      `Your listing "${property.titleEn}" has been approved and is now live.`,
+      'Property',
+      property.id
+    );
+
+    res.json(updated);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Something went wrong approving the property' });
+  }
+}
+async function rejectProperty(req, res) {
+  try {
+    const { id } = req.params;
+    const property = await prisma.property.findUnique({ where: { id } });
+
+    if (!property) {
+      return res.status(404).json({ error: 'Property not found' });
+    }
+
+    const updated = await prisma.property.update({
+      where: { id },
+      data: { status: 'REJECTED' },
+    });
+
+    await notifyUser(
+      property.landlordId,
+      'LISTING_REJECTED',
+      'Listing Rejected',
+      `Your listing "${property.titleEn}" was rejected. Please review and resubmit.`,
+      'Property',
+      property.id
+    );
+
+    res.json(updated);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Something went wrong rejecting the property' });
+  }
+}
+
+    res.json(updated);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Something went wrong updating the status' });
+  }
+}
+async function checkAndExpireListings() {
+  const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+
+  await prisma.property.updateMany({
+    where: {
+      status: 'APPROVED',
+      publishedAt: { lte: thirtyDaysAgo },
+    },
+    data: { status: 'EXPIRED' },
+  });
+}
+async function renewProperty(req, res) {
+  try {
+    const { id } = req.params;
+    const property = await prisma.property.findUnique({ where: { id } });
+
+    if (!property) {
+      return res.status(404).json({ error: 'Property not found' });
+    }
+    if (property.landlordId !== req.user.userId) {
+      return res.status(403).json({ error: 'You do not own this property' });
+    }
+    if (property.status !== 'EXPIRED') {
+      return res.status(400).json({ error: 'Only expired listings can be renewed' });
+    }
+
+    const renewed = await prisma.property.update({
+      where: { id },
+      data: {
+        status: 'PENDING',
+        publishedAt: null,
+      },
+    });
+
+    res.json(renewed);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Something went wrong renewing the property' });
+  }
+}
+async function getMyProperties(req, res) {
+  try {
+    const properties = await prisma.property.findMany({
+      where: { landlordId: req.user.userId },
+      include: { category: true, location: true, images: true },
+      orderBy: { createdAt: 'desc' },
+    });
+    res.json(properties);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Something went wrong fetching your properties' });
+  }
+}
+module.exports = { createProperty, uploadImages, updateProperty, updatePropertyStatus, checkAndExpireListings, renewProperty, getMyProperties };

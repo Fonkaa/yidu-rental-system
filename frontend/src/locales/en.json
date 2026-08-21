@@ -1,0 +1,127 @@
+{
+  "appName": "Online House Rental System",
+
+  "login": {
+    "title": "Log In",
+    "email": "Email",
+    "password": "Password",
+    "submit": "Log In",
+    "submitting": "Logging in...",
+    "noAccount": "No account?",
+    "register": "Register",
+    "forgotPassword": "Forgot password?"
+  },
+
+  "register": {
+    "title": "Register",
+    "fullName": "Full Name",
+    "email": "Email",
+    "password": "Password",
+    "iAmA": "I am a...",
+    "landlord": "Landlord",
+    "tenant": "Tenant",
+    "submit": "Register",
+    "submitting": "Creating account...",
+    "success": "Account created! Redirecting to login...",
+    "haveAccount": "Already have an account?",
+    "login": "Log In"
+  },
+
+  "forgotPassword": {
+    "title": "Forgot Password",
+    "email": "Email",
+    "submit": "Send Reset Link",
+    "submitting": "Sending...",
+    "backToLogin": "Back to Login"
+  },
+
+  "resetPassword": {
+    "title": "Reset Password",
+    "resetToken": "Reset Token",
+    "newPassword": "New Password",
+    "submit": "Reset Password",
+    "submitting": "Resetting...",
+    "backToLogin": "Back to Login"
+  },
+
+  "propertyForm": {
+    "verifyTitle": "Verify Your Identity",
+    "verifyDescription": "Before creating a listing, please provide your national ID number. This helps us keep the platform accountable and safe for tenants.",
+    "idNumber": "National ID Number",
+    "saveAndContinue": "Save and Continue",
+    "saving": "Saving...",
+    "title": "Create Property Listing",
+    "titleEn": "Title (English)",
+    "titleAm": "Title (Amharic)",
+    "languageHint": "At least one language is required for title and description.",
+    "descriptionEn": "Description (English)",
+    "descriptionAm": "Description (Amharic)",
+    "price": "Price (Birr/month)",
+    "rooms": "Number of Rooms",
+    "furnished": "Furnished",
+    "category": "Category",
+    "selectCategory": "Select a category",
+    "subCity": "Sub-city",
+    "selectSubCity": "Select a sub-city",
+    "landmark": "Landmark Description",
+    "landmarkPlaceholder": "e.g. Near Bole Medhanealem Church",
+    "landmarkHint": "Provide either a landmark description above, or GPS coordinates below.",
+    "gpsLat": "GPS Latitude",
+    "gpsLng": "GPS Longitude",
+    "photos": "Photos (at least 1, JPEG/PNG/WEBP, max 5MB each)",
+    "submit": "Submit Listing",
+    "submitting": "Submitting...",
+    "submitted": "Submitted",
+    "success": "Listing created! It's pending admin review."
+  },
+
+  "landlordDashboard": {
+    "title": "My Listings",
+    "welcome": "Welcome",
+    "newListing": "+ New Listing",
+    "logOut": "Log Out",
+    "loading": "Loading...",
+    "noListings": "No listings yet. Create your first one!",
+    "markRented": "Mark Rented",
+    "markUnavailable": "Mark Unavailable",
+    "renew": "Renew",
+    "processing": "Processing..."
+  },
+
+  "adminDashboard": {
+    "title": "Admin Dashboard",
+    "welcome": "Welcome",
+    "logOut": "Log Out",
+    "tabPending": "Pending Listings",
+    "tabUsers": "Users",
+    "tabCommission": "Commission Rate",
+    "loading": "Loading...",
+    "noPending": "No pending listings right now.",
+    "noImagesWarning": "No images uploaded for this listing.",
+    "approve": "Approve",
+    "reject": "Reject",
+    "processing": "Processing...",
+    "name": "Name",
+    "email": "Email",
+    "role": "Role",
+    "status": "Status",
+    "action": "Action",
+    "active": "Active",
+    "deactivated": "Deactivated",
+    "activate": "Activate",
+    "deactivate": "Deactivate",
+    "currentRate": "Current rate",
+    "newRate": "New Commission Rate (%)",
+    "updateRate": "Update Rate",
+    "rateUpdated": "Commission rate updated successfully."
+  },
+
+  "status": {
+    "PENDING": "Pending",
+    "APPROVED": "Approved",
+    "REJECTED": "Rejected",
+    "UNAVAILABLE": "Unavailable",
+    "RENTED": "Rented",
+    "EXPIRED": "Expired"
+  }
+}

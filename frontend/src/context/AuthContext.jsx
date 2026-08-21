@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import { createContext, useContext, useEffect, useState } from "react";
 
 import {
@@ -6,10 +7,14 @@ import {
   getCurrentUser,
   logoutUser,
 } from "../services/authService";
+=======
+import { createContext, useContext, useState } from 'react';
+>>>>>>> origin/feature/developer-a-auth
 
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
+<<<<<<< HEAD
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -110,12 +115,34 @@ export function AuthProvider({ children }) {
 
   return (
     <AuthContext.Provider value={value}>
+=======
+  const [user, setUser] = useState(() => {
+    const saved = localStorage.getItem('user');
+    return saved ? JSON.parse(saved) : null;
+  });
+
+  const loginUser = (token, userData) => {
+    localStorage.setItem('token', token);
+    localStorage.setItem('user', JSON.stringify(userData));
+    setUser(userData);
+  };
+
+  const logoutUser = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    setUser(null);
+  };
+
+  return (
+    <AuthContext.Provider value={{ user, loginUser, logoutUser }}>
+>>>>>>> origin/feature/developer-a-auth
       {children}
     </AuthContext.Provider>
   );
 }
 
 export function useAuth() {
+<<<<<<< HEAD
   const context = useContext(AuthContext);
 
   if (!context) {
@@ -126,3 +153,7 @@ export function useAuth() {
 }
 
 export default AuthContext;
+=======
+  return useContext(AuthContext);
+}
+>>>>>>> origin/feature/developer-a-auth

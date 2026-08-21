@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import api from "./api";
 
 // Register
@@ -54,3 +55,13 @@ export const logoutUser = () => {
   localStorage.removeItem("hr_token");
   localStorage.removeItem("hr_user");
 };
+=======
+import api from './api';
+
+export const register = (data) => api.post('/auth/register', data);
+export const login = (data) => api.post('/auth/login', data);
+export const forgotPassword = (data) => api.post('/auth/forgot-password', data);
+export const resetPassword = (data) => api.post('/auth/reset-password', data);
+export const getMe = () => api.get('/auth/me');
+export const updateIdNumber = (idNumber) => api.patch('/auth/id-number', { idNumber });
+>>>>>>> origin/feature/developer-a-auth

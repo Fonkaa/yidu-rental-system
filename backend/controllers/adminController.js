@@ -3,9 +3,15 @@ const { notifyUser } = require('../services/notificationService');
 
 async function getPendingProperties(req, res) {
   try {
+<<<<<<< HEAD
     const pending = await prisma.property.findMany({
       where: { status: 'PENDING' },
       include: { landlord: { select: { fullName: true, email: true } }, category: true, location: true },
+=======
+        const pending = await prisma.property.findMany({
+      where: { status: 'PENDING' },
+      include: { landlord: { select: { fullName: true, email: true } }, category: true, location: true, images: true },
+>>>>>>> origin/feature/developer-a-auth
     });
     res.json(pending);
   } catch (error) {

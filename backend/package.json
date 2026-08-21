@@ -20,8 +20,12 @@
     "express": "^5.2.1",
     "jsonwebtoken": "^9.0.3",
     "multer": "^2.2.0",
+<<<<<<< HEAD
     "swagger-jsdoc": "^6.3.0",
     "swagger-ui-express": "^5.0.1"
+=======
+    "swagger-ui-express": "5.0.1"
+>>>>>>> origin/feature/developer-a-auth
   },
   "devDependencies": {
     "nodemon": "^3.1.14",

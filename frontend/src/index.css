@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 * {
   box-sizing: border-box;
 }
@@ -21,3 +22,6 @@ body {
   background: #f8fafc;
   color: #0f172a;
 }
+=======
+@import "tailwindcss";
+>>>>>>> origin/feature/developer-a-auth
