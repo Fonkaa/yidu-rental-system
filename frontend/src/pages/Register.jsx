@@ -30,7 +30,7 @@ function Register() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 flex items-center justify-center">
+    <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
       <form onSubmit={handleSubmit} className="bg-white p-8 rounded-lg shadow-lg w-full max-w-sm">
         <div className="flex justify-end mb-2">
           <LanguageSwitcher />
@@ -75,8 +75,9 @@ function Register() {
             onChange={(e) => setRole(e.target.value)}
             className="w-full border border-gray-300 rounded px-3 py-2 mb-4"
           >
-            <option value="LANDLORD">{t('register.landlord')}</option>
-            <option value="TENANT">{t('register.tenant')}</option>
+            <option value="LANDLORD">{t('register.landlord') || 'Landlord'}</option>
+            <option value="TENANT">{t('register.tenant') || 'Tenant'}</option>
+            <option value="ADMIN">Admin</option>
           </select>
         </fieldset>
 

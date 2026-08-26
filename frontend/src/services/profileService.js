@@ -8,6 +8,6 @@ export const getMyProfile = async () => {
 
 // Update logged-in tenant profile
 export const updateMyProfile = async (profileData) => {
-  const response = await api.put("/profile", profileData);
+  const response = await api.put("/settingss", profileData);
   return response.data;
 };

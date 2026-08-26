@@ -35,11 +35,6 @@ export default function Sidebar({ isOpen, onClose }) {
       path: "/lease",
       icon: "▣",
     },
-    {
-      label: "Notifications",
-      path: "/notifications",
-      icon: "♢",
-    },
   ];
 
   const handleLogout = () => {

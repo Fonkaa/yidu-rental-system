@@ -1,11 +1,9 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router();
-const { createLease, listLeases, updateLease } = require('../controllers/leaseController');
-const { verifyToken } = require('../middleware/authMiddleware');
+const { getTenantLeases } = require("../controllers/leaseController");
+const { verifyToken } = require("../middleware/authMiddleware");
 
-router.use(verifyToken);
-router.get('/', listLeases);
-router.post('/', createLease);
-router.patch('/:id/status', updateLease);
+// GET /api/leases/my-leases
+router.get("/my-leases", verifyToken, getTenantLeases);
 
 module.exports = router;

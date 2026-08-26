@@ -1,26 +1,11 @@
-const express = require('express');
-
+const express = require("express");
 const router = express.Router();
+const { getMessages, getConversation, sendMessage } = require("../controllers/messageController");
+const { verifyToken } = require("../middleware/authMiddleware");
 
-const {
-  createMessage,
-  getMessages,
-  listMessages,
-} = require('../controllers/messageController');
+router.get("/", verifyToken, getMessages);
+router.get("/:contactId", verifyToken, getConversation);
+router.post("/", verifyToken, sendMessage);
 
-const {
-  verifyToken,
-} = require('../middleware/authMiddleware');
-
-router.use(verifyToken);
-
-// Get all messages for logged-in user
-router.get('/', listMessages);
-
-// Get conversation with another user
-router.get('/:contactUserId', getMessages);
-
-// Send a message
-router.post('/', createMessage);
-
+module.exports = router;
 module.exports = router;

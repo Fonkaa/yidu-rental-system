@@ -7,9 +7,8 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-<<<<<<< Updated upstream
-=======
 model User {
+  notifications            Notification[]
   id                       String          @id @default(uuid())
   fullName                 String
   email                    String          @unique
@@ -18,6 +17,8 @@ model User {
   role                     Role            @default(TENANT)
   resetToken               String?
   resetTokenExpiry         DateTime?
+  otpCode                  String?         // <--- Added OTP Code field
+  otpExpiry                DateTime?       // <--- Added OTP Expiry field
   createdAt                DateTime        @default(now())
   updatedAt                DateTime        @updatedAt
   isActive                 Boolean         @default(true)
@@ -47,6 +48,7 @@ model Property {
   gpsLat              Float?
   gpsLng              Float?
   status              ListingStatus   @default(PENDING)
+  rejectionReason     String?         // <--- Added rejection reason here
   publishedAt         DateTime?
   expiresAt           DateTime?
   createdAt           DateTime        @default(now())
@@ -170,7 +172,7 @@ model Lease {
 
 model Notification {
   id                String    @id @default(uuid())
-  userId            String
+  userId            String    // <--- Add this foreign key field
   type              String
   title             String
   message           String
@@ -179,6 +181,7 @@ model Notification {
   isRead            Boolean   @default(false)
   createdAt         DateTime  @default(now())
   readAt            DateTime?
+  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade) // <--- Add this relation link
 
   @@index([userId])
   @@index([isRead])
@@ -198,17 +201,16 @@ model Payment {
   amount               Decimal       @db.Decimal(10, 2)
   commissionAmount     Decimal       @db.Decimal(10, 2)
   gatewayTransactionId String?       @unique
+  method               String        @default("Telebirr")
   status               PaymentStatus @default(PENDING)
   paidAt               DateTime?
   createdAt            DateTime      @default(now())
-  method               String        @default("Telebirr")
   lease                Lease         @relation(fields: [leaseId], references: [id], onDelete: Cascade)
 
   @@index([status])
   @@index([createdAt])
 }
 
->>>>>>> Stashed changes
 enum Role {
   TENANT
   LANDLORD
@@ -224,9 +226,6 @@ enum ListingStatus {
   EXPIRED
 }
 
-<<<<<<< HEAD
-<<<<<<< Updated upstream
-=======
 enum RentalRequestStatus {
   PENDING
   APPROVED
@@ -245,221 +244,4 @@ enum PaymentStatus {
   SUCCESS
   FAILED
   REFUNDED
-}
-
->>>>>>> origin/feature/developer-a-auth
-// ==========================================
-// Shared model — ask before changing
-// ==========================================
-model User {
-  id               String     @id @default(uuid())
-  fullName         String
-  email            String     @unique
-  passwordHash     String
-  role             Role       @default(TENANT)
-  isActive         Boolean    @default(true)
-  phone            String?
-  idNumber         String?
-  resetToken       String?
-  resetTokenExpiry DateTime?
-  createdAt        DateTime   @default(now())
-  updatedAt        DateTime   @updatedAt
-
-  properties       Property[]
-  favorites        Favorite[]
-  leases           Lease[]
-  rentalRequests   RentalRequest[]
-  sentMessages     Message[] @relation("MessageSender")
-  receivedMessages Message[] @relation("MessageReceiver")
-}
-
-// ==========================================
-// Developer A models — Landlord & Admin side
-// ==========================================
-model Property {
-  id                  String         @id @default(uuid())
-  titleEn             String
-  titleAm             String?
-  descriptionEn       String
-  descriptionAm       String?
-  price               Float
-  rooms               Int
-  furnished           Boolean        @default(false)
-  landmarkDescription String?
-  gpsLat              Float?
-  gpsLng              Float?
-  status              ListingStatus  @default(PENDING)
-  publishedAt         DateTime?
-  expiresAt           DateTime?
-  createdAt           DateTime       @default(now())
-  updatedAt           DateTime       @updatedAt
-
-  landlord   User     @relation(fields: [landlordId], references: [id])
-  landlordId String
-
-  category   Category @relation(fields: [categoryId], references: [id])
-  categoryId String
-
-  location   Location @relation(fields: [locationId], references: [id])
-  locationId String
-
-  images         PropertyImage[]
-  favorites      Favorite[]
-  leases         Lease[]
-  messages       Message[]
-  rentalRequests RentalRequest[]
-}
-
-model PropertyImage {
-  id         String   @id @default(uuid())
-  url        String
-  property   Property @relation(fields: [propertyId], references: [id])
-  propertyId String
-  createdAt  DateTime @default(now())
-=======
-enum RentalRequestStatus {
-  PENDING
-  APPROVED
-  REJECTED
-  CANCELLED
-}
-
-enum LeaseStatus {
-  ACTIVE
-  EXPIRED
-  TERMINATED
-}
-
-enum PaymentStatus {
-  PENDING
-  SUCCESS
-  FAILED
-  REFUNDED
->>>>>>> Stashed changes
-}
-
-model Category {
-  id          String     @id @default(uuid())
-  name        String     @unique
-  description String?
-  properties  Property[]
-}
-
-model Location {
-  id             String     @id @default(uuid())
-  city           String
-  subCity        String?
-  kebeleOrWoreda String?
-  region         String?
-  properties     Property[]
-}
-
-model Notification {
-  id                String    @id @default(uuid())
-  userId            String
-  type              String
-  title             String
-  message           String
-  relatedEntityType String?
-  relatedEntityId   String?
-  isRead            Boolean   @default(false)
-  createdAt         DateTime  @default(now())
-  readAt            DateTime?
-}
-
-model CommissionSetting {
-  id               String   @id @default(uuid())
-  ratePercent      Float    @default(10)
-  updatedByAdminId String?
-  updatedAt        DateTime @updatedAt
-}
-
-// ==========================================
-// Developer B models — Tenant & Rental Workflow side
-// (reconstructed from live database via introspection — ask him before changing)
-// ==========================================
-model RentalRequest {
-  id         String              @id @default(uuid())
-  tenantId   String
-  propertyId String
-  message    String?
-  status     RentalRequestStatus @default(PENDING)
-  createdAt  DateTime            @default(now())
-  updatedAt  DateTime            @updatedAt
-
-  tenant   User     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
-
-  @@unique([tenantId, propertyId])
-  @@index([propertyId])
-  @@index([status])
-  @@index([tenantId])
-}
-
-model Lease {
-  id         String      @id @default(uuid())
-  tenantId   String
-  propertyId String
-  startDate  DateTime
-  endDate    DateTime
-  rentAmount Float
-  status     LeaseStatus @default(ACTIVE)
-  createdAt  DateTime    @default(now())
-  updatedAt  DateTime    @updatedAt
-
-  tenant   User     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
-
-  @@index([propertyId])
-  @@index([status])
-  @@index([tenantId])
-}
-
-model Favorite {
-  id         String   @id @default(uuid())
-  userId     String
-  propertyId String
-  createdAt  DateTime @default(now())
-
-  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
-
-  @@unique([userId, propertyId])
-  @@index([propertyId])
-  @@index([userId])
-}
-
-model Message {
-  id         String    @id @default(uuid())
-  senderId   String
-  receiverId String
-  propertyId String?
-  text       String
-  isRead     Boolean   @default(false)
-  createdAt  DateTime  @default(now())
-
-  sender   User      @relation("MessageSender", fields: [senderId], references: [id], onDelete: Cascade)
-  receiver User      @relation("MessageReceiver", fields: [receiverId], references: [id], onDelete: Cascade)
-  property Property? @relation(fields: [propertyId], references: [id])
-
-  @@index([createdAt])
-  @@index([propertyId])
-  @@index([receiverId])
-  @@index([senderId])
-}
-
-// ==========================================
-// Developer C models — Payments (Chapa)
-// (reconstructed from live database via introspection — ask him before changing)
-// ==========================================
-model Payment {
-  id                   String        @id @default(uuid())
-  leaseId              String        @unique
-  amount               Decimal       @db.Decimal(10, 2)
-  commissionAmount     Decimal       @db.Decimal(10, 2)
-  gatewayTransactionId String?       @unique
-  method               String        @default("Telebirr")
-  status               PaymentStatus @default(PENDING)
-  paidAt               DateTime?
-  createdAt            DateTime      @default(now())
 }

@@ -7,7 +7,6 @@ function LanguageSwitcher() {
     i18n.changeLanguage(lng);
     localStorage.setItem('language', lng);
   };
-
   return (
     <div className="flex gap-1 text-sm">
       <button

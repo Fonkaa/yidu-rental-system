@@ -29,7 +29,13 @@ async function addFavorite(userId, propertyId) {
       propertyId,
     },
     include: {
-      property: true,
+      property: {
+        include: {
+          images: true,
+          location: true,
+          category: true,
+        },
+      },
     },
   });
 }
@@ -41,6 +47,8 @@ async function listFavorites(userId) {
       property: {
         include: {
           images: true,
+          location: true,
+          category: true,
           landlord: {
             select: { id: true, fullName: true, email: true },
           },

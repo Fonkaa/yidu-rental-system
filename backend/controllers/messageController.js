@@ -1,149 +1,126 @@
-const {
-  sendMessage,
-  getConversation,
-  listUserMessages,
-  markMessagesAsRead,
-} = require('../services/messageService');
+const prisma = require("../prisma/client");
+const { notifyUser } = require("../services/notificationService");
 
-
-// ==========================================
-// CREATE MESSAGE
-// POST /api/messages
-// ==========================================
-async function createMessage(req, res) {
-  try {
-    const {
-      receiverId,
-      content,
-      propertyId,
-    } = req.body;
-
-    if (!receiverId || !content) {
-      return res.status(400).json({
-        error: 'receiverId and content are required',
-      });
-    }
-
-    const message = await sendMessage({
-      senderId: req.user.userId,
-      receiverId,
-      content,
-      propertyId: propertyId || null,
-    });
-
-    return res.status(201).json({
-      success: true,
-      message,
-    });
-
-  } catch (error) {
-    console.error('CREATE MESSAGE ERROR:', error);
-
-    if (error.message === 'USER_NOT_FOUND') {
-      return res.status(404).json({
-        error: 'Receiver not found',
-      });
-    }
-
-    if (
-      error.message ===
-      'A user cannot send a message to themselves'
-    ) {
-      return res.status(400).json({
-        error: error.message,
-      });
-    }
-
-    if (error.message === 'PROPERTY_NOT_FOUND') {
-      return res.status(404).json({
-        error: 'Property not found',
-      });
-    }
-
-    return res.status(500).json({
-      error: 'Something went wrong while sending message',
-      details: error.message,
-    });
-  }
-}
-
-
-// ==========================================
-// GET CONVERSATION
-// GET /api/messages/:contactUserId
-// ==========================================
+// GET ALL MESSAGES / CONVERSATIONS FOR LOGGED-IN USER
 async function getMessages(req, res) {
   try {
-    const { contactUserId } = req.params;
-    const { propertyId } = req.query;
-
-    if (!contactUserId) {
-      return res.status(400).json({
-        error: 'contactUserId is required',
-      });
+    const userId = req.user?.userId;
+    if (!userId) {
+      return res.status(401).json({ success: false, error: "Authentication required" });
     }
 
-    const conversation = await getConversation(
-      req.user.userId,
-      contactUserId,
-      propertyId || null
-    );
-
-    await markMessagesAsRead(
-      req.user.userId,
-      contactUserId
-    );
-
-    return res.status(200).json({
-      success: true,
-      messages: conversation,
+    const messages = await prisma.message.findMany({
+      where: {
+        OR: [{ senderId: userId }, { receiverId: userId }]
+      },
+      include: {
+        sender: { select: { id: true, fullName: true, email: true } },
+        receiver: { select: { id: true, fullName: true, email: true } },
+        property: { select: { id: true, titleEn: true, titleAm: true } }
+      },
+      orderBy: { createdAt: 'asc' }
     });
 
+    return res.status(200).json({ success: true, messages, currentUserId: userId });
   } catch (error) {
-    console.error(
-      'GET CONVERSATION ERROR:',
-      error
-    );
-
-    return res.status(500).json({
-      error: 'Something went wrong while fetching messages',
-      details: error.message,
-    });
+    console.error("GET MESSAGES ERROR:", error);
+    return res.status(500).json({ success: false, error: "Failed to fetch messages" });
   }
 }
 
-
-// ==========================================
-// LIST ALL USER MESSAGES
-// GET /api/messages
-// ==========================================
-async function listMessages(req, res) {
+// GET MESSAGES WITH A SPECIFIC CONTACT
+async function getConversation(req, res) {
   try {
-    const messages = await listUserMessages(
-      req.user.userId
-    );
+    const userId = req.user?.userId;
+    const { contactId } = req.params;
 
-    return res.status(200).json({
-      success: true,
-      messages,
+    if (!userId) {
+      return res.status(401).json({ success: false, error: "Authentication required" });
+    }
+
+    const messages = await prisma.message.findMany({
+      where: {
+        OR: [
+          { senderId: userId, receiverId: contactId },
+          { senderId: contactId, receiverId: userId }
+        ]
+      },
+      include: {
+        sender: { select: { id: true, fullName: true, email: true } },
+        receiver: { select: { id: true, fullName: true, email: true } },
+        property: { select: { id: true, titleEn: true, titleAm: true } }
+      },
+      orderBy: { createdAt: 'asc' }
     });
 
+    const contact = await prisma.user.findUnique({
+      where: { id: contactId },
+      select: { id: true, fullName: true, email: true }
+    });
+
+    return res.status(200).json({ success: true, messages, contact, currentUserId: userId });
   } catch (error) {
-    console.error(
-      'LIST MESSAGES ERROR:',
-      error
-    );
-
-    return res.status(500).json({
-      error: 'Something went wrong while fetching messages',
-      details: error.message,
-    });
+    console.error("GET CONVERSATION ERROR:", error);
+    return res.status(500).json({ success: false, error: "Failed to load conversation" });
   }
 }
 
+// SEND A NEW MESSAGE
+async function sendMessage(req, res) {
+  try {
+    const senderId = req.user?.userId;
+    const { receiverId, content, text, propertyId } = req.body;
+    const messageText = text || content; // support both or fallback
+
+    if (!senderId) {
+      return res.status(401).json({ success: false, error: "Authentication required" });
+    }
+
+    if (!receiverId || !messageText) {
+      return res.status(400).json({ success: false, error: "Receiver and message text are required" });
+    }
+
+    const message = await prisma.message.create({
+      data: {
+        senderId,
+        receiverId,
+        text: messageText,
+        propertyId: propertyId || null,
+      },
+      include: {
+        sender: { select: { id: true, fullName: true, email: true } },
+        receiver: { select: { id: true, fullName: true, email: true } },
+        property: { select: { id: true, titleEn: true, titleAm: true } }
+      }
+    });
+
+    // --- TRIGGER NOTIFICATION FOR MESSAGE RECIPIENT ---
+    try {
+      const senderName = message.sender?.fullName || "Someone";
+      const snippet = messageText.length > 40 ? `${messageText.substring(0, 40)}...` : messageText;
+
+      await notifyUser(
+        receiverId,
+        'NEW_MESSAGE',
+        `New Message from ${senderName} 💬`,
+        snippet,
+        'User',
+        senderId,
+        req
+      );
+    } catch (notifErr) {
+      console.error("Failed to dispatch message notification:", notifErr);
+    }
+
+    return res.status(201).json({ success: true, message });
+  } catch (error) {
+    console.error("SEND MESSAGE ERROR:", error);
+    return res.status(500).json({ success: false, error: "Failed to send message" });
+  }
+}
 
 module.exports = {
-  createMessage,
   getMessages,
-  listMessages,
-}; 
+  getConversation,
+  sendMessage,
+};

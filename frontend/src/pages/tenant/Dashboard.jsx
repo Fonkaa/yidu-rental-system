@@ -1,1202 +1,584 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+
 import { useNavigate } from "react-router-dom";
+
 import { useAuth } from "../../context/AuthContext";
 
+import api from "../../services/api";
+
+
+
 import {
-  Home,
+
   Building2,
+
   Heart,
-  MessageSquare,
-  FileText,
-  Settings,
-  LogOut,
-  User,
-  Bell,
+
   Search,
-  Menu,
-  X,
-  Globe,
-  ChevronDown,
-  CheckCircle,
-  AlertCircle,
-  LayoutDashboard,
+
   MapPin,
-  CalendarDays,
-  ShieldCheck,
-  Headphones,
-  BadgeCheck,
+
   TrendingUp,
+
   BedDouble,
-  Bath,
+
   Maximize,
+
+  ShieldCheck,
+
+  Loader2,
+
+  BadgeCheck,
+
+  Headphones,
+
 } from "lucide-react";
 
-import "./Dashboard.css";
+
 
 export default function Dashboard() {
+
   const navigate = useNavigate();
-  const { logout, user } = useAuth();
 
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [language, setLanguage] = useState("en");
-  const [showLanguageDropdown, setShowLanguageDropdown] = useState(false);
-  const [showNotifications, setShowNotifications] = useState(false);
+  const { user } = useAuth();
 
-  const userName = user?.fullName || "Abyu Eshetie";
-  const userEmail = user?.email || "abyu@gmail.com";
-  const userPhone = user?.phone || "+251 9xx xxx xxx";
 
-  /* =====================================================
-     TRANSLATIONS
-  ===================================================== */
 
-  const translations = {
-    en: {
-      home: "Home",
-      about: "About Us",
-      contact: "Contact Us",
-      logout: "Logout",
+  const [properties, setProperties] = useState([]);
 
-      dashboard: "Dashboard",
-      searchProperties: "Search Properties",
-      myFavorites: "My Favorites",
-      myRequests: "My Requests",
-      myLeases: "My Leases",
-      messages: "Messages",
-      notifications: "Notifications",
-      profileSettings: "Profile Settings",
-      helpSupport: "Help & Support",
+  const [statsCounts, setStatsCounts] = useState({
 
-      tenant: "Tenant",
-      online: "Online",
-      verified: "Verified",
+    available: 0,
 
-      welcome: "Welcome back",
-      findRent: "Find, rent, and manage your perfect home with ease.",
+    saved: 0,
 
-      searchPlaceholder: "Search location, city, or property...",
-      allTypes: "All Types",
-      allPrices: "All Prices",
-      search: "Search",
+    requests: 0,
 
-      availableProperties: "Available Properties",
-      savedProperties: "Saved Properties",
-      requests: "My Requests",
-      activeLeases: "Active Leases",
+    leases: 0,
 
-      featuredProperties: "Featured Properties",
-      viewAll: "View All",
-      forRent: "For Rent",
-      viewDetails: "View Details",
+  });
 
-      beds: "Beds",
-      bath: "Bath",
-      month: "/ month",
+  const [loadingProps, setLoadingProps] = useState(true);
 
-      quickActions: "Quick Actions",
 
-      recentNotifications: "Recent Notifications",
-      showAllNotifications: "Show All Notifications",
 
-      requestApproved: "Your request was approved",
-      newMatches: "New property matches found",
-      leaseExpire: "Lease will expire in 30 days",
+  const userName = user?.fullName || "Valued Tenant";
 
-      time1: "2 days ago",
-      time2: "1 day ago",
-      time3: "5 days ago",
 
-      safeSecure: "Safe & Secure",
-      safetyPriority: "Your safety is our priority",
 
-      verifiedProperties: "Verified Properties",
-      listingsVerified: "All listings are verified",
+  const t = {
 
-      bestPrice: "Best Price",
-      affordable: "Affordable for you",
+    welcome: "Welcome back",
 
-      support: "24/7 Support",
-      hereForYou: "We are here for you",
+    findRent: "Find, rent, and manage your perfect home with ease.",
 
-      privacy: "Privacy Policy",
-      terms: "Terms & Conditions",
+    searchPlaceholder: "Search location, city, or property...",
 
-      allRights: "All rights reserved",
-      exploreNow: "Explore Now",
-      perfectHome: "Find Your Perfect Home",
-      easySafeReliable: "Easy • Safe • Reliable",
+    allTypes: "All Types",
 
-      discoverHomes: "Discover homes that match your needs",
+    search: "Search",
 
-      searchPropertiesShort: "Search Properties",
-      favoritesShort: "My Favorites",
-      requestsShort: "My Requests",
-      messagesShort: "Messages",
-      leasesShort: "My Leases",
-      profileShort: "Profile",
+    availableProperties: "Available Properties",
 
-      increase: "from last month",
-    },
+    savedProperties: "Saved Properties",
 
-    am: {
-      home: "መኖሪያ",
-      about: "ስለ እኛ",
-      contact: "አግኙን",
-      logout: "ውጣ",
+    requests: "My Requests",
 
-      dashboard: "ዳሽቦርድ",
-      searchProperties: "ንብረቶችን ይፈልጉ",
-      myFavorites: "የኔ ተወዳጆች",
-      myRequests: "የኔ ጥያቄዎች",
-      myLeases: "የኔ ኪራዮች",
-      messages: "መልዕክቶች",
-      notifications: "ማሳወቂያዎች",
-      profileSettings: "የመገለጫ ቅንብሮች",
-      helpSupport: "እርዳታ እና ድጋፍ",
+    activeLeases: "Active Leases",
 
-      tenant: "ተከራይ",
-      online: "በመስመር ላይ",
-      verified: "የተረጋገጠ",
+    featuredProperties: "All Properties",
 
-      welcome: "እንኳን ደህና መጡ",
-      findRent: "ቤትዎን ያግኙ፣ ይከራዩ እና በቀላሉ ያስተዳድሩ።",
+    viewAll: "View All",
 
-      searchPlaceholder: "አካባቢ፣ ከተማ ወይም ንብረት ይፈልጉ...",
-      allTypes: "ሁሉም ዓይነቶች",
-      allPrices: "ሁሉም ዋጋዎች",
-      search: "ፈልግ",
+    rented: "Rented",
 
-      availableProperties: "የሚገኙ ንብረቶች",
-      savedProperties: "የተቀመጡ ንብረቶች",
-      requests: "የኔ ጥያቄዎች",
-      activeLeases: "ንቁ ኪራዮች",
+    available: "Available",
 
-      featuredProperties: "ተመራጭ ንብረቶች",
-      viewAll: "ሁሉንም ይመልከቱ",
-      forRent: "ለኪራይ",
-      viewDetails: "ዝርዝር ይመልከቱ",
+    viewDetails: "View Details",
 
-      beds: "መኝታ",
-      bath: "መታጠቢያ",
-      month: "/ ወር",
+    beds: "Beds",
 
-      quickActions: "ፈጣን ድርጊቶች",
+    month: "/ month",
 
-      recentNotifications: "የቅርብ ጊዜ ማሳወቂያዎች",
-      showAllNotifications: "ሁሉንም ማሳወቂያዎች",
+    safeSecure: "Safe & Secure",
 
-      requestApproved: "ጥያቄዎ ጸድቋል",
-      newMatches: "አዳዲስ ተስማሚ ንብረቶች ተገኝተዋል",
-      leaseExpire: "ኪራይዎ በ30 ቀናት ውስጥ ያበቃል",
+    safetyPriority: "Your safety is our priority",
 
-      time1: "2 ቀናት በፊት",
-      time2: "1 ቀን በፊት",
-      time3: "5 ቀናት በፊት",
+    verifiedProperties: "Verified Properties",
 
-      safeSecure: "ደህንነት",
-      safetyPriority: "ደህንነትዎ ቅድሚያችን ነው",
+    listingsVerified: "All listings are verified",
 
-      verifiedProperties: "የተረጋገጡ ንብረቶች",
-      listingsVerified: "ሁሉም ንብረቶች ተረጋግጠዋል",
+    bestPrice: "Best Price",
 
-      bestPrice: "ምርጥ ዋጋ",
-      affordable: "ለእርስዎ ተመጣጣኝ",
+    affordable: "Affordable for you",
 
-      support: "24/7 ድጋፍ",
-      hereForYou: "ሁሌም ለእርስዎ እዚህ ነን",
+    support: "24/7 Support",
 
-      privacy: "የግላዊነት ፖሊሲ",
-      terms: "ውሎች እና ሁኔታዎች",
+    hereForYou: "We are here for you",
 
-      allRights: "መብቱ በህግ የተጠበቀ ነው",
-      exploreNow: "አሁን ይመልከቱ",
-      perfectHome: "ፍጹም ቤትዎን ያግኙ",
-      easySafeReliable: "ቀላል • ደህንነቱ የተጠበቀ • አስተማማኝ",
+    increase: "from last month",
 
-      discoverHomes: "የሚፈልጉትን ቤት ያግኙ",
+    discoverHomes: "Discover homes that match your needs",
 
-      searchPropertiesShort: "ንብረት ፈልግ",
-      favoritesShort: "ተወዳጆች",
-      requestsShort: "ጥያቄዎች",
-      messagesShort: "መልዕክቶች",
-      leasesShort: "ኪራዮች",
-      profileShort: "መገለጫ",
-
-      increase: "ካለፈው ወር",
-    },
   };
 
-  const t = language === "am" ? translations.am : translations.en;
 
-  /* =====================================================
-     PROPERTY DATA
-  ===================================================== */
 
-  const properties = [
-    {
-      id: 1,
-      title: "Modern Apartment",
-      location: "Bole, Addis Ababa",
-      price: "850",
-      bedrooms: 2,
-      bathrooms: 1,
-      area: "120",
-      image:
-        "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?auto=format&fit=crop&w=1000&q=85",
-    },
-    {
-      id: 2,
-      title: "Luxury Villa",
-      location: "CMC, Addis Ababa",
-      price: "1,200",
-      bedrooms: 3,
-      bathrooms: 2,
-      area: "200",
-      image:
-        "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1000&q=85",
-    },
-    {
-      id: 3,
-      title: "Family House",
-      location: "Ayat, Addis Ababa",
-      price: "650",
-      bedrooms: 2,
-      bathrooms: 1,
-      area: "100",
-      image:
-        "https://images.unsplash.com/photo-1600566753086-00f18fb6b3ea?auto=format&fit=crop&w=1000&q=85",
-    },
-  ];
+  useEffect(() => {
 
-  /* =====================================================
-     NOTIFICATIONS
-  ===================================================== */
+    const fetchDashboardData = async () => {
 
-  const notifications = [
-    {
-      type: "success",
-      icon: <CheckCircle size={18} />,
-      title: t.requestApproved,
-      time: t.time1,
-    },
-    {
-      type: "info",
-      icon: <Bell size={18} />,
-      title: t.newMatches,
-      time: t.time2,
-    },
-    {
-      type: "warning",
-      icon: <AlertCircle size={18} />,
-      title: t.leaseExpire,
-      time: t.time3,
-    },
-  ];
+      try {
 
-  /* =====================================================
-     SIDEBAR MENU
-  ===================================================== */
+        setLoadingProps(true);
 
-  const menuItems = [
-    {
-      id: "dashboard",
-      label: t.dashboard,
-      icon: <LayoutDashboard size={19} />,
-      path: "/dashboard",
-    },
-    {
-      id: "properties",
-      label: t.searchProperties,
-      icon: <Building2 size={19} />,
-      path: "/properties",
-    },
-    {
-      id: "favorites",
-      label: t.myFavorites,
-      icon: <Heart size={19} />,
-      path: "/favorites",
-    },
-    {
-      id: "requests",
-      label: t.myRequests,
-      icon: <FileText size={19} />,
-      path: "/rental-requests",
-    },
-    {
-      id: "leases",
-      label: t.myLeases,
-      icon: <CalendarDays size={19} />,
-      path: "/leases",
-    },
-    {
-      id: "messages",
-      label: t.messages,
-      icon: <MessageSquare size={19} />,
-      path: "/messages",
-    },
-    {
-      id: "notifications",
-      label: t.notifications,
-      icon: <Bell size={19} />,
-      path: "/notifications",
-    },
-    {
-      id: "profile",
-      label: t.profileSettings,
-      icon: <Settings size={19} />,
-      path: "/profile",
-    },
-    {
-      id: "help",
-      label: t.helpSupport,
-      icon: <Headphones size={19} />,
-      path: "/help",
-    },
-  ];
+        const res = await api.get("/dashboard");
 
-  /* =====================================================
-     HANDLERS
-  ===================================================== */
+        const data = res.data || {};
 
-  const handleLogout = async () => {
-    try {
-      await logout();
-      navigate("/login");
-    } catch (error) {
-      console.error("Logout error:", error);
-      navigate("/login");
-    }
-  };
+        const propData = data.properties || [];
 
-  const navigateTo = (path) => {
-    setSidebarOpen(false);
-    setShowNotifications(false);
-    setShowLanguageDropdown(false);
-    navigate(path);
-  };
 
-  const changeLanguage = (value) => {
-    setLanguage(value);
-    setShowLanguageDropdown(false);
-  };
 
-  const scrollToSection = (id) => {
-    const element = document.getElementById(id);
+        setProperties(Array.isArray(propData) ? propData : []);
 
-    if (element) {
-      element.scrollIntoView({
-        behavior: "smooth",
-        block: "start",
-      });
-    }
-  };
 
-  /* =====================================================
-     COMPONENT
-  ===================================================== */
+
+        const availableCount = (Array.isArray(propData) ? propData : []).filter(
+
+          (p) => String(p.status || "").trim().toUpperCase() === "APPROVED" || String(p.status || "").trim().toUpperCase() === "AVAILABLE"
+
+        ).length;
+
+
+
+        setStatsCounts({
+
+          available: availableCount || propData.length,
+
+          saved: data.stats?.saved || 0,
+
+          requests: data.stats?.requests || 0,
+
+          leases: data.stats?.leases || 0,
+
+        });
+
+      } catch (err) {
+
+        console.error("Dashboard data fetch error:", err);
+
+      } finally {
+
+        setLoadingProps(false);
+
+      }
+
+    };
+
+
+
+    fetchDashboardData();
+
+  }, [user?.id]);
+
+
 
   return (
-    <div className="dashboard-page">
-      {/* =================================================
-          MOBILE OVERLAY
-      ================================================= */}
 
-      {sidebarOpen && (
-        <div
-          className="dashboard-overlay"
-          onClick={() => setSidebarOpen(false)}
-        />
-      )}
+    <div className="max-w-7xl mx-auto w-full px-4 sm:px-8 py-8 flex flex-col gap-8 bg-white">
 
-      {/* =================================================
-          TOP NAVBAR
-      ================================================= */}
+     
 
-      <header className="dashboard-top-navbar">
-        <div className="navbar-container">
-          {/* LEFT */}
-          <div className="navbar-left">
+      {/* HERO BANNER */}
+
+      <section className="relative rounded-3xl bg-[#022036] border border-[#FFC107]/30 p-8 sm:p-12 overflow-hidden shadow-md text-white">
+
+        <div className="absolute right-0 top-0 bottom-0 w-1/2 hidden md:block opacity-20 bg-cover bg-center pointer-events-none" style={{ backgroundImage: `url('https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=800&q=80')` }}></div>
+
+        <div className="absolute inset-0 bg-gradient-to-r from-[#022036] via-[#022036]/95 to-transparent"></div>
+
+
+
+        <div className="relative z-10 max-w-2xl">
+
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#FFC107]/10 border border-[#FFC107]/20 text-[#FFC107] text-xs font-bold mb-4 shadow-xs">
+
+            <span className="w-1.5 h-1.5 rounded-full bg-[#FFC107] animate-ping"></span>
+
+            Teamwork IT Solutions Platform
+
+          </span>
+
+
+
+          <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-white mb-3">
+
+            {t.welcome}, <span className="text-[#FFC107]">{userName}</span>!
+
+          </h1>
+
+          <p className="text-slate-300 text-sm leading-relaxed mb-8">
+
+            {t.findRent}
+
+          </p>
+
+
+
+          {/* SEARCH BAR */}
+
+          <div className="bg-white/10 backdrop-blur-2xl border border-white/15 p-2 rounded-2xl flex flex-col lg:flex-row gap-2 shadow-xl">
+
+            <div className="flex-1 flex items-center gap-2 px-3 py-2 bg-white/5 rounded-xl border border-white/10">
+
+              <Search size={18} className="text-[#FFC107]" />
+
+              <input
+
+                type="text"
+
+                placeholder={t.searchPlaceholder}
+
+                className="w-full bg-transparent border-none text-white placeholder-white/40 text-xs focus:outline-none"
+
+              />
+
+            </div>
+
+
+
+            <select defaultValue="" className="px-4 py-3 bg-[#022036] border border-white/10 rounded-xl text-white text-xs focus:outline-none cursor-pointer">
+
+              <option value="" disabled>{t.allTypes}</option>
+
+              <option value="Apartment">Apartment</option>
+
+              <option value="Villa">Villa</option>
+
+              <option value="House">House</option>
+
+            </select>
+
+
+
             <button
-              className="mobile-menu-btn"
-              onClick={() => setSidebarOpen(true)}
-              aria-label="Open menu"
+
+              className="px-6 py-3 bg-[#FFC107] hover:bg-[#ffcd38] text-[#022036] font-extrabold text-xs rounded-xl shadow-sm transition-all cursor-pointer flex items-center justify-center gap-2"
+
+              onClick={() => navigate("/properties")}
+
             >
-              <Menu size={22} />
+
+              <Search size={15} />
+
+              <span>{t.search}</span>
+
             </button>
 
-            <div className="navbar-brand">
-              <div className="brand-icon">
-                <Home size={24} strokeWidth={2.4} />
-              </div>
-
-              <div className="brand-text">
-                <strong>House Rental</strong>
-                <span>System</span>
-              </div>
-            </div>
           </div>
 
-          {/* CENTER NAVIGATION */}
-          <nav className="navbar-center">
-            <button
-              className="top-nav-link active"
-              onClick={() =>
-                window.scrollTo({
-                  top: 0,
-                  behavior: "smooth",
-                })
-              }
-            >
-              <Home size={16} />
-              {t.home}
-            </button>
-
-            <button
-              className="top-nav-link"
-              onClick={() => scrollToSection("about")}
-            >
-              {t.about}
-            </button>
-
-            <button
-              className="top-nav-link"
-              onClick={() => scrollToSection("contact")}
-            >
-              {t.contact}
-            </button>
-          </nav>
-
-          {/* RIGHT */}
-          <div className="navbar-right">
-            {/* LANGUAGE */}
-            <div className="language-wrapper">
-              <button
-                className="language-button"
-                onClick={() =>
-                  setShowLanguageDropdown((prev) => !prev)
-                }
-              >
-                <Globe size={17} />
-
-                <span>
-                  {language === "en" ? "Translate" : "ተርጉም"}
-                </span>
-
-                <ChevronDown size={14} />
-              </button>
-
-              {showLanguageDropdown && (
-                <div className="language-dropdown">
-                  <button
-                    onClick={() => changeLanguage("am")}
-                    className={language === "am" ? "selected" : ""}
-                  >
-                    🇪🇹 አማርኛ
-                  </button>
-
-                  <button
-                    onClick={() => changeLanguage("en")}
-                    className={language === "en" ? "selected" : ""}
-                  >
-                    🇬🇧 English
-                  </button>
-                </div>
-              )}
-            </div>
-
-            {/* NOTIFICATIONS */}
-            <div className="notification-wrapper">
-              <button
-                className="icon-nav-button"
-                onClick={() =>
-                  setShowNotifications((prev) => !prev)
-                }
-                aria-label="Notifications"
-              >
-                <Bell size={20} />
-
-                <span className="notification-badge">5</span>
-              </button>
-
-              {showNotifications && (
-                <div className="notification-dropdown">
-                  <div className="dropdown-title">
-                    <strong>{t.notifications}</strong>
-                    <span>5</span>
-                  </div>
-
-                  {notifications.map((item, index) => (
-                    <div
-                      className="dropdown-notification"
-                      key={index}
-                    >
-                      <div
-                        className={`dropdown-icon ${item.type}`}
-                      >
-                        {item.icon}
-                      </div>
-
-                      <div className="dropdown-notification-content">
-                        <strong>{item.title}</strong>
-                        <small>{item.time}</small>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* USER */}
-            <button
-              className="navbar-user"
-              onClick={() => navigateTo("/profile")}
-            >
-              <div className="navbar-avatar">
-                <User size={18} />
-              </div>
-
-              <span>{userName}</span>
-
-              <ChevronDown size={14} />
-            </button>
-
-            {/* LOGOUT */}
-            <button
-              className="navbar-logout"
-              onClick={handleLogout}
-            >
-              <LogOut size={17} />
-              <span>{t.logout}</span>
-            </button>
-          </div>
         </div>
-      </header>
 
-      {/* =================================================
-          SIDEBAR
-      ================================================= */}
+      </section>
 
-      <aside
-        className={`dashboard-sidebar ${
-          sidebarOpen ? "sidebar-open" : ""
-        }`}
-      >
-        <div className="sidebar-top">
-          {/* MOBILE SIDEBAR HEADER */}
-          <div className="sidebar-mobile-header">
-            <div className="sidebar-brand">
-              <div className="sidebar-brand-icon">
-                <Home size={22} />
-              </div>
+
+
+      {/* STATISTICS GRID */}
+
+      <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+
+        {[
+
+          { label: t.availableProperties, count: statsCounts.available, icon: Building2, color: "text-sky-700", bg: "bg-sky-50 border-sky-100" },
+
+          { label: t.savedProperties, count: statsCounts.saved, icon: Heart, color: "text-emerald-700", bg: "bg-emerald-50 border-emerald-100" },
+
+          { label: t.requests, count: statsCounts.requests, icon: Building2, color: "text-yellow-800", bg: "bg-yellow-50 border-yellow-200" },
+
+          { label: t.activeLeases, count: statsCounts.leases, icon: Building2, color: "text-purple-700", bg: "bg-purple-50 border-purple-100" },
+
+        ].map((stat, i) => {
+
+          const Icon = stat.icon;
+
+          return (
+
+            <div key={i} className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs flex items-center justify-between">
 
               <div>
-                <strong>House Rental</strong>
-                <span>System</span>
+
+                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1">{stat.label}</span>
+
+                <strong className="text-xl font-extrabold text-[#022036] font-mono">{stat.count}</strong>
+
+                <div className="flex items-center gap-1 mt-1 text-[10px] text-emerald-700 font-bold">
+
+                  <TrendingUp size={12} />
+
+                  <span>15% {t.increase}</span>
+
+                </div>
+
               </div>
+
+              <div className={`p-3 rounded-xl border ${stat.bg} ${stat.color}`}>
+
+                <Icon size={20} />
+
+              </div>
+
             </div>
 
-            <button
-              className="sidebar-close"
-              onClick={() => setSidebarOpen(false)}
-              aria-label="Close menu"
-            >
-              <X size={21} />
-            </button>
+          );
+
+        })}
+
+      </section>
+
+
+
+      {/* ALL PROPERTIES SECTION */}
+
+      <section className="bg-white rounded-2xl border border-slate-200 p-6 sm:p-8 shadow-xs">
+
+        <div className="flex items-center justify-between mb-6 pb-4 border-b border-slate-200">
+
+          <div>
+
+            <h2 className="text-base font-bold text-[#022036] uppercase tracking-wider">{t.featuredProperties}</h2>
+
+            <p className="text-xs text-slate-500 mt-0.5">{t.discoverHomes} (Scroll sideways to view all listings)</p>
+
           </div>
 
-          {/* USER CARD */}
-          <div className="sidebar-user-card">
-            <div className="sidebar-avatar">
-              <User size={26} />
-            </div>
+          <button
 
-            <div className="sidebar-user-info">
-              <strong>{userName}</strong>
-              <span>{t.tenant}</span>
+            className="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 border border-slate-200 rounded-xl text-xs font-bold text-[#022036] transition-all cursor-pointer flex items-center gap-1.5"
 
-              <div className="online-status">
-                <i></i>
-                {t.online}
-              </div>
-            </div>
-          </div>
+            onClick={() => navigate("/properties")}
 
-          {/* LABEL */}
-          <div className="sidebar-label">MENU</div>
+          >
 
-          {/* NAVIGATION */}
-          <nav className="sidebar-nav">
-            {menuItems.map((item) => (
-              <button
-                key={item.id}
-                className={`sidebar-item ${
-                  item.id === "dashboard" ? "active" : ""
-                }`}
-                onClick={() => navigateTo(item.path)}
-              >
-                <span className="sidebar-item-icon">
-                  {item.icon}
-                </span>
+            <span>{t.viewAll}</span>
 
-                <span className="sidebar-item-text">
-                  {item.label}
-                </span>
+            <span>→</span>
 
-                {item.id === "notifications" && (
-                  <span className="sidebar-notification-count">
-                    5
-                  </span>
-                )}
-              </button>
-            ))}
-          </nav>
+          </button>
+
         </div>
 
-        {/* PROMO */}
-        <div className="sidebar-promo">
-          <div className="promo-overlay"></div>
 
-          <div className="promo-content">
-            <span>{t.easySafeReliable}</span>
 
-            <h3>{t.perfectHome}</h3>
+        {loadingProps ? (
 
-            <button
-              onClick={() => navigateTo("/properties")}
-            >
-              {t.exploreNow}
-              <span>→</span>
-            </button>
+          <div className="flex justify-center items-center py-16">
+
+            <Loader2 size={32} className="animate-spin text-[#FFC107]" />
+
           </div>
-        </div>
-      </aside>
 
-      {/* =================================================
-          MAIN
-      ================================================= */}
+        ) : properties.length === 0 ? (
 
-      <main className="dashboard-main">
-        {/* =================================================
-            HERO
-        ================================================= */}
+          <div className="text-center py-12 text-slate-400 text-xs">No properties found in the database.</div>
 
-        <section className="hero-section">
-          <div className="hero-background"></div>
+        ) : (
 
-          <div className="hero-content">
-            <div className="hero-text">
-              <h1>
-                {t.welcome}, {userName}!
-              </h1>
+          <div className="relative group">
 
-              <p>{t.findRent}</p>
-            </div>
+            <div className="flex gap-6 overflow-x-auto pb-4 pt-2 scrollbar-thin scrollbar-thumb-[#FFC107]/40 scrollbar-track-slate-100 snap-x">
 
-            {/* SEARCH */}
-            <div className="hero-search">
-              <div className="search-input-wrapper">
-                <Search size={19} />
+              {properties.map((property) => {
 
-                <input
-                  type="text"
-                  placeholder={t.searchPlaceholder}
-                />
-              </div>
+                const statusVal = String(property.status || "").trim().toUpperCase();
 
-              <select defaultValue="">
-                <option value="" disabled>
-                  {t.allTypes}
-                </option>
+                const isRented = statusVal === "RENTED" || statusVal === "OCCUPIED" || statusVal === "LEASED" || statusVal === "UNAVAILABLE";
 
-                <option value="Apartment">
-                  Apartment
-                </option>
 
-                <option value="Villa">
-                  Villa
-                </option>
 
-                <option value="House">
-                  House
-                </option>
-              </select>
+                let imgUrl = "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?auto=format&fit=crop&w=1000&q=85";
 
-              <select defaultValue="">
-                <option value="" disabled>
-                  {t.allPrices}
-                </option>
+                if (Array.isArray(property.images) && property.images.length > 0) {
 
-                <option value="0-500">
-                  $0 - $500
-                </option>
+                  const rawUrl = property.images[0]?.url || property.images[0];
 
-                <option value="500-1000">
-                  $500 - $1,000
-                </option>
+                  if (rawUrl) {
 
-                <option value="1000+">
-                  $1,000+
-                </option>
-              </select>
+                    imgUrl = rawUrl.startsWith('http') ? rawUrl : `http://localhost:5000${rawUrl.startsWith('/') ? '' : '/'}${rawUrl}`;
 
-              <button
-                className="hero-search-button"
-                onClick={() => navigateTo("/properties")}
-              >
-                <Search size={17} />
-                {t.search}
-              </button>
-            </div>
-          </div>
-        </section>
-
-        {/* =================================================
-            DASHBOARD CONTENT
-        ================================================= */}
-
-        <div className="dashboard-layout">
-          {/* =================================================
-              LEFT COLUMN
-          ================================================= */}
-
-          <div className="dashboard-content-left">
-            {/* STATISTICS */}
-            <section className="statistics-grid">
-              <div className="stat-card blue">
-                <div className="stat-icon">
-                  <Building2 size={22} />
-                </div>
-
-                <div className="stat-content">
-                  <strong>12</strong>
-
-                  <span>
-                    {t.availableProperties}
-                  </span>
-
-                  <small>
-                    <TrendingUp size={13} />
-                    15% {t.increase}
-                  </small>
-                </div>
-              </div>
-
-              <div className="stat-card green">
-                <div className="stat-icon">
-                  <Heart size={22} />
-                </div>
-
-                <div className="stat-content">
-                  <strong>8</strong>
-
-                  <span>
-                    {t.savedProperties}
-                  </span>
-
-                  <small>
-                    <TrendingUp size={13} />
-                    10% {t.increase}
-                  </small>
-                </div>
-              </div>
-
-              <div className="stat-card orange">
-                <div className="stat-icon">
-                  <CalendarDays size={22} />
-                </div>
-
-                <div className="stat-content">
-                  <strong>3</strong>
-
-                  <span>{t.requests}</span>
-
-                  <small>
-                    <TrendingUp size={13} />
-                    8% {t.increase}
-                  </small>
-                </div>
-              </div>
-
-              <div className="stat-card purple">
-                <div className="stat-icon">
-                  <FileText size={22} />
-                </div>
-
-                <div className="stat-content">
-                  <strong>2</strong>
-
-                  <span>{t.activeLeases}</span>
-
-                  <small>
-                    <TrendingUp size={13} />
-                    5% {t.increase}
-                  </small>
-                </div>
-              </div>
-            </section>
-
-            {/* FEATURED PROPERTIES */}
-            <section className="section-card">
-              <div className="section-heading">
-                <div>
-                  <h2>{t.featuredProperties}</h2>
-
-                  <p>{t.discoverHomes}</p>
-                </div>
-
-                <button
-                  className="view-all-button"
-                  onClick={() =>
-                    navigateTo("/properties")
                   }
-                >
-                  {t.viewAll}
-                  <span>→</span>
-                </button>
-              </div>
 
-              <div className="property-grid">
-                {properties.map((property) => (
-                  <article
-                    className="property-card"
-                    key={property.id}
-                  >
-                    {/* IMAGE */}
-                    <div className="property-image">
+                } else if (property.image) {
+
+                  imgUrl = property.image.startsWith('http') ? property.image : `http://localhost:5000${property.image.startsWith('/') ? '' : '/'}${property.image}`;
+
+                } else if (property.imageUrl) {
+
+                  imgUrl = property.imageUrl.startsWith('http') ? property.imageUrl : `http://localhost:5000${property.imageUrl.startsWith('/') ? '' : '/'}${property.imageUrl}`;
+
+                }
+
+
+
+                return (
+
+                  <div key={property.id} className="min-w-[300px] sm:min-w-[340px] max-w-[340px] bg-slate-50 border border-slate-200 rounded-2xl overflow-hidden group/card hover:border-[#FFC107]/50 transition-all shadow-xs flex flex-col snap-start flex-shrink-0">
+
+                    <div className="relative h-48 overflow-hidden bg-slate-200">
+
                       <img
-                        src={property.image}
-                        alt={property.title}
+
+                        src={imgUrl}
+
+                        alt={property.titleEn || property.title || "Property"}
+
                         loading="lazy"
+
+                        className="w-full h-full object-cover group-hover/card:scale-105 transition-transform duration-500"
+
                       />
 
-                      <span className="rent-badge">
-                        {t.forRent}
+                      <span className={`absolute top-3 left-3 px-3 py-1 rounded-full backdrop-blur-md text-[10px] font-extrabold tracking-wider uppercase border shadow-xs ${isRented ? 'bg-red-500 text-white border-red-400' : 'bg-emerald-600 text-white border-emerald-500'}`}>
+
+                        {isRented ? t.rented : t.available}
+
                       </span>
 
                       <button
-                        className="property-favorite"
-                        aria-label="Favorite property"
-                        onClick={() => navigateTo("/favorites")}
+
+                        className="absolute top-3 right-3 p-2 rounded-full bg-black/40 backdrop-blur-md text-white/80 hover:text-[#FFC107] transition-colors cursor-pointer"
+
+                        onClick={() => navigate("/favorites")}
+
                       >
-                        <Heart size={18} />
+
+                        <Heart size={16} />
+
                       </button>
+
                     </div>
 
-                    {/* BODY */}
-                    <div className="property-body">
-                      <h3>{property.title}</h3>
 
-                      <div className="property-location">
-                        <MapPin size={14} />
 
-                        <span>
-                          {property.location}
-                        </span>
+                    <div className="p-5 flex flex-col flex-1 justify-between">
+
+                      <div>
+
+                        <h3 className="font-bold text-[#022036] text-base mb-1 truncate">{property.titleEn || property.title || "Modern Property"}</h3>
+
+                        <div className="flex items-center gap-1 text-xs text-slate-500 mb-3">
+
+                          <MapPin size={13} className="text-yellow-600" />
+
+                          <span className="truncate">{property.location?.city || property.location || "Addis Ababa"}</span>
+
+                        </div>
+
+                        <div className="flex items-baseline gap-1 mb-4">
+
+                          <strong className="text-xl font-extrabold text-[#022036] font-mono">{Number(property.price || 500).toLocaleString()}</strong>
+
+                          <span className="text-xs text-slate-400">ETB {t.month}</span>
+
+                        </div>
+
                       </div>
 
-                      <div className="property-price">
-                        <strong>
-                          ${property.price}
-                        </strong>
 
-                        <span>{t.month}</span>
+
+                      <div>
+
+                        <div className="flex items-center justify-between text-xs text-slate-600 py-2.5 border-t border-b border-slate-200 mb-4 font-mono">
+
+                          <span className="flex items-center gap-1"><BedDouble size={14} className="text-slate-400" /> {property.rooms || 2} {t.beds}</span>
+
+                          <span className="flex items-center gap-1"><Maximize size={14} className="text-slate-400" /> {property.area || 100} m²</span>
+
+                        </div>
+
+
+
+                        <button
+
+                          className="w-full py-2.5 bg-[#022036] hover:bg-[#FFC107] text-[#FFC107] hover:text-[#022036] rounded-xl text-xs font-bold transition-all cursor-pointer shadow-xs"
+
+                          onClick={() => navigate(`/properties/${property.id}`)}
+
+                        >
+
+                          {t.viewDetails}
+
+                        </button>
+
                       </div>
 
-                      <div className="property-meta">
-                        <span>
-                          <BedDouble size={14} />
-                          {property.bedrooms} {t.beds}
-                        </span>
-
-                        <span>
-                          <Bath size={14} />
-                          {property.bathrooms} {t.bath}
-                        </span>
-
-                        <span>
-                          <Maximize size={14} />
-                          {property.area} m²
-                        </span>
-                      </div>
-
-                      <button
-                        className="view-details-button"
-                        onClick={() =>
-                          navigateTo(
-                            `/properties/${property.id}`
-                          )
-                        }
-                      >
-                        {t.viewDetails}
-                      </button>
-                    </div>
-                  </article>
-                ))}
-              </div>
-            </section>
-
-            {/* BENEFITS */}
-            <section className="benefits-section">
-              <div className="benefit-item">
-                <div className="benefit-icon green">
-                  <ShieldCheck size={21} />
-                </div>
-
-                <div>
-                  <strong>{t.safeSecure}</strong>
-                  <span>{t.safetyPriority}</span>
-                </div>
-              </div>
-
-              <div className="benefit-item">
-                <div className="benefit-icon purple">
-                  <BadgeCheck size={21} />
-                </div>
-
-                <div>
-                  <strong>
-                    {t.verifiedProperties}
-                  </strong>
-
-                  <span>
-                    {t.listingsVerified}
-                  </span>
-                </div>
-              </div>
-
-              <div className="benefit-item">
-                <div className="benefit-icon orange">
-                  <Building2 size={21} />
-                </div>
-
-                <div>
-                  <strong>{t.bestPrice}</strong>
-                  <span>{t.affordable}</span>
-                </div>
-              </div>
-
-              <div className="benefit-item">
-                <div className="benefit-icon pink">
-                  <Headphones size={21} />
-                </div>
-
-                <div>
-                  <strong>{t.support}</strong>
-                  <span>{t.hereForYou}</span>
-                </div>
-              </div>
-            </section>
-          </div>
-
-          {/* =================================================
-              RIGHT COLUMN
-          ================================================= */}
-
-          <aside className="dashboard-right">
-            {/* PROFILE */}
-            <section className="right-card profile-card">
-              <div className="profile-top">
-                <div className="large-avatar">
-                  <User size={30} />
-                </div>
-
-                <div>
-                  <h3>{userName}</h3>
-                  <span>{t.tenant}</span>
-                </div>
-              </div>
-
-              <div className="profile-info">
-                <div>
-                  <span>✉</span>
-                  <p>{userEmail}</p>
-                </div>
-
-                <div>
-                  <span>☎</span>
-                  <p>{userPhone}</p>
-                </div>
-              </div>
-
-              <div className="verified-label">
-                <BadgeCheck size={14} />
-                {t.verified}
-              </div>
-            </section>
-
-            {/* QUICK ACTIONS */}
-            <section className="right-card">
-              <div className="right-card-heading">
-                <h2>{t.quickActions}</h2>
-              </div>
-
-              <div className="quick-actions-grid">
-                <button
-                  onClick={() =>
-                    navigateTo("/properties")
-                  }
-                >
-                  <div className="quick-icon blue">
-                    <Search size={21} />
-                  </div>
-
-                  <span>
-                    {t.searchPropertiesShort}
-                  </span>
-                </button>
-
-                <button
-                  onClick={() =>
-                    navigateTo("/favorites")
-                  }
-                >
-                  <div className="quick-icon red">
-                    <Heart size={21} />
-                  </div>
-
-                  <span>
-                    {t.favoritesShort}
-                  </span>
-                </button>
-
-                <button
-                  onClick={() =>
-                    navigateTo("/rental-requests")
-                  }
-                >
-                  <div className="quick-icon orange">
-                    <CalendarDays size={21} />
-                  </div>
-
-                  <span>
-                    {t.requestsShort}
-                  </span>
-                </button>
-
-                <button
-                  onClick={() =>
-                    navigateTo("/messages")
-                  }
-                >
-                  <div className="quick-icon purple">
-                    <MessageSquare size={21} />
-                  </div>
-
-                  <span>
-                    {t.messagesShort}
-                  </span>
-                </button>
-
-                <button
-                  onClick={() =>
-                    navigateTo("/leases")
-                  }
-                >
-                  <div className="quick-icon blue">
-                    <FileText size={21} />
-                  </div>
-
-                  <span>
-                    {t.leasesShort}
-                  </span>
-                </button>
-
-                <button
-                  onClick={() =>
-                    navigateTo("/profile")
-                  }
-                >
-                  <div className="quick-icon green">
-                    <User size={21} />
-                  </div>
-
-                  <span>
-                    {t.profileShort}
-                  </span>
-                </button>
-              </div>
-            </section>
-
-            {/* NOTIFICATIONS */}
-            <section className="right-card notifications-card">
-              <div className="right-card-heading">
-                <h2>{t.recentNotifications}</h2>
-
-                <button
-                  onClick={() =>
-                    navigateTo("/notifications")
-                  }
-                >
-                  {t.viewAll}
-                </button>
-              </div>
-
-              <div className="notification-list">
-                {notifications.map((item, index) => (
-                  <div
-                    className="notification-row"
-                    key={index}
-                  >
-                    <div
-                      className={`notification-row-icon ${item.type}`}
-                    >
-                      {item.icon}
                     </div>
 
-                    <div className="notification-row-content">
-                      <strong>{item.title}</strong>
-                      <span>{item.time}</span>
-                    </div>
                   </div>
-                ))}
+
+                );
+
+              })}
+
+            </div>
+
+          </div>
+
+        )}
+
+      </section>
+
+
+
+      {/* BENEFITS SECTION */}
+
+      <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 pb-8">
+
+        {[
+
+          { title: t.safeSecure, desc: t.safetyPriority, icon: BadgeCheck, color: "text-emerald-700", bg: "bg-emerald-50 border-emerald-100" },
+
+          { title: t.verifiedProperties, desc: t.listingsVerified, icon: ShieldCheck, color: "text-sky-700", bg: "bg-sky-50 border-sky-100" },
+
+          { title: t.bestPrice, desc: t.affordable, icon: Building2, color: "text-yellow-800", bg: "bg-yellow-50 border-yellow-200" },
+
+          { title: t.support, desc: t.hereForYou, icon: Headphones, color: "text-purple-700", bg: "bg-purple-50 border-purple-100" },
+
+        ].map((benefit, i) => {
+
+          const Icon = benefit.icon;
+
+          return (
+
+            <div key={i} className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs flex items-center gap-4">
+
+              <div className={`p-3.5 rounded-xl border ${benefit.bg} ${benefit.color}`}>
+
+                <Icon size={20} />
+
               </div>
 
-              <button
-                className="show-notifications-button"
-                onClick={() =>
-                  navigateTo("/notifications")
-                }
-              >
-                {t.showAllNotifications}
-              </button>
-            </section>
-          </aside>
-        </div>
+              <div>
 
-        {/* =================================================
-            FOOTER
-        ================================================= */}
+                <strong className="text-xs font-bold text-[#022036] block mb-0.5">{benefit.title}</strong>
 
-        <footer className="dashboard-footer">
-          <div className="footer-copy">
-            © 2026 House Rental System. {t.allRights}.
-          </div>
+                <span className="text-[11px] text-slate-500 leading-tight block">{benefit.desc}</span>
 
-          <div className="footer-links">
-            <a href="#privacy">{t.privacy}</a>
+              </div>
 
-            <span>|</span>
+            </div>
 
-            <a href="#terms">{t.terms}</a>
+          );
 
-            <span>|</span>
+        })}
 
-            <a
-              href="#contact"
-              onClick={(e) => {
-                e.preventDefault();
-                scrollToSection("contact");
-              }}
-            >
-              {t.contact}
-            </a>
-          </div>
-        </footer>
+      </section>
 
-        {/* TARGETS */}
-        <div id="about" className="page-anchor"></div>
-        <div id="contact" className="page-anchor"></div>
-      </main>
+
+
     </div>
+
   );
-}
+
+} 
+

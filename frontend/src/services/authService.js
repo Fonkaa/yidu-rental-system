@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 import api from "./api";
 
 // Register
@@ -7,23 +6,31 @@ export const registerUser = async (userData) => {
   return response.data;
 };
 
+// Aliases for compatibility
+export const register = registerUser;
+
 // Login
 export const loginUser = async (credentials) => {
   const response = await api.post("/auth/login", credentials);
 
-  if (response.data.token) {
-    localStorage.setItem("hr_token", response.data.token);
+  const token = response.data.token;
+  const user = response.data.user;
+
+  if (token) {
+    localStorage.setItem("hr_token", token);
+    localStorage.setItem("token", token);
   }
 
-  if (response.data.user) {
-    localStorage.setItem(
-      "hr_user",
-      JSON.stringify(response.data.user)
-    );
+  if (user) {
+    localStorage.setItem("hr_user", JSON.stringify(user));
+    localStorage.setItem("user", JSON.stringify(user));
   }
 
   return response.data;
 };
+
+// Alias for compatibility
+export const login = loginUser;
 
 // Current user
 export const getCurrentUser = async () => {
@@ -31,37 +38,34 @@ export const getCurrentUser = async () => {
   return response.data;
 };
 
-// Forgot password
-export const forgotPassword = async (email) => {
-  const response = await api.post("/auth/forgot-password", {
-    email,
-  });
+export const getMe = getCurrentUser;
 
+// Forgot password
+export const forgotPassword = async (emailOrData) => {
+  const payload = typeof emailOrData === 'string' ? { email: emailOrData } : emailOrData;
+  const response = await api.post("/auth/forgot-password", payload);
   return response.data;
 };
 
 // Reset password
-export const resetPassword = async (resetToken, newPassword) => {
-  const response = await api.post("/auth/reset-password", {
-    resetToken,
-    newPassword,
-  });
+export const resetPassword = async (resetTokenOrData, newPassword) => {
+  const payload = typeof resetTokenOrData === 'object' 
+    ? resetTokenOrData 
+    : { resetToken: resetTokenOrData, newPassword };
+  const response = await api.post("/auth/reset-password", payload);
+  return response.data;
+};
 
+// Update ID Number
+export const updateIdNumber = async (idNumber) => {
+  const response = await api.patch('/auth/id-number', { idNumber });
   return response.data;
 };
 
 // Logout
 export const logoutUser = () => {
   localStorage.removeItem("hr_token");
+  localStorage.removeItem("token");
   localStorage.removeItem("hr_user");
+  localStorage.removeItem("user");
 };
-=======
-import api from './api';
-
-export const register = (data) => api.post('/auth/register', data);
-export const login = (data) => api.post('/auth/login', data);
-export const forgotPassword = (data) => api.post('/auth/forgot-password', data);
-export const resetPassword = (data) => api.post('/auth/reset-password', data);
-export const getMe = () => api.get('/auth/me');
-export const updateIdNumber = (idNumber) => api.patch('/auth/id-number', { idNumber });
->>>>>>> origin/feature/developer-a-auth

@@ -1,64 +1,78 @@
-const {
-  createLeaseFromRequest,
-  getLeasesForUser,
-  updateLeaseStatus,
-} = require('../services/leaseService');
+const prisma = require("../prisma/client");
 
-async function createLease(req, res) {
+// ==========================================
+// GET ALL LEASES FOR LOGGED-IN TENANT
+// ==========================================
+async function getTenantLeases(req, res) {
   try {
-    const lease = await createLeaseFromRequest({
-      ...req.body,
-      landlordId: req.user.userId,
+    if (!req.user || !req.user.userId) {
+      return res.status(401).json({ success: false, error: "Authentication required" });
+    }
+
+    const tenantId = req.user.userId;
+
+    // 1. Auto-release expired active leases (Only expire if endDate date is strictly past today)
+    const now = new Date();
+    now.setHours(23, 59, 59, 999); // Give until end of the expiry day
+
+    const expiredLeases = await prisma.lease.findMany({
+      where: {
+        status: 'ACTIVE',
+        endDate: { lt: now }
+      }
+    }).catch(() => []);
+
+    if (expiredLeases.length > 0) {
+      const propertyIdsToRelease = expiredLeases.map(l => l.propertyId);
+      
+      await prisma.lease.updateMany({
+        where: { id: { in: expiredLeases.map(l => l.id) } },
+        data: { status: 'EXPIRED' }
+      });
+
+      await prisma.property.updateMany({
+        where: { id: { in: propertyIdsToRelease } },
+        data: { status: 'APPROVED' }
+      });
+    }
+
+    // 2. Fetch all leases belonging to this tenant with correct relations
+    const rawLeases = await prisma.lease.findMany({
+      where: { tenantId },
+      include: {
+        property: {
+          include: {
+            location: true,
+            images: true,
+          }
+        },
+        tenant: { select: { id: true, fullName: true, email: true } },
+        payment: true,
+      },
+      orderBy: { createdAt: 'desc' }
     });
 
-    return res.status(201).json(lease);
+    // 3. STRICT LEASE-ID DEDUPLICATION
+    const uniqueLeaseMap = new Map();
+    rawLeases.forEach((lease) => {
+      if (!uniqueLeaseMap.has(lease.id)) {
+        uniqueLeaseMap.set(lease.id, lease);
+      }
+    });
+
+    const leases = Array.from(uniqueLeaseMap.values());
+
+    return res.status(200).json({
+      success: true,
+      leases,
+    });
+
   } catch (error) {
-    console.error(error);
-    if (error.message === 'RENTAL_REQUEST_NOT_FOUND') {
-      return res.status(404).json({ error: 'Rental request not found' });
-    }
-    if (error.message === 'Only approved rental requests can create a lease') {
-      return res.status(400).json({ error: error.message });
-    }
-    return res.status(500).json({ error: 'Something went wrong while creating lease' });
-  }
-}
-
-async function listLeases(req, res) {
-  try {
-    const leases = await getLeasesForUser(req.user.userId, req.user.role);
-    return res.json(leases);
-  } catch (error) {
-    console.error(error);
-    return res.status(500).json({ error: 'Something went wrong while fetching leases' });
-  }
-}
-
-async function updateLease(req, res) {
-  try {
-    const { id } = req.params;
-    const { status } = req.body;
-
-    if (!status) {
-      return res.status(400).json({ error: 'status is required' });
-    }
-
-    const lease = await updateLeaseStatus(id, req.user.userId, req.user.role, status);
-    return res.json(lease);
-  } catch (error) {
-    console.error(error);
-    if (error.message === 'LEASE_NOT_FOUND') {
-      return res.status(404).json({ error: 'Lease not found' });
-    }
-    if (error.message === 'FORBIDDEN') {
-      return res.status(403).json({ error: 'You are not allowed to update this lease' });
-    }
-    return res.status(500).json({ error: 'Something went wrong while updating lease' });
+    console.error("GET TENANT LEASES ERROR:", error);
+    return res.status(500).json({ success: false, error: "Failed to load tenant leases." });
   }
 }
 
 module.exports = {
-  createLease,
-  listLeases,
-  updateLease,
+  getTenantLeases,
 };

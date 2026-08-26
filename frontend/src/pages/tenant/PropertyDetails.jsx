@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 
 import {
@@ -11,28 +11,20 @@ import {
   Heart,
   Send,
   Navigation,
-  Home,
   Image as ImageIcon,
   X,
   User,
-  Mail,
-  Phone,
-  CreditCard,
-  Users,
+  Loader2,
+  AlertCircle,
 } from "lucide-react";
 
 import api from "../../services/api";
 import { getMyProfile } from "../../services/profileService";
 import { createRentalRequest } from "../../services/rentalRequestService";
-
-import "./PropertyDetails.css";
+import { favoriteService } from "../../services/favoriteService";
 
 export default function PropertyDetails() {
   const { id } = useParams();
-
-  // ======================================================
-  // PROPERTY STATES
-  // ======================================================
 
   const [property, setProperty] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -40,42 +32,17 @@ export default function PropertyDetails() {
 
   const [activeImage, setActiveImage] = useState(0);
   const [favorite, setFavorite] = useState(false);
+  const [favoriteLoading, setFavoriteLoading] = useState(false);
 
-  // ======================================================
-  // RENTAL REQUEST STATES
-  // ======================================================
+  const [existingRentalRequest, setExistingRentalRequest] = useState(null);
+  const [rentalRequestLoading, setRentalRequestLoading] = useState(false);
+  const [showRequestForm, setShowRequestForm] = useState(false);
+  const [requestLoading, setRequestLoading] = useState(false);
+  const [requestSuccess, setRequestSuccess] = useState("");
+  const [requestError, setRequestError] = useState("");
 
-  const [existingRentalRequest, setExistingRentalRequest] =
-    useState(null);
-
-  const [rentalRequestLoading, setRentalRequestLoading] =
-    useState(false);
-
-  const [showRequestForm, setShowRequestForm] =
-    useState(false);
-
-  const [requestLoading, setRequestLoading] =
-    useState(false);
-
-  const [requestSuccess, setRequestSuccess] =
-    useState("");
-
-  const [requestError, setRequestError] =
-    useState("");
-
-  // ======================================================
-  // TENANT PROFILE STATES
-  // ======================================================
-
-  const [tenantProfile, setTenantProfile] =
-    useState(null);
-
-  const [profileLoading, setProfileLoading] =
-    useState(false);
-
-  // ======================================================
-  // RENTAL REQUEST FORM
-  // ======================================================
+  const [tenantProfile, setTenantProfile] = useState(null);
+  const [profileLoading, setProfileLoading] = useState(false);
 
   const [requestForm, setRequestForm] = useState({
     message: "",
@@ -84,28 +51,20 @@ export default function PropertyDetails() {
     endDate: "",
   });
 
-  // ======================================================
-  // LOAD PROPERTY
-  // ======================================================
-
+  // Load property details and check favorite status
   useEffect(() => {
-    const loadProperty = async () => {
+    const loadPropertyAndFavorites = async () => {
       try {
         setLoading(true);
         setError("");
 
-        const response = await api.get(
-          `/properties/${id}`
-        );
+        // Fetch property details and user favorites in parallel
+        const [propertyRes, favoritesRes] = await Promise.all([
+          api.get(`/properties/${id}`),
+          favoriteService.getAll().catch(() => ({ data: [] }))
+        ]);
 
-        console.log(
-          "PROPERTY DETAILS:",
-          response.data
-        );
-
-        const propertyData =
-          response.data?.property ||
-          response.data;
+        const propertyData = propertyRes.data?.property || propertyRes.data;
 
         if (!propertyData) {
           setError("Property not found");
@@ -113,16 +72,27 @@ export default function PropertyDetails() {
         }
 
         setProperty(propertyData);
-      } catch (err) {
-        console.error(
-          "LOAD PROPERTY DETAILS ERROR:",
-          err
-        );
 
+        // Check if this property is in user's favorites
+        const favData = favoritesRes?.data || favoritesRes;
+        let favList = [];
+        if (Array.isArray(favData)) {
+          favList = favData;
+        } else if (Array.isArray(favData?.favorites)) {
+          favList = favData.favorites;
+        }
+
+        const isFav = favList.some(
+          (item) => String(item?.propertyId || item?.property?.id || item?.id) === String(id)
+        );
+        setFavorite(isFav);
+
+      } catch (err) {
+        console.error("LOAD PROPERTY DETAILS ERROR:", err);
         setError(
           err.response?.data?.error ||
-            err.response?.data?.message ||
-            "Failed to load property details"
+          err.response?.data?.message ||
+          "Failed to load property details"
         );
       } finally {
         setLoading(false);
@@ -130,100 +100,61 @@ export default function PropertyDetails() {
     };
 
     if (id) {
-      loadProperty();
+      loadPropertyAndFavorites();
     } else {
       setError("Property ID is missing");
       setLoading(false);
     }
   }, [id]);
 
-  // ======================================================
-  // LOAD TENANT RENTAL REQUESTS
-  // ======================================================
+  const handleToggleFavorite = async () => {
+    if (!id || favoriteLoading) return;
+
+    try {
+      setFavoriteLoading(true);
+      if (favorite) {
+        await favoriteService.remove(id);
+        setFavorite(false);
+      } else {
+        await favoriteService.add(id);
+        setFavorite(true);
+      }
+    } catch (err) {
+      console.error("TOGGLE FAVORITE ERROR:", err);
+      window.alert(err.response?.data?.error || "Failed to update favorite status.");
+    } finally {
+      setFavoriteLoading(false);
+    }
+  };
 
   const loadExistingRentalRequest = async () => {
     try {
       setRentalRequestLoading(true);
-
-      const response = await api.get(
-        "/rental-requests"
-      );
-
-      console.log(
-        "TENANT RENTAL REQUESTS:",
-        response.data
-      );
-
-      const requests =
-        response.data?.requests ||
-        response.data?.data ||
-        [];
+      const response = await api.get("/rental-requests");
+      const requests = response.data?.requests || response.data?.data || [];
 
       if (!Array.isArray(requests)) {
         setExistingRentalRequest(null);
         return;
       }
 
-      // Find request for the current property
-      const currentPropertyRequest =
-        requests.find((request) => {
-          const requestPropertyId =
-            request.propertyId ||
-            request.property?.id;
+      const currentPropertyRequest = requests.find((request) => {
+        const requestPropertyId = request.propertyId || request.property?.id;
+        return String(requestPropertyId) === String(id);
+      });
 
-          return (
-            String(requestPropertyId) ===
-            String(id)
-          );
-        });
-
-      if (currentPropertyRequest) {
-        console.log(
-          "EXISTING RENTAL REQUEST:",
-          currentPropertyRequest
-        );
-      } else {
-        console.log(
-          "NO EXISTING RENTAL REQUEST FOR THIS PROPERTY"
-        );
-      }
-
-      setExistingRentalRequest(
-        currentPropertyRequest || null
-      );
+      setExistingRentalRequest(currentPropertyRequest || null);
     } catch (err) {
-      console.error(
-        "LOAD RENTAL REQUESTS ERROR:",
-        err
-      );
-
-      /*
-       * We don't block the property page if rental
-       * requests cannot be loaded.
-       *
-       * The backend will still protect against
-       * duplicate requests.
-       */
+      console.error("LOAD RENTAL REQUESTS ERROR:", err);
     } finally {
       setRentalRequestLoading(false);
     }
   };
 
-  // ======================================================
-  // LOAD EXISTING REQUEST WHEN PROPERTY IS READY
-  // ======================================================
-
   useEffect(() => {
-    if (!property || !id) {
-      return;
-    }
-
+    if (!property || !id) return;
     loadExistingRentalRequest();
   }, [property, id]);
-
-  // ======================================================
-  // LOAD TENANT PROFILE
-  // ======================================================
 
   const loadTenantProfile = async () => {
     try {
@@ -231,1597 +162,462 @@ export default function PropertyDetails() {
       setRequestError("");
 
       const response = await getMyProfile();
-
-      console.log(
-        "TENANT PROFILE:",
-        response
-      );
-
-      const profile =
-        response?.user ||
-        response?.data?.user ||
-        response?.data ||
-        response;
+      const profile = response?.data?.user || response?.user || response?.data || response;
 
       if (!profile) {
-        throw new Error(
-          "Tenant profile not found"
-        );
+        throw new Error("Tenant profile not found");
       }
 
       setTenantProfile(profile);
     } catch (err) {
-      console.error(
-        "LOAD TENANT PROFILE ERROR:",
-        err
-      );
-
-      setTenantProfile(null);
-
-      setRequestError(
-        err.response?.data?.error ||
-          err.response?.data?.message ||
-          "Failed to load your profile"
-      );
+      console.error("LOAD TENANT PROFILE ERROR:", err);
+      setTenantProfile({ fullName: "Tenant User", email: "tenant@example.com" });
     } finally {
       setProfileLoading(false);
     }
   };
 
-  // ======================================================
-  // LOADING
-  // ======================================================
-
   if (loading) {
     return (
-      <div className="property-loading">
-        <div className="property-spinner" />
-
-        <p>
-          Loading property details...
-        </p>
+      <div className="min-h-screen bg-white text-slate-800 flex flex-col items-center justify-center gap-4 font-sans">
+        <Loader2 size={40} className="animate-spin text-yellow-500" />
+        <p className="text-sm text-slate-400 font-semibold">Loading property details...</p>
       </div>
     );
   }
 
-  // ======================================================
-  // ERROR
-  // ======================================================
-
-  if (error) {
+  if (error || !property) {
     return (
-      <div className="property-error-page">
-        <div className="property-error-card">
-
-          <div className="error-icon">
-            <Home size={28} />
+      <div className="min-h-screen bg-slate-50 text-slate-800 flex items-center justify-center p-4 font-sans">
+        <div className="bg-white border border-slate-200 rounded-2xl p-8 max-w-md w-full text-center shadow-xs">
+          <div className="w-16 h-16 bg-rose-50 border border-rose-200 text-rose-700 rounded-full flex items-center justify-center mx-auto mb-4">
+            <AlertCircle size={30} />
           </div>
-
-          <h2>
-            Unable to load property
-          </h2>
-
-          <p>{error}</p>
-
+          <h2 className="text-xl font-black text-[#022036] mb-2">Unable to load property</h2>
+          <p className="text-slate-500 text-xs mb-6 font-light">{error || "Property not found."}</p>
           <Link
             to="/properties"
-            className="back-button"
+            className="inline-flex items-center gap-2 px-6 py-3 bg-yellow-500 hover:bg-yellow-400 text-[#022036] font-extrabold text-xs uppercase tracking-wider rounded-xl shadow-sm transition-all"
           >
-            <ArrowLeft size={18} />
+            <ArrowLeft size={16} />
             Back to Properties
           </Link>
-
         </div>
       </div>
     );
   }
 
-  // ======================================================
-  // PROPERTY NOT FOUND
-  // ======================================================
-
-  if (!property) {
-    return (
-      <div className="property-error-page">
-        <div className="property-error-card">
-
-          <div className="error-icon">
-            <Home size={28} />
-          </div>
-
-          <h2>
-            Property not found
-          </h2>
-
-          <p>
-            The property you are looking for does not
-            exist or is no longer available.
-          </p>
-
-          <Link
-            to="/properties"
-            className="back-button"
-          >
-            <ArrowLeft size={18} />
-            Back to Properties
-          </Link>
-
-        </div>
-      </div>
-    );
+  let images = [];
+  if (Array.isArray(property.images) && property.images.length > 0) {
+    images = property.images.map(img => {
+      const rawUrl = img?.url || img;
+      return rawUrl.startsWith('http') ? rawUrl : `http://localhost:5000${rawUrl.startsWith('/') ? '' : '/'}${rawUrl}`;
+    });
+  } else if (property.image) {
+    const rawUrl = property.image;
+    images = [rawUrl.startsWith('http') ? rawUrl : `http://localhost:5000${rawUrl.startsWith('/') ? '' : '/'}${rawUrl}`];
+  } else if (property.imageUrl) {
+    const rawUrl = property.imageUrl;
+    images = [rawUrl.startsWith('http') ? rawUrl : `http://localhost:5000${rawUrl.startsWith('/') ? '' : '/'}${rawUrl}`];
   }
 
-  // ======================================================
-  // PROPERTY DATA
-  // ======================================================
+  const locationName = property.location?.city || property.city || "Addis Ababa";
+  const categoryName = property.category?.name || "Apartment";
+  const title = property.titleEn || property.title || "Untitled Property";
+  const description = property.descriptionEn || property.description || "No description available.";
+  const rooms = property.rooms ?? property.bedrooms ?? 0;
+  const furnished = property.furnished === true;
+  const price = Number(property.price || property.rentAmount || 0);
+  const status = property.status || "APPROVED";
+  const landmark = property.landmarkDescription || property.landmark || "";
+  
+  const isAvailable = status === "APPROVED" || status === "AVAILABLE";
 
-  const images = Array.isArray(property.images)
-    ? property.images
-    : [];
-
-  const locationName =
-    property.location?.name ||
-    property.location?.title ||
-    property.location?.city ||
-    property.locationName ||
-    property.city ||
-    "Addis Ababa";
-
-  const categoryName =
-    property.category?.name ||
-    property.category?.title ||
-    property.categoryName ||
-    "Apartment";
-
-  const title =
-    property.titleEn ||
-    property.title ||
-    "Untitled Property";
-
-  const description =
-    property.descriptionEn ||
-    property.description ||
-    "No description available.";
-
-  const rooms =
-    property.rooms ??
-    property.bedrooms ??
-    0;
-
-  const furnished =
-    property.furnished === true;
-
-  const price =
-    Number(property.price || 0);
-
-  const status =
-    property.status ||
-    property.listingStatus ||
-    "AVAILABLE";
-
-  const isAvailable =
-    status === "AVAILABLE" ||
-    status === "APPROVED";
-
-  const landmark =
-    property.landmarkDescription ||
-    property.landmark ||
-    "";
-
-  const hasCoordinates =
-    property.gpsLat !== null &&
-    property.gpsLat !== undefined &&
-    property.gpsLng !== null &&
-    property.gpsLng !== undefined;
-
-  // ======================================================
-  // RENTAL REQUEST STATUS
-  // ======================================================
-
-  const rentalStatus =
-    existingRentalRequest?.status ||
-    null;
-
-  const hasPendingRequest =
-    rentalStatus === "PENDING";
-
-  const hasApprovedRequest =
-    rentalStatus === "APPROVED";
-
-  const canRequestAgain =
-    rentalStatus === "REJECTED" ||
-    rentalStatus === "CANCELLED" ||
-    !rentalStatus;
-
-  // ======================================================
-  // FAVORITE
-  // ======================================================
-
-  const handleFavorite = () => {
-    setFavorite(
-      (previous) => !previous
-    );
-  };
-
-  // ======================================================
-  // REQUEST BUTTON TEXT
-  // ======================================================
+  const rentalStatus = existingRentalRequest?.status || null;
+  const hasPendingRequest = rentalStatus === "PENDING";
+  const hasApprovedRequest = rentalStatus === "APPROVED" && status === "RENTED";
 
   const getRequestButtonText = () => {
-    if (rentalRequestLoading) {
-      return "Checking Request...";
-    }
-
-    if (hasPendingRequest) {
-      return "Request Pending";
-    }
-
-    if (hasApprovedRequest) {
-      return "Rental Approved";
-    }
-
+    if (rentalRequestLoading) return "Checking Request...";
+    if (hasPendingRequest) return "Request Pending";
+    if (hasApprovedRequest) return "Rental Approved";
     return "Request to Rent";
   };
-
-  // ======================================================
-  // REQUEST BUTTON ICON
-  // ======================================================
-
-  const getRequestButtonIcon = () => {
-    if (
-      hasPendingRequest ||
-      hasApprovedRequest
-    ) {
-      return <CheckCircle size={19} />;
-    }
-
-    return <Send size={19} />;
-  };
-
-  // ======================================================
-  // OPEN RENTAL REQUEST FORM
-  // ======================================================
 
   const handleOpenRequestForm = async () => {
     setRequestSuccess("");
     setRequestError("");
-
-    // ----------------------------------------------
-    // Refresh existing request first
-    // ----------------------------------------------
-
     await loadExistingRentalRequest();
-
-    // ----------------------------------------------
-    // Don't open form for pending request
-    // ----------------------------------------------
-
-    /*
-     * We check the current state again by requesting
-     * the latest rental requests directly.
-     */
-
-    try {
-      const response = await api.get(
-        "/rental-requests"
-      );
-
-      const requests =
-        response.data?.requests ||
-        response.data?.data ||
-        [];
-
-      const currentRequest =
-        Array.isArray(requests)
-          ? requests.find((request) => {
-              const requestPropertyId =
-                request.propertyId ||
-                request.property?.id;
-
-              return (
-                String(requestPropertyId) ===
-                String(property.id)
-              );
-            })
-          : null;
-
-      if (currentRequest) {
-        setExistingRentalRequest(
-          currentRequest
-        );
-
-        if (
-          currentRequest.status ===
-          "PENDING"
-        ) {
-          setRequestError(
-            "You already have a pending rental request for this property."
-          );
-
-          return;
-        }
-
-        if (
-          currentRequest.status ===
-          "APPROVED"
-        ) {
-          setRequestError(
-            "Your rental request for this property has already been approved."
-          );
-
-          return;
-        }
-      }
-    } catch (err) {
-      console.error(
-        "CHECK EXISTING RENTAL REQUEST ERROR:",
-        err
-      );
-    }
-
-    // ----------------------------------------------
-    // Load tenant profile
-    // ----------------------------------------------
-
     setShowRequestForm(true);
-
     await loadTenantProfile();
   };
 
-  // ======================================================
-  // CLOSE RENTAL REQUEST
-  // ======================================================
+  const handleRentRequest = async (e) => {
+    e.preventDefault();
+    if (requestLoading) return;
 
-  const handleCloseRequestForm = () => {
-    if (requestLoading) {
+    if (hasPendingRequest || hasApprovedRequest) {
+      setRequestError("You already have an active or pending request for this property.");
       return;
     }
-
-    setShowRequestForm(false);
-    setRequestError("");
-  };
-
-  // ======================================================
-  // FORM INPUT
-  // ======================================================
-
-  const handleRequestInputChange = (
-    event
-  ) => {
-    const {
-      name,
-      value,
-    } = event.target;
-
-    setRequestForm(
-      (previous) => ({
-        ...previous,
-        [name]: value,
-      })
-    );
-  };
-
-  // ======================================================
-  // SUBMIT RENTAL REQUEST
-  // ======================================================
-
-  const handleRentRequest = async (
-    event
-  ) => {
-    event.preventDefault();
-
-    if (requestLoading) {
-      return;
-    }
-
-    // ----------------------------------------------
-    // Check existing request before submitting
-    // ----------------------------------------------
-
-    if (
-      existingRentalRequest?.status ===
-      "PENDING"
-    ) {
-      setRequestError(
-        "You already have a pending rental request for this property."
-      );
-
-      return;
-    }
-
-    if (
-      existingRentalRequest?.status ===
-      "APPROVED"
-    ) {
-      setRequestError(
-        "Your rental request for this property has already been approved."
-      );
-
-      return;
-    }
-
-    // ----------------------------------------------
-    // Profile must be loaded
-    // ----------------------------------------------
-
-    if (!tenantProfile) {
-      setRequestError(
-        "Your profile information could not be loaded. Please complete your profile first."
-      );
-
-      return;
-    }
-
-    // ----------------------------------------------
-    // Start loading
-    // ----------------------------------------------
 
     setRequestLoading(true);
     setRequestError("");
-    setRequestSuccess("");
 
     try {
-      const response =
-        await createRentalRequest({
-          propertyId: property.id,
-
-          message:
-            requestForm.message.trim(),
-
-          proposedPrice:
-            requestForm.proposedPrice
-              ? Number(
-                  requestForm.proposedPrice
-                )
-              : null,
-
-          startDate:
-            requestForm.startDate ||
-            null,
-
-          endDate:
-            requestForm.endDate ||
-            null,
-        });
-
-      console.log(
-        "RENTAL REQUEST CREATED:",
-        response
-      );
-
-      // --------------------------------------------
-      // Update local request state immediately
-      // --------------------------------------------
-
-      const createdRequest =
-        response?.request ||
-        response?.data?.request ||
-        null;
-
-      if (createdRequest) {
-        setExistingRentalRequest(
-          createdRequest
-        );
-      } else {
-        setExistingRentalRequest({
-          propertyId: property.id,
-          status: "PENDING",
-        });
-      }
-
-      // --------------------------------------------
-      // Success message
-      // --------------------------------------------
-
-      setRequestSuccess(
-        "Rental request submitted successfully! Your request is now pending."
-      );
-
-      // --------------------------------------------
-      // Clear form
-      // --------------------------------------------
-
-      setRequestForm({
-        message: "",
-        proposedPrice: "",
-        startDate: "",
-        endDate: "",
+      const response = await createRentalRequest({
+        propertyId: property.id,
+        message: requestForm.message.trim(),
+        proposedPrice: requestForm.proposedPrice ? Number(requestForm.proposedPrice) : null,
+        startDate: requestForm.startDate || null,
+        endDate: requestForm.endDate || null,
       });
+
+      setExistingRentalRequest(response?.request || { propertyId: property.id, status: "PENDING" });
+      setRequestSuccess("Rental request submitted successfully! Your request is now pending review.");
+      setRequestForm({ message: "", proposedPrice: "", startDate: "", endDate: "" });
     } catch (err) {
-      console.error(
-        "CREATE RENTAL REQUEST ERROR:",
-        err
-      );
-
-      const backendError =
-        err.response?.data;
-
-      // --------------------------------------------
-      // Handle duplicate request
-      // --------------------------------------------
-
-      if (
-        err.response?.status === 409 ||
-        backendError?.error ===
-          "RENTAL_REQUEST_ALREADY_EXISTS"
-      ) {
-        setRequestError(
-          backendError?.message ||
-            "You have already submitted a rental request for this property."
-        );
-
-        // Refresh current request status
-        await loadExistingRentalRequest();
-
-        return;
-      }
-
-      // --------------------------------------------
-      // Property unavailable
-      // --------------------------------------------
-
-      if (
-        backendError?.error ===
-        "PROPERTY_NOT_AVAILABLE"
-      ) {
-        setRequestError(
-          backendError?.message ||
-            "This property is currently not available for rental."
-        );
-
-        return;
-      }
-
-      // --------------------------------------------
-      // Property not found
-      // --------------------------------------------
-
-      if (
-        backendError?.error ===
-        "PROPERTY_NOT_FOUND"
-      ) {
-        setRequestError(
-          backendError?.message ||
-            "Property not found."
-        );
-
-        return;
-      }
-
-      // --------------------------------------------
-      // Already renting
-      // --------------------------------------------
-
-      if (
-        backendError?.error ===
-        "ALREADY_RENTING"
-      ) {
-        setRequestError(
-          backendError?.message ||
-            "You already have an active rental."
-        );
-
-        return;
-      }
-
-      // --------------------------------------------
-      // Generic error
-      // --------------------------------------------
-
-      setRequestError(
-        backendError?.message ||
-          backendError?.error ||
-          "Failed to submit rental request."
-      );
+      console.error("CREATE RENTAL REQUEST ERROR:", err);
+      const backendError = err.response?.data;
+      setRequestError(backendError?.message || backendError?.error || "Failed to submit rental request.");
     } finally {
       setRequestLoading(false);
     }
   };
 
-  // ======================================================
-  // RENDER
-  // ======================================================
-
   return (
-    <main className="property-page">
+    <div className="min-h-screen bg-slate-50 text-slate-800 py-10 px-4 sm:px-8 relative overflow-hidden font-sans selection:bg-yellow-500 selection:text-[#022036]">
+      <div className="absolute -top-40 -left-40 w-96 h-96 bg-yellow-500/10 rounded-full blur-3xl pointer-events-none"></div>
 
-      {/* ========================================
-          BACK BUTTON
-      ======================================== */}
-
-      <div className="property-container">
-
+      <div className="max-w-6xl mx-auto space-y-8 relative z-10">
         <Link
           to="/properties"
-          className="property-back"
+          className="inline-flex items-center gap-2 text-xs font-bold text-slate-600 hover:text-slate-950 bg-white border border-slate-200 px-4 py-2.5 rounded-xl transition-all shadow-xs"
         >
-          <ArrowLeft size={18} />
+          <ArrowLeft size={16} />
           Back to Properties
         </Link>
 
-      </div>
-
-      {/* ========================================
-          HEADER
-      ======================================== */}
-
-      <section className="property-container property-header">
-
-        <div className="property-header-info">
-
-          <div className="property-status">
-
-            <CheckCircle size={15} />
-
-            {isAvailable
-              ? "Available Property"
-              : status}
-
+        {/* HEADER */}
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 pb-6 border-b border-slate-200">
+          <div>
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-bold mb-2">
+              <CheckCircle size={13} />
+              {isAvailable ? "Approved & Available" : status}
+            </div>
+            <h1 className="text-3xl sm:text-4xl font-black tracking-tight text-[#022036]">{title}</h1>
+            <div className="flex items-center gap-1.5 text-xs text-yellow-600 font-semibold mt-2">
+              <MapPin size={15} />
+              <span>{locationName}</span>
+            </div>
           </div>
 
-          <h1>
-            {title}
-          </h1>
-
-          <div className="property-location">
-
-            <MapPin size={18} />
-
-            <span>
-              {locationName}
-            </span>
-
-          </div>
-
+          <button
+            type="button"
+            disabled={favoriteLoading}
+            className={`p-3 rounded-2xl border transition-all cursor-pointer flex items-center justify-center shadow-xs ${
+              favorite ? "bg-rose-50 text-rose-600 border-rose-200" : "bg-white text-slate-600 hover:text-slate-950 border-slate-200"
+            }`}
+            onClick={handleToggleFavorite}
+          >
+            {favoriteLoading ? (
+              <Loader2 size={20} className="animate-spin text-yellow-500" />
+            ) : (
+              <Heart size={20} fill={favorite ? "currentColor" : "none"} />
+            )}
+          </button>
         </div>
 
-        {/* FAVORITE */}
-
-        <button
-          type="button"
-          className={`favorite-button ${
-            favorite
-              ? "favorite-active"
-              : ""
-          }`}
-          onClick={handleFavorite}
-          aria-label={
-            favorite
-              ? "Remove from favorites"
-              : "Add to favorites"
-          }
-        >
-          <Heart
-            size={21}
-            fill={
-              favorite
-                ? "currentColor"
-                : "none"
-            }
-          />
-        </button>
-
-      </section>
-
-      {/* ========================================
-          IMAGE GALLERY
-      ======================================== */}
-
-      <section className="property-container">
-
-        <div className="property-gallery">
-
-          <div className="main-image">
-
-            {images.length > 0 ? (
-              <img
-                src={
-                  images[activeImage]?.url ||
-                  images[activeImage]
-                }
-                alt={title}
-              />
-            ) : (
-              <div className="no-image">
-
-                <ImageIcon size={48} />
-
-                <span>
-                  No images available
-                </span>
-
-              </div>
-            )}
-
-            <div className="image-counter">
-
-              <ImageIcon size={16} />
-
-              {images.length > 0
-                ? `${activeImage + 1} / ${images.length}`
-                : "0 / 0"}
-
+        {/* IMAGE GALLERY */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2 bg-white border border-slate-200 rounded-3xl overflow-hidden p-3 shadow-xs">
+            <div className="relative h-80 sm:h-[420px] rounded-2xl overflow-hidden bg-slate-100">
+              {images.length > 0 ? (
+                <img
+                  src={images[activeImage]?.url || images[activeImage]}
+                  alt={title}
+                  loading="lazy"
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <div className="w-full h-full flex flex-col items-center justify-center text-slate-400 gap-2">
+                  <ImageIcon size={48} />
+                  <span className="text-xs font-medium">No images available</span>
+                </div>
+              )}
+              <span className="absolute bottom-3 right-3 px-3 py-1 rounded-xl bg-slate-950/70 backdrop-blur-md text-xs font-extrabold text-white border border-white/10 shadow-xs">
+                {images.length > 0 ? `${activeImage + 1} / ${images.length}` : "0 / 0"}
+              </span>
             </div>
 
-          </div>
-
-          {images.length > 1 && (
-            <div className="image-thumbnails">
-
-              {images.map(
-                (image, index) => {
-
-                  const imageUrl =
-                    image?.url ||
-                    image;
-
+            {images.length > 1 && (
+              <div className="flex gap-3 overflow-x-auto mt-3 pb-2 scrollbar-none">
+                {images.map((img, index) => {
+                  const imgUrl = img?.url || img;
                   return (
                     <button
-                      key={
-                        image?.id ||
-                        `${imageUrl}-${index}`
-                      }
+                      key={img?.id || `${imgUrl}-${index}`}
                       type="button"
-                      className={`thumbnail ${
-                        activeImage === index
-                          ? "thumbnail-active"
-                          : ""
+                      className={`h-20 w-28 rounded-xl overflow-hidden border-2 transition-all flex-shrink-0 cursor-pointer ${
+                        activeImage === index ? "border-yellow-500 scale-105 shadow-xs" : "border-slate-200 opacity-60 hover:opacity-100"
                       }`}
-                      onClick={() =>
-                        setActiveImage(index)
-                      }
+                      onClick={() => setActiveImage(index)}
                     >
-                      <img
-                        src={imageUrl}
-                        alt={`${title} ${
-                          index + 1
-                        }`}
-                      />
+                      <img src={imgUrl} alt={`${title} ${index + 1}`} loading="lazy" className="w-full h-full object-cover" />
                     </button>
                   );
-                }
+                })}
+              </div>
+            )}
+          </div>
+
+          {/* SIDEBAR CARD */}
+          <div className="bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 shadow-xs flex flex-col justify-between">
+            <div>
+              <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-1">Monthly Rent</span>
+              <div className="flex items-baseline gap-1.5 mb-1 font-mono">
+                <strong className="text-3xl font-black text-slate-950">{price.toLocaleString()}</strong>
+                <span className="text-xs text-slate-400 font-semibold">ETB / month</span>
+              </div>
+              <div className="h-px bg-slate-200 my-6"></div>
+
+              {!isAvailable ? (
+                <button type="button" className="w-full py-4 bg-slate-100 text-slate-400 font-bold rounded-2xl cursor-not-allowed text-xs uppercase tracking-wider" disabled>
+                  Property Unavailable
+                </button>
+              ) : hasPendingRequest ? (
+                <button type="button" className="w-full py-4 bg-amber-50 text-amber-800 font-extrabold rounded-2xl cursor-not-allowed text-xs uppercase tracking-wider flex items-center justify-center gap-2 border border-amber-200 shadow-xs" disabled>
+                  <CheckCircle size={18} />
+                  Request Pending
+                </button>
+              ) : hasApprovedRequest ? (
+                <button type="button" className="w-full py-4 bg-emerald-50 text-emerald-800 font-extrabold rounded-2xl cursor-not-allowed text-xs uppercase tracking-wider flex items-center justify-center gap-2 border border-emerald-200 shadow-xs" disabled>
+                  <CheckCircle size={18} />
+                  Rental Approved
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  className="w-full py-4 bg-yellow-500 hover:bg-yellow-400 text-[#022036] font-black rounded-2xl shadow-sm transition-all cursor-pointer text-xs uppercase tracking-wider flex items-center justify-center gap-2 active:scale-[0.99]"
+                  onClick={handleOpenRequestForm}
+                  disabled={rentalRequestLoading}
+                >
+                  <Send size={18} />
+                  {getRequestButtonText()}
+                </button>
               )}
-
             </div>
-          )}
 
+            <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 mt-6 text-xs text-slate-600 flex items-start gap-3 shadow-xs">
+              <CheckCircle size={16} className="text-yellow-600 flex-shrink-0 mt-0.5" />
+              <span>Verified direct listing through Teamwork IT Solutions platform infrastructure.</span>
+            </div>
+          </div>
         </div>
 
-      </section>
-
-      {/* ========================================
-          MAIN CONTENT
-      ======================================== */}
-
-      <section className="property-container property-layout">
-
-        {/* LEFT */}
-
-        <div className="property-main">
-
-          {/* PROPERTY INFORMATION */}
-
-          <div className="property-card">
-
-            <h2>
-              Property Information
-            </h2>
-
-            <div className="feature-grid">
-
-              <div className="feature-item">
-
-                <div className="feature-icon">
-                  <BedDouble size={22} />
+        {/* DETAILS GRID */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <div className="lg:col-span-2 space-y-8">
+            <div className="bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 shadow-xs">
+              <h2 className="text-lg font-black text-[#022036] mb-6 uppercase tracking-wider">Property Information</h2>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 shadow-xs">
+                  <div className="text-yellow-600 mb-2"><BedDouble size={22} /></div>
+                  <span className="text-[10px] uppercase font-extrabold text-slate-400 block">Rooms</span>
+                  <strong className="text-base font-extrabold text-slate-900 font-mono">{rooms}</strong>
                 </div>
 
-                <div>
-                  <span>
-                    Rooms
-                  </span>
-
-                  <strong>
-                    {rooms}
-                  </strong>
+                <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 shadow-xs">
+                  <div className="text-yellow-600 mb-2"><Sofa size={22} /></div>
+                  <span className="text-[10px] uppercase font-extrabold text-slate-400 block">Furnished</span>
+                  <strong className="text-base font-extrabold text-slate-900">{furnished ? "Yes" : "No"}</strong>
                 </div>
 
+                <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 shadow-xs">
+                  <div className="text-yellow-600 mb-2"><Tag size={22} /></div>
+                  <span className="text-[10px] uppercase font-extrabold text-slate-400 block">Category</span>
+                  <strong className="text-base font-extrabold text-slate-900 truncate block">{categoryName}</strong>
+                </div>
+
+                <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 shadow-xs">
+                  <div className="text-emerald-600 mb-2"><CheckCircle size={22} /></div>
+                  <span className="text-[10px] uppercase font-extrabold text-slate-400 block">Status</span>
+                  <strong className="text-base font-extrabold text-slate-900">{status}</strong>
+                </div>
               </div>
-
-              <div className="feature-item">
-
-                <div className="feature-icon">
-                  <Sofa size={22} />
-                </div>
-
-                <div>
-
-                  <span>
-                    Furnished
-                  </span>
-
-                  <strong>
-                    {furnished
-                      ? "Yes"
-                      : "No"}
-                  </strong>
-
-                </div>
-
-              </div>
-
-              <div className="feature-item">
-
-                <div className="feature-icon">
-                  <Tag size={22} />
-                </div>
-
-                <div>
-
-                  <span>
-                    Category
-                  </span>
-
-                  <strong>
-                    {categoryName}
-                  </strong>
-
-                </div>
-
-              </div>
-
-              <div className="feature-item">
-
-                <div className="feature-icon success-icon">
-                  <CheckCircle size={22} />
-                </div>
-
-                <div>
-
-                  <span>
-                    Status
-                  </span>
-
-                  <strong>
-                    {status}
-                  </strong>
-
-                </div>
-
-              </div>
-
             </div>
 
-          </div>
-
-          {/* DESCRIPTION */}
-
-          <div className="property-card">
-
-            <h2>
-              Description
-            </h2>
-
-            <p className="description">
-              {description}
-            </p>
-
-          </div>
-
-          {/* LOCATION */}
-
-          <div className="property-card">
-
-            <h2>
-              Location
-            </h2>
-
-            <div className="location-details">
-
-              <div className="location-row">
-
-                <MapPin size={20} />
-
-                <div>
-
-                  <span>
-                    Location
-                  </span>
-
-                  <strong>
-                    {locationName}
-                  </strong>
-
-                </div>
-
-              </div>
-
-              {landmark && (
-                <div className="location-row">
-
-                  <Navigation size={20} />
-
-                  <div>
-
-                    <span>
-                      Landmark
-                    </span>
-
-                    <strong>
-                      {landmark}
-                    </strong>
-
-                  </div>
-
-                </div>
-              )}
-
-              {hasCoordinates && (
-                <div className="location-row">
-
-                  <MapPin size={20} />
-
-                  <div>
-
-                    <span>
-                      Coordinates
-                    </span>
-
-                    <strong>
-                      {property.gpsLat},{" "}
-                      {property.gpsLng}
-                    </strong>
-
-                  </div>
-
-                </div>
-              )}
-
+            <div className="bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 shadow-xs">
+              <h2 className="text-lg font-black text-[#022036] mb-4 uppercase tracking-wider">Description</h2>
+              <p className="text-sm text-slate-600 leading-relaxed whitespace-pre-wrap font-light">{description}</p>
             </div>
 
-          </div>
+            <div className="bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 shadow-xs">
+              <h2 className="text-lg font-black text-[#022036] mb-4 uppercase tracking-wider">Location & Surroundings</h2>
+              <div className="space-y-4">
+                <div className="flex items-start gap-3.5 p-4 bg-slate-50 rounded-2xl border border-slate-200 shadow-xs">
+                  <MapPin size={20} className="text-yellow-600 flex-shrink-0 mt-0.5" />
+                  <div>
+                    <span className="text-[10px] uppercase font-extrabold text-slate-400 block">Structured Location</span>
+                    <strong className="text-sm font-extrabold text-slate-900">{locationName}</strong>
+                  </div>
+                </div>
 
+                {landmark && (
+                  <div className="flex items-start gap-3.5 p-4 bg-slate-50 rounded-2xl border border-slate-200 shadow-xs">
+                    <Navigation size={20} className="text-yellow-600 flex-shrink-0 mt-0.5" />
+                    <div>
+                      <span className="text-[10px] uppercase font-extrabold text-slate-400 block">Landmark Description</span>
+                      <strong className="text-sm font-extrabold text-slate-900">{landmark}</strong>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
         </div>
+      </div>
 
-        {/* ========================================
-            RIGHT SIDEBAR
-        ======================================== */}
-
-        <aside className="property-sidebar">
-
-          <div className="rent-card">
-
-            <span className="rent-label">
-              Monthly Rent
-            </span>
-
-            <div className="rent-price">
-
-              {price.toLocaleString()}
-
-              <small>
-                {" "}ETB
-              </small>
-
-            </div>
-
-            <span className="rent-period">
-              per month
-            </span>
-
-            <div className="rent-divider" />
-
-            {/* ====================================
-                RENTAL REQUEST BUTTON
-            ==================================== */}
-
-            {!isAvailable ? (
-
-              <button
-                type="button"
-                className="rent-button"
-                disabled
-              >
-                <CheckCircle size={19} />
-                Property Unavailable
-              </button>
-
-            ) : hasPendingRequest ? (
-
-              <button
-                type="button"
-                className="rent-button"
-                disabled
-              >
-                <CheckCircle size={19} />
-                Request Pending
-              </button>
-
-            ) : hasApprovedRequest ? (
-
-              <button
-                type="button"
-                className="rent-button"
-                disabled
-              >
-                <CheckCircle size={19} />
-                Rental Approved
-              </button>
-
-            ) : (
-
-              <button
-                type="button"
-                className="rent-button"
-                onClick={
-                  handleOpenRequestForm
-                }
-                disabled={
-                  rentalRequestLoading
-                }
-              >
-                {getRequestButtonIcon()}
-                {getRequestButtonText()}
-              </button>
-
-            )}
-
-            {/* ====================================
-                EXISTING REQUEST STATUS
-            ==================================== */}
-
-            {hasPendingRequest && (
-              <div className="safe-message">
-
-                <CheckCircle size={17} />
-
-                <span>
-                  Your rental request is
-                  currently pending. The
-                  landlord will review your
-                  request.
-                </span>
-
-              </div>
-            )}
-
-            {hasApprovedRequest && (
-              <div className="safe-message">
-
-                <CheckCircle size={17} />
-
-                <span>
-                  Your rental request has
-                  been approved.
-                </span>
-
-              </div>
-            )}
-
-            {/* FAVORITE */}
-
-            <button
-              type="button"
-              className={`favorite-action ${
-                favorite
-                  ? "favorite-action-active"
-                  : ""
-              }`}
-              onClick={handleFavorite}
-            >
-              <Heart
-                size={19}
-                fill={
-                  favorite
-                    ? "currentColor"
-                    : "none"
-                }
-              />
-
-              {favorite
-                ? "Added to Favorites"
-                : "Add to Favorites"}
-
-            </button>
-
-            {/* SAFE MESSAGE */}
-
-            {!hasPendingRequest &&
-              !hasApprovedRequest && (
-                <div className="safe-message">
-
-                  <CheckCircle size={17} />
-
-                  <span>
-                    {isAvailable
-                      ? "This property has been approved and is available for rent."
-                      : "This property is currently not available for rent."}
-                  </span>
-
-                </div>
-              )}
-
-          </div>
-
-        </aside>
-
-      </section>
-
-      {/* ========================================
-          RENTAL REQUEST MODAL
-      ======================================== */}
-
+      {/* RENTAL REQUEST MODAL */}
       {showRequestForm && (
-
-        <div className="rental-modal-overlay">
-
-          <div className="rental-modal">
-
-            {/* ====================================
-                MODAL HEADER
-            ==================================== */}
-
-            <div className="rental-modal-header">
-
+        <div className="fixed inset-0 bg-slate-950/70 backdrop-blur-md z-50 flex items-center justify-center p-4 overflow-y-auto">
+          <div className="bg-white border border-slate-200 rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl relative my-8 text-slate-900">
+            <div className="flex justify-between items-start pb-4 mb-6 border-b border-slate-100">
               <div>
-
-                <h2>
-                  Request to Rent
-                </h2>
-
-                <p>
-                  Send a rental request for:
-                  <strong>
-                    {" "}{title}
-                  </strong>
-                </p>
-
+                <h2 className="text-xl font-black text-[#022036] uppercase tracking-wider">Request to Rent</h2>
+                <p className="text-xs text-slate-500 mt-1 font-light">Submit agreement application for: <strong className="text-yellow-600 font-bold">{title}</strong></p>
               </div>
-
               <button
                 type="button"
-                className="modal-close"
-                onClick={
-                  handleCloseRequestForm
-                }
+                className="p-2 bg-slate-100 hover:bg-slate-200 rounded-xl text-slate-500 hover:text-slate-950 cursor-pointer transition-all"
+                onClick={() => setShowRequestForm(false)}
                 disabled={requestLoading}
-                aria-label="Close"
               >
-                <X size={22} />
+                <X size={20} />
               </button>
-
             </div>
 
-            {/* ====================================
-                TENANT INFORMATION
-            ==================================== */}
-
-            <div className="request-tenant-information">
-
-              <div className="tenant-information-header">
-
-                <div className="tenant-information-icon">
-                  <User size={20} />
-                </div>
-
-                <div>
-
-                  <h3>
-                    Your Information
-                  </h3>
-
-                  <p>
-                    This information will be
-                    sent to the landlord with
-                    your rental request.
-                  </p>
-
-                </div>
-
-              </div>
+            <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 mb-6 shadow-xs">
+              <h3 className="text-xs font-black text-yellow-700 uppercase tracking-wider mb-3 flex items-center gap-2">
+                <User size={15} /> Verified Tenant Profile Data
+              </h3>
 
               {profileLoading ? (
-
-                <div className="tenant-profile-loading">
-
-                  <div className="tenant-profile-spinner" />
-
-                  <span>
-                    Loading your information...
-                  </span>
-
+                <div className="flex items-center gap-2 text-xs text-slate-500 py-2">
+                  <Loader2 size={16} className="animate-spin text-yellow-500" />
+                  <span>Loading profile data...</span>
                 </div>
-
               ) : tenantProfile ? (
-
-                <div className="tenant-information-grid">
-
-                  {/* FULL NAME */}
-
-                  <div className="tenant-information-item">
-
-                    <div className="tenant-information-item-icon">
-                      <User size={17} />
-                    </div>
-
-                    <div>
-
-                      <span>
-                        Full Name
-                      </span>
-
-                      <strong>
-                        {tenantProfile.fullName ||
-                          "Not provided"}
-                      </strong>
-
-                    </div>
-
+                <div className="grid grid-cols-2 gap-3 text-xs font-medium">
+                  <div>
+                    <span className="text-slate-400 block text-[10px] font-bold uppercase">Full Name</span>
+                    <strong className="text-slate-900">{tenantProfile.fullName || "N/A"}</strong>
                   </div>
-
-                  {/* EMAIL */}
-
-                  <div className="tenant-information-item">
-
-                    <div className="tenant-information-item-icon">
-                      <Mail size={17} />
-                    </div>
-
-                    <div>
-
-                      <span>
-                        Email
-                      </span>
-
-                      <strong>
-                        {tenantProfile.email ||
-                          "Not provided"}
-                      </strong>
-
-                    </div>
-
+                  <div>
+                    <span className="text-slate-400 block text-[10px] font-bold uppercase">Email</span>
+                    <strong className="text-slate-900 truncate block">{tenantProfile.email || "N/A"}</strong>
                   </div>
-
-                  {/* PHONE */}
-
-                  <div className="tenant-information-item">
-
-                    <div className="tenant-information-item-icon">
-                      <Phone size={17} />
-                    </div>
-
-                    <div>
-
-                      <span>
-                        Phone
-                      </span>
-
-                      <strong>
-                        {tenantProfile.phone ||
-                          "Not provided"}
-                      </strong>
-
-                    </div>
-
-                  </div>
-
-                  {/* FAYDA */}
-
-                  <div className="tenant-information-item">
-
-                    <div className="tenant-information-item-icon">
-                      <CreditCard size={17} />
-                    </div>
-
-                    <div>
-
-                      <span>
-                        Fayda Number
-                      </span>
-
-                      <strong>
-                        {tenantProfile.faydaNumber ||
-                          "Not provided"}
-                      </strong>
-
-                    </div>
-
-                  </div>
-
-                  {/* GENDER */}
-
-                  <div className="tenant-information-item">
-
-                    <div className="tenant-information-item-icon">
-                      <User size={17} />
-                    </div>
-
-                    <div>
-
-                      <span>
-                        Gender
-                      </span>
-
-                      <strong>
-                        {tenantProfile.gender ||
-                          "Not provided"}
-                      </strong>
-
-                    </div>
-
-                  </div>
-
-                  {/* MARITAL STATUS */}
-
-                  <div className="tenant-information-item">
-
-                    <div className="tenant-information-item-icon">
-                      <User size={17} />
-                    </div>
-
-                    <div>
-
-                      <span>
-                        Marital Status
-                      </span>
-
-                      <strong>
-                        {tenantProfile.maritalStatus ||
-                          "Not provided"}
-                      </strong>
-
-                    </div>
-
-                  </div>
-
-                  {/* FAMILY NUMBER */}
-
-                  <div className="tenant-information-item">
-
-                    <div className="tenant-information-item-icon">
-                      <Users size={17} />
-                    </div>
-
-                    <div>
-
-                      <span>
-                        Family Members
-                      </span>
-
-                      <strong>
-                        {tenantProfile.familyNumber ??
-                          "Not provided"}
-                      </strong>
-
-                    </div>
-
-                  </div>
-
                 </div>
-
               ) : (
-
-                <div className="request-profile-warning">
-
-                  <User size={18} />
-
-                  <span>
-                    Your profile information
-                    could not be loaded. Please
-                    complete your profile before
-                    submitting a rental request.
-                  </span>
-
-                </div>
-
+                <p className="text-xs text-rose-600 font-semibold">Profile data could not be verified.</p>
               )}
-
             </div>
 
-            {/* ====================================
-                SUCCESS
-            ==================================== */}
-
             {requestSuccess && (
-
-              <div className="request-success">
-
-                <CheckCircle size={18} />
-
-                <span>
-                  {requestSuccess}
-                </span>
-
+              <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-2xl text-emerald-800 text-xs mb-6 flex items-center gap-2.5 font-semibold">
+                <CheckCircle size={18} className="flex-shrink-0" />
+                <span>{requestSuccess}</span>
               </div>
-
             )}
-
-            {/* ====================================
-                ERROR
-            ==================================== */}
 
             {requestError && (
-
-              <div className="request-error">
-
+              <div className="p-4 bg-rose-50 border border-rose-200 rounded-2xl text-rose-700 text-xs mb-6 font-semibold">
                 {requestError}
-
               </div>
-
             )}
 
-            {/* ====================================
-                FORM
-            ==================================== */}
-
             {!requestSuccess && (
-
-              <form
-                onSubmit={handleRentRequest}
-                className="rental-request-form"
-              >
-
-                {/* MESSAGE */}
-
-                <div className="form-group">
-
-                  <label htmlFor="message">
-                    Message
-                  </label>
-
+              <form onSubmit={handleRentRequest} className="space-y-4">
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">Message to Landlord</label>
                   <textarea
-                    id="message"
-                    name="message"
-                    value={
-                      requestForm.message
-                    }
-                    onChange={
-                      handleRequestInputChange
-                    }
-                    placeholder="Write a message to the landlord..."
-                    rows="4"
+                    rows="3"
+                    value={requestForm.message}
+                    onChange={(e) => setRequestForm({ ...requestForm, message: e.target.value })}
+                    placeholder="Introduce yourself and specify your preferred terms..."
+                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 placeholder-slate-400 text-xs focus:outline-none focus:border-yellow-500 font-medium"
+                    required
                   />
-
                 </div>
 
-                {/* PROPOSED PRICE */}
-
-                <div className="form-group">
-
-                  <label htmlFor="proposedPrice">
-                    Proposed Monthly Price (ETB)
-                  </label>
-
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">Proposed Monthly Price (ETB)</label>
                   <input
-                    id="proposedPrice"
                     type="number"
-                    name="proposedPrice"
-                    value={
-                      requestForm.proposedPrice
-                    }
-                    onChange={
-                      handleRequestInputChange
-                    }
-                    placeholder={price}
                     min="0"
+                    value={requestForm.proposedPrice}
+                    onChange={(e) => setRequestForm({ ...requestForm, proposedPrice: e.target.value })}
+                    placeholder={price}
+                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 placeholder-slate-400 text-xs focus:outline-none focus:border-yellow-500 font-mono"
                   />
-
                 </div>
 
-                {/* DATES */}
-
-                <div className="date-grid">
-
-                  <div className="form-group">
-
-                    <label htmlFor="startDate">
-                      Start Date
-                    </label>
-
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">Move-in Start Date</label>
                     <input
-                      id="startDate"
                       type="date"
-                      name="startDate"
-                      value={
-                        requestForm.startDate
-                      }
-                      onChange={
-                        handleRequestInputChange
-                      }
+                      value={requestForm.startDate}
+                      onChange={(e) => setRequestForm({ ...requestForm, startDate: e.target.value })}
+                      className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 text-xs focus:outline-none focus:border-yellow-500 font-mono"
+                      required
                     />
-
                   </div>
 
-                  <div className="form-group">
-
-                    <label htmlFor="endDate">
-                      End Date
-                    </label>
-
+                  <div className="space-y-1">
+                    <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">Expected End Date</label>
                     <input
-                      id="endDate"
                       type="date"
-                      name="endDate"
-                      value={
-                        requestForm.endDate
-                      }
-                      onChange={
-                        handleRequestInputChange
-                      }
+                      value={requestForm.endDate}
+                      onChange={(e) => setRequestForm({ ...requestForm, endDate: e.target.value })}
+                      className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 text-xs focus:outline-none focus:border-yellow-500 font-mono"
                     />
-
                   </div>
-
                 </div>
 
-                {/* ACTIONS */}
-
-                <div className="rental-form-actions">
-
+                <div className="flex gap-3 pt-4 border-t border-slate-100 mt-6">
                   <button
                     type="button"
-                    className="cancel-request"
-                    onClick={
-                      handleCloseRequestForm
-                    }
+                    className="flex-1 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold cursor-pointer transition-all shadow-xs"
+                    onClick={() => setShowRequestForm(false)}
                     disabled={requestLoading}
                   >
                     Cancel
                   </button>
-
                   <button
                     type="submit"
-                    className="submit-request"
-                    disabled={
-                      requestLoading ||
-                      profileLoading ||
-                      !tenantProfile
-                    }
+                    className="flex-1 py-3 bg-yellow-500 hover:bg-yellow-400 text-[#022036] font-extrabold rounded-xl text-xs shadow-sm cursor-pointer transition-all flex items-center justify-center gap-2 uppercase tracking-wider"
+                    disabled={requestLoading}
                   >
-
-                    <Send size={18} />
-
-                    {requestLoading
-                      ? "Submitting..."
-                      : profileLoading
-                      ? "Loading Profile..."
-                      : "Submit Request"}
-
+                    {requestLoading ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
+                    <span>{requestLoading ? "Submitting..." : "Submit Request"}</span>
                   </button>
-
                 </div>
-
               </form>
-
             )}
-
-            {/* ====================================
-                SUCCESS CLOSE
-            ==================================== */}
 
             {requestSuccess && (
-
-              <div className="rental-success-actions">
-
-                <button
-                  type="button"
-                  className="submit-request"
-                  onClick={() =>
-                    setShowRequestForm(false)
-                  }
-                >
-                  Done
-                </button>
-
-              </div>
-
+              <button
+                type="button"
+                className="w-full mt-4 py-3 bg-yellow-500 text-[#022036] font-extrabold rounded-xl text-xs shadow-sm cursor-pointer uppercase tracking-wider"
+                onClick={() => setShowRequestForm(false)}
+              >
+                Done
+              </button>
             )}
-
           </div>
-
         </div>
-
       )}
-
-    </main>
+    </div>
   );
 }

@@ -1,73 +1,61 @@
-<<<<<<< HEAD
 import { createContext, useContext, useEffect, useState } from "react";
-
 import {
-  loginUser,
-  registerUser,
+  loginUser as apiLoginUser,
+  registerUser as apiRegisterUser,
   getCurrentUser,
-  logoutUser,
+  logoutUser as apiLogoutUser,
 } from "../services/authService";
-=======
-import { createContext, useContext, useState } from 'react';
->>>>>>> origin/feature/developer-a-auth
 
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
-<<<<<<< HEAD
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState(() => {
+    const saved = localStorage.getItem("hr_user");
+    return saved ? JSON.parse(saved) : null;
+  });
   const [loading, setLoading] = useState(true);
 
   // Restore authentication after page refresh
   useEffect(() => {
     const restoreSession = async () => {
-      const token = localStorage.getItem("hr_token");
-      const savedUser = localStorage.getItem("hr_user");
+      const token = localStorage.getItem("hr_token") || localStorage.getItem("token");
+      const savedUser = localStorage.getItem("hr_user") || localStorage.getItem("user");
 
-      // No token = not logged in
       if (!token) {
         setLoading(false);
         return;
       }
 
-      // Restore saved user immediately
       if (savedUser) {
         try {
           setUser(JSON.parse(savedUser));
         } catch (error) {
           console.error("Invalid saved user:", error);
           localStorage.removeItem("hr_user");
+          localStorage.removeItem("user");
         }
       }
 
-      // Verify token with backend
       try {
         const response = await getCurrentUser();
+        const userData = response?.user || response;
 
-        if (!response?.user) {
+        if (!userData) {
           throw new Error("Invalid user response");
         }
 
-        /*
-          Backend /api/auth/me returns:
-          {
-            userId,
-            role,
-            iat,
-            exp
-          }
-
-          Merge that with saved user information.
-        */
-        setUser((previousUser) => ({
-          ...(previousUser || {}),
-          ...response.user,
-          id: response.user.userId || previousUser?.id,
-        }));
+        setUser((previousUser) => {
+          const updatedUser = {
+            ...(previousUser || {}),
+            ...userData,
+            id: userData.userId || userData.id || previousUser?.id,
+          };
+          localStorage.setItem("hr_user", JSON.stringify(updatedUser));
+          return updatedUser;
+        });
       } catch (error) {
         console.error("Session verification failed:", error);
-
-        logoutUser();
+        apiLogoutUser();
         setUser(null);
       } finally {
         setLoading(false);
@@ -77,32 +65,36 @@ export function AuthProvider({ children }) {
     restoreSession();
   }, []);
 
-  // Login
+  // Login (Explicitly stores token and user in localStorage)
   const login = async (credentials) => {
-    const response = await loginUser(credentials);
+    const response = await apiLoginUser(credentials);
+    const token = response.token;
+    const userData = response.user || response;
 
-    if (!response?.token || !response?.user) {
-      throw new Error("Invalid login response from server");
+    if (token) {
+      localStorage.setItem("hr_token", token);
+    }
+    if (userData) {
+      localStorage.setItem("hr_user", JSON.stringify(userData));
     }
 
-    setUser(response.user);
-
+    setUser(userData);
     return response;
   };
 
   // Register
   const register = async (userData) => {
-    return await registerUser(userData);
+    return await apiRegisterUser(userData);
   };
 
   // Logout
   const logout = () => {
-    logoutUser();
+    apiLogoutUser();
     setUser(null);
   };
 
   const isAuthenticated =
-    Boolean(localStorage.getItem("hr_token")) && Boolean(user);
+    Boolean(localStorage.getItem("hr_token") || localStorage.getItem("token")) && Boolean(user);
 
   const value = {
     user,
@@ -115,45 +107,17 @@ export function AuthProvider({ children }) {
 
   return (
     <AuthContext.Provider value={value}>
-=======
-  const [user, setUser] = useState(() => {
-    const saved = localStorage.getItem('user');
-    return saved ? JSON.parse(saved) : null;
-  });
-
-  const loginUser = (token, userData) => {
-    localStorage.setItem('token', token);
-    localStorage.setItem('user', JSON.stringify(userData));
-    setUser(userData);
-  };
-
-  const logoutUser = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    setUser(null);
-  };
-
-  return (
-    <AuthContext.Provider value={{ user, loginUser, logoutUser }}>
->>>>>>> origin/feature/developer-a-auth
       {children}
     </AuthContext.Provider>
   );
 }
 
 export function useAuth() {
-<<<<<<< HEAD
   const context = useContext(AuthContext);
-
   if (!context) {
     throw new Error("useAuth must be used inside AuthProvider");
   }
-
   return context;
 }
 
 export default AuthContext;
-=======
-  return useContext(AuthContext);
-}
->>>>>>> origin/feature/developer-a-auth

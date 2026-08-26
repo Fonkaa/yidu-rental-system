@@ -1,8 +1,10 @@
+const prisma = require("../prisma/client");
 const {
   createRentalRequest,
   getRentalRequestsForUser,
   updateRentalRequestStatus,
 } = require("../services/rentalRequestService");
+const { notifyUser } = require("../services/notificationService");
 
 // ======================================================
 // CREATE RENTAL REQUEST
@@ -30,6 +32,31 @@ async function createRequest(req, res) {
       tenantId: req.user.userId,
       ...req.body,
     });
+
+    // --- NOTIFY LANDLORD ---
+    try {
+      const property = await prisma.property.findUnique({
+        where: { id: propertyId },
+        select: { landlordId: true, titleEn: true }
+      });
+      const tenantUser = await prisma.user.findUnique({
+        where: { id: req.user.userId },
+        select: { fullName: true }
+      });
+
+      if (property) {
+        await notifyUser(
+          property.landlordId,
+          'RENTAL_REQUEST',
+          'New Rental Inquiry! 🏠',
+          `${tenantUser?.fullName || 'A tenant'} submitted a rental request for "${property.titleEn || 'your property'}".`,
+          'Property',
+          propertyId
+        );
+      }
+    } catch (notifErr) {
+      console.error("Failed to notify landlord:", notifErr);
+    }
 
     return res.status(201).json({
       success: true,
@@ -196,6 +223,30 @@ async function updateRequestStatus(req, res) {
       req.user.role,
       status
     );
+
+    // --- NOTIFY TENANT OF STATUS CHANGE ---
+    try {
+      const fullReq = await prisma.rentalRequest.findUnique({
+        where: { id },
+        include: { property: { select: { titleEn: true } } }
+      });
+
+      if (fullReq && fullReq.tenantId) {
+        const isApproved = status === 'APPROVED';
+        await notifyUser(
+          fullReq.tenantId,
+          isApproved ? 'REQUEST_APPROVED' : 'REQUEST_REJECTED',
+          isApproved ? 'Rental Request Approved! 🎉' : 'Rental Request Update',
+          isApproved 
+            ? `Your request for "${fullReq.property?.titleEn || 'property'}" has been approved by the landlord.` 
+            : `Your rental request was declined.`,
+          'RentalRequest',
+          id
+        );
+      }
+    } catch (notifErr) {
+      console.error("Failed to notify tenant:", notifErr);
+    }
 
     return res.status(200).json({
       success: true,

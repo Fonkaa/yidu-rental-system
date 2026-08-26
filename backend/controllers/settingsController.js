@@ -1,54 +1,113 @@
-const prisma = require('../prisma/client');
+const prisma = require("../prisma/client");
+const bcrypt = require("bcrypt");
 
-async function getCommissionRate(req, res) {
+// GET USER SETTINGS PROFILE
+async function getSettings(req, res) {
   try {
-    let setting = await prisma.commissionSetting.findFirst();
-
-    if (!setting) {
-      setting = await prisma.commissionSetting.create({
-        data: { ratePercent: 10 },
-      });
+    const userId = req.user?.userId;
+    if (!userId) {
+      return res.status(401).json({ success: false, error: "Authentication required" });
     }
 
-    res.json(setting);
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        fullName: true,
+        email: true,
+        phone: true,
+        role: true,
+        faydaNumber: true,
+        gender: true,
+        maritalStatus: true,
+        familyNumber: true,
+        createdAt: true,
+      }
+    });
+
+    if (!user) {
+      return res.status(404).json({ success: false, error: "User not found" });
+    }
+
+    return res.status(200).json({
+      success: true,
+      user: {
+        ...user,
+        idNumber: user.faydaNumber // Mapped for frontend compatibility
+      }
+    });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: 'Something went wrong fetching the commission rate' });
+    console.error("GET SETTINGS ERROR:", error);
+    return res.status(500).json({ success: false, error: "Failed to fetch settings profile" });
   }
 }
 
-async function updateCommissionRate(req, res) {
+// UPDATE USER SETTINGS PROFILE & PASSWORD
+async function updateSettings(req, res) {
   try {
-    const { ratePercent } = req.body;
-
-    if (ratePercent === undefined || ratePercent < 0 || ratePercent > 100) {
-      return res.status(400).json({ error: 'ratePercent must be a number between 0 and 100' });
+    const userId = req.user?.userId;
+    if (!userId) {
+      return res.status(401).json({ success: false, error: "Authentication required" });
     }
 
-    let setting = await prisma.commissionSetting.findFirst();
+    const { fullName, phone, idNumber, gender, maritalStatus, familyNumber, currentPassword, newPassword } = req.body;
 
-    if (!setting) {
-      setting = await prisma.commissionSetting.create({
-        data: {
-          ratePercent: parseFloat(ratePercent),
-          updatedByAdminId: req.user.userId,
-        },
-      });
-    } else {
-      setting = await prisma.commissionSetting.update({
-        where: { id: setting.id },
-        data: {
-          ratePercent: parseFloat(ratePercent),
-          updatedByAdminId: req.user.userId,
-        },
-      });
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user) {
+      return res.status(404).json({ success: false, error: "User not found" });
     }
 
-    res.json(setting);
+    const updateData = {};
+    if (fullName !== undefined) updateData.fullName = fullName.trim();
+    if (phone !== undefined) updateData.phone = phone.trim();
+    if (idNumber !== undefined) updateData.faydaNumber = idNumber.trim();
+    if (gender !== undefined) updateData.gender = gender;
+    if (maritalStatus !== undefined) updateData.maritalStatus = maritalStatus;
+    if (familyNumber !== undefined) updateData.familyNumber = Number(familyNumber) || null;
+
+    // Handle Password Change if requested
+    if (newPassword && newPassword.trim() !== "") {
+      if (!currentPassword) {
+        return res.status(400).json({ success: false, error: "Current password is required to set a new password" });
+      }
+      const passwordMatches = await bcrypt.compare(currentPassword, user.passwordHash);
+      if (!passwordMatches) {
+        return res.status(401).json({ success: false, error: "Incorrect current password" });
+      }
+      updateData.passwordHash = await bcrypt.hash(newPassword, 10);
+    }
+
+    const updatedUser = await prisma.user.update({
+      where: { id: userId },
+      data: updateData,
+      select: {
+        id: true,
+        fullName: true,
+        email: true,
+        phone: true,
+        role: true,
+        faydaNumber: true,
+        gender: true,
+        maritalStatus: true,
+        familyNumber: true,
+      }
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: "Settings updated successfully",
+      user: {
+        ...updatedUser,
+        idNumber: updatedUser.faydaNumber
+      }
+    });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: 'Something went wrong updating the commission rate' });
+    console.error("UPDATE SETTINGS ERROR:", error);
+    return res.status(500).json({ success: false, error: "Failed to update settings" });
   }
 }
 
-module.exports = { getCommissionRate, updateCommissionRate };
+module.exports = {
+  getSettings,
+  updateSettings,
+};
