@@ -13,7 +13,7 @@
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
-    "@prisma/client": "6.1.0",
+    "@prisma/client": "^6.1.0",
     "@tailwindcss/vite": "^4.3.3",
     "axios": "^1.19.0",
     "bcrypt": "^6.0.0",
@@ -32,6 +32,6 @@
   },
   "devDependencies": {
     "nodemon": "^3.1.14",
-    "prisma": "6.1.0"
+    "prisma": "^6.1.0"
   }
 }
