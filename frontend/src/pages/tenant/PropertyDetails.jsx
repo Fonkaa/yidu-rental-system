@@ -179,7 +179,7 @@ export default function PropertyDetails() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-white text-slate-800 flex flex-col items-center justify-center gap-4 font-sans">
+      <div className="h-full w-full bg-white text-slate-800 flex flex-col items-center justify-center gap-4 font-sans">
         <Loader2 size={40} className="animate-spin text-yellow-500" />
         <p className="text-sm text-slate-400 font-semibold">Loading property details...</p>
       </div>
@@ -188,7 +188,7 @@ export default function PropertyDetails() {
 
   if (error || !property) {
     return (
-      <div className="min-h-screen bg-slate-50 text-slate-800 flex items-center justify-center p-4 font-sans">
+      <div className="h-full w-full bg-slate-50 text-slate-800 flex items-center justify-center p-4 font-sans">
         <div className="bg-white border border-slate-200 rounded-2xl p-8 max-w-md w-full text-center shadow-xs">
           <div className="w-16 h-16 bg-rose-50 border border-rose-200 text-rose-700 rounded-full flex items-center justify-center mx-auto mb-4">
             <AlertCircle size={30} />
@@ -286,7 +286,7 @@ export default function PropertyDetails() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-800 py-10 px-4 sm:px-8 relative overflow-hidden font-sans selection:bg-yellow-500 selection:text-[#022036]">
+    <div className="h-full w-full bg-slate-50 text-slate-800 py-10 px-4 sm:px-8 relative overflow-y-auto pb-24 font-sans selection:bg-yellow-500 selection:text-[#022036]">
       <div className="absolute -top-40 -left-40 w-96 h-96 bg-yellow-500/10 rounded-full blur-3xl pointer-events-none"></div>
 
       <div className="max-w-6xl mx-auto space-y-8 relative z-10">
