@@ -4,11 +4,13 @@ import { createProperty, uploadPropertyImages } from '../../services/propertySer
 import { getCategories, getLocations } from '../../services/lookupService';
 import { getMe, updateIdNumber } from '../../services/authService';
 import { Building2, ArrowLeft, Loader2, AlertCircle } from 'lucide-react';
+import * as XLSX from 'xlsx';
 
 export default function CreateProperty() {
   const [categories, setCategories] = useState([]);
   const [locations, setLocations] = useState([]);
   const [images, setImages] = useState([]);
+  const [videoFile, setVideoFile] = useState(null); // Optional video tour state
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -49,6 +51,46 @@ export default function CreateProperty() {
     setForm((prev) => ({ ...prev, [name]: type === 'checkbox' ? checked : value }));
   };
 
+  const handleExcelGpsUpload = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setError('');
+    const reader = new FileReader();
+    reader.onload = (evt) => {
+      try {
+        const bstr = evt.target?.result;
+        const workbook = XLSX.read(bstr, { type: 'binary' });
+        const firstSheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[firstSheetName];
+        const jsonData = XLSX.utils.sheet_to_json(worksheet);
+
+        if (jsonData.length === 0) {
+          setError('The uploaded Excel file is empty.');
+          return;
+        }
+
+        const row = jsonData[0];
+        const lat = row.lat || row.Latitude || row.latitude || row.GPS_Lat || row.gpsLat || row['GPS Lat'];
+        const lng = row.lng || row.Longitude || row.longitude || row.GPS_Lng || row.gpsLng || row['GPS Lng'];
+
+        if (lat !== undefined && lng !== undefined) {
+          setForm((prev) => ({
+            ...prev,
+            gpsLat: String(lat),
+            gpsLng: String(lng),
+          }));
+        } else {
+          setError('Could not find latitude/longitude columns. Ensure headers are named "lat" and "lng" or "Latitude" and "Longitude".');
+        }
+      } catch (err) {
+        console.error('Excel parse error:', err);
+        setError('Failed to parse the Excel file. Please upload a valid .xlsx or .xls file.');
+      }
+    };
+    reader.readAsBinaryString(file);
+  };
+
   const handleSaveId = async (e) => {
     e.preventDefault();
     setIdError('');
@@ -87,6 +129,12 @@ export default function CreateProperty() {
 
       const formData = new FormData();
       images.forEach((img) => formData.append('images', img));
+      
+      // Append optional video tour if selected
+      if (videoFile) {
+        formData.append('video', videoFile);
+      }
+
       await uploadPropertyImages(propertyId, formData);
 
       setSuccess(true);
@@ -240,6 +288,18 @@ export default function CreateProperty() {
                 className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-900 placeholder-slate-400 text-sm focus:outline-none focus:border-yellow-500 font-medium" />
             </div>
 
+            {/* GPS Excel Import Section */}
+            <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl space-y-2">
+              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">Import GPS Coordinates from Excel (.xlsx/.xls)</label>
+              <input 
+                type="file" 
+                accept=".xlsx, .xls" 
+                onChange={handleExcelGpsUpload}
+                className="w-full text-xs text-slate-600 file:mr-4 file:py-2 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-slate-200 file:text-slate-700 hover:file:bg-slate-300 file:cursor-pointer cursor-pointer" 
+              />
+              <p className="text-[10px] text-slate-400">Headers in your Excel sheet should be named <code className="text-slate-600 font-mono">lat</code> and <code className="text-slate-600 font-mono">lng</code>.</p>
+            </div>
+
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">GPS Latitude (Optional)</label>
@@ -258,6 +318,18 @@ export default function CreateProperty() {
               <input type="file" accept="image/jpeg,image/png,image/webp" multiple
                 onChange={(e) => setImages(Array.from(e.target.files))}
                 className="w-full text-xs text-slate-600 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-extrabold file:bg-yellow-500 file:text-[#022036] hover:file:bg-yellow-400 file:cursor-pointer cursor-pointer" />
+            </div>
+
+            {/* Optional Video Tour Upload Section */}
+            <div>
+              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Property Tour Video (Optional)</label>
+              <input 
+                type="file" 
+                accept="video/mp4,video/webm,video/quicktime"
+                onChange={(e) => setVideoFile(e.target.files[0] || null)}
+                className="w-full text-xs text-slate-600 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-extrabold file:bg-slate-200 file:text-slate-700 hover:file:bg-slate-300 file:cursor-pointer cursor-pointer" 
+              />
+              <p className="text-[10px] text-slate-400 mt-1">Upload an optional MP4 or WebM video walkthrough for tenants.</p>
             </div>
           </fieldset>
 

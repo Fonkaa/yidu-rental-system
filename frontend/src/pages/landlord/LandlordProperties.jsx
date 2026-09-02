@@ -326,6 +326,7 @@ export default function LandlordProperties() {
                     >
                       <RefreshCw size={12} /> Renew
                     </button>
+                    
                   )}
                 </div>
               </div>

@@ -24,6 +24,8 @@ model User {
   isActive                 Boolean         @default(true)
   familyNumber             Int?
   faydaNumber              String?
+  faydaFrontImage          String?
+  faydaBackImage           String?
   gender                   String?
   maritalStatus            String?
   favorites                Favorite[]
@@ -48,6 +50,7 @@ model Property {
   gpsLat              Float?
   gpsLng              Float?
   status              ListingStatus   @default(PENDING)
+  videoUrl            String?
   rejectionReason     String?         // <--- Added rejection reason here
   publishedAt         DateTime?
   expiresAt           DateTime?

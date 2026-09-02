@@ -54,6 +54,8 @@ async function approveProperty(req, res) {
 async function rejectProperty(req, res) {
   try {
     const { id } = req.params;
+    const { reason } = req.body; // <--- Capture the rejection reason from frontend
+
     const property = await prisma.property.findUnique({ where: { id } });
     if (!property) {
       return res.status(404).json({ error: 'Property not found' });
@@ -61,19 +63,22 @@ async function rejectProperty(req, res) {
 
     const updated = await prisma.property.update({
       where: { id },
-      data: { status: 'REJECTED' },
+      data: { 
+        status: 'REJECTED',
+        rejectionReason: reason || "Listing rejected by administrator." // <--- Store the custom reason correctly
+      },
     });
 
     await notifyUser(
       property.landlordId,
       'LISTING_REJECTED',
       'Listing Rejected',
-      `Your listing "${property.titleEn}" was rejected. Please review and resubmit.`,
+      `Your listing "${property.titleEn}" was rejected. Reason: ${reason || 'Please review and resubmit.'}`,
       'Property',
       property.id
     );
 
-    res.json(updated);
+    res.json({ success: true, property: updated });
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'Something went wrong rejecting the property' });
@@ -222,6 +227,27 @@ async function getPaymentsSummary(req, res) {
     return res.status(0).json({ error: 'Something went wrong fetching payments summary' });
   }
 }
+async function deleteUser(req, res) {
+  try {
+    const { id } = req.params;
+    const user = await prisma.user.findUnique({ where: { id } });
+
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Delete associated properties first if needed, or rely on Prisma cascade relations
+    await prisma.property.deleteMany({ where: { landlordId: id } }).catch(() => {});
+    
+    // Delete the user
+    await prisma.user.delete({ where: { id } });
+
+    return res.json({ success: true, message: 'User deleted successfully' });
+  } catch (error) {
+    console.error('DELETE USER ERROR:', error);
+    return res.status(500).json({ error: 'Something went wrong deleting the user' });
+  }
+}
 
 module.exports = {
   getPendingProperties,
@@ -232,4 +258,5 @@ module.exports = {
   updateUserRole,
   createRole,
   getPaymentsSummary,
+  deleteUser,
 };

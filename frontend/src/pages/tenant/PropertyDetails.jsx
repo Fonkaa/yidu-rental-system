@@ -16,12 +16,14 @@ import {
   User,
   Loader2,
   AlertCircle,
+  Globe,
 } from "lucide-react";
 
 import api from "../../services/api";
 import { getMyProfile } from "../../services/profileService";
 import { createRentalRequest } from "../../services/rentalRequestService";
 import { favoriteService } from "../../services/favoriteService";
+import { getMe } from "../../services/authService";
 
 export default function PropertyDetails() {
   const { id } = useParams();
@@ -29,6 +31,7 @@ export default function PropertyDetails() {
   const [property, setProperty] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [userRole, setUserRole] = useState("");
 
   const [activeImage, setActiveImage] = useState(0);
   const [favorite, setFavorite] = useState(false);
@@ -51,17 +54,18 @@ export default function PropertyDetails() {
     endDate: "",
   });
 
-  // Load property details and check favorite status
+  // Load property details, user role, and check favorite status
   useEffect(() => {
     const loadPropertyAndFavorites = async () => {
       try {
         setLoading(true);
         setError("");
 
-        // Fetch property details and user favorites in parallel
-        const [propertyRes, favoritesRes] = await Promise.all([
+        // Fetch property details, user profile/role, and user favorites in parallel
+        const [propertyRes, favoritesRes, userRes] = await Promise.all([
           api.get(`/properties/${id}`),
-          favoriteService.getAll().catch(() => ({ data: [] }))
+          favoriteService.getAll().catch(() => ({ data: [] })),
+          getMe().catch(() => ({ data: { user: {} } }))
         ]);
 
         const propertyData = propertyRes.data?.property || propertyRes.data;
@@ -72,6 +76,10 @@ export default function PropertyDetails() {
         }
 
         setProperty(propertyData);
+
+        // Determine current user role
+        const currentUser = userRes?.data?.user || userRes?.user || userRes?.data || {};
+        setUserRole(currentUser.role || localStorage.getItem("user_role") || "");
 
         // Check if this property is in user's favorites
         const favData = favoritesRes?.data || favoritesRes;
@@ -91,8 +99,8 @@ export default function PropertyDetails() {
         console.error("LOAD PROPERTY DETAILS ERROR:", err);
         setError(
           err.response?.data?.error ||
-          err.response?.data?.message ||
-          "Failed to load property details"
+            err.response?.data?.message ||
+            "Failed to load property details"
         );
       } finally {
         setLoading(false);
@@ -128,6 +136,7 @@ export default function PropertyDetails() {
   };
 
   const loadExistingRentalRequest = async () => {
+    if (userRole === "landlord") return;
     try {
       setRentalRequestLoading(true);
       const response = await api.get("/rental-requests");
@@ -152,9 +161,9 @@ export default function PropertyDetails() {
   };
 
   useEffect(() => {
-    if (!property || !id) return;
+    if (!property || !id || userRole === "landlord") return;
     loadExistingRentalRequest();
-  }, [property, id]);
+  }, [property, id, userRole]);
 
   const loadTenantProfile = async () => {
     try {
@@ -221,6 +230,11 @@ export default function PropertyDetails() {
     images = [rawUrl.startsWith('http') ? rawUrl : `http://localhost:5000${rawUrl.startsWith('/') ? '' : '/'}${rawUrl}`];
   }
 
+  const rawVideoUrl = property.videoUrl;
+  const videoUrl = rawVideoUrl
+    ? rawVideoUrl.startsWith('http') ? rawVideoUrl : `http://localhost:5000${rawVideoUrl.startsWith('/') ? '' : '/'}${rawVideoUrl}`
+    : null;
+
   const locationName = property.location?.city || property.city || "Addis Ababa";
   const categoryName = property.category?.name || "Apartment";
   const title = property.titleEn || property.title || "Untitled Property";
@@ -230,6 +244,10 @@ export default function PropertyDetails() {
   const price = Number(property.price || property.rentAmount || 0);
   const status = property.status || "APPROVED";
   const landmark = property.landmarkDescription || property.landmark || "";
+  
+  // Extract GPS coordinates
+  const gpsLat = property.gpsLat ?? property.latitude ?? null;
+  const gpsLng = property.gpsLng ?? property.longitude ?? null;
   
   const isAvailable = status === "APPROVED" || status === "AVAILABLE";
 
@@ -285,6 +303,8 @@ export default function PropertyDetails() {
     }
   };
 
+  const isLandlord = userRole.toLowerCase() === "landlord";
+
   return (
     <div className="h-full w-full bg-slate-50 text-slate-800 py-10 px-4 sm:px-8 relative overflow-y-auto pb-24 font-sans selection:bg-yellow-500 selection:text-[#022036]">
       <div className="absolute -top-40 -left-40 w-96 h-96 bg-yellow-500/10 rounded-full blur-3xl pointer-events-none"></div>
@@ -328,11 +348,18 @@ export default function PropertyDetails() {
           </button>
         </div>
 
-        {/* IMAGE GALLERY */}
+        {/* MEDIA GALLERY / VIDEO HERO SHOWCASE */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 bg-white border border-slate-200 rounded-3xl overflow-hidden p-3 shadow-xs">
-            <div className="relative h-80 sm:h-[420px] rounded-2xl overflow-hidden bg-slate-100">
-              {images.length > 0 ? (
+            <div className="relative h-80 sm:h-[420px] rounded-2xl overflow-hidden bg-slate-900">
+              {videoUrl ? (
+                <video
+                  src={videoUrl}
+                  controls
+                  preload="metadata"
+                  className="w-full h-full object-cover"
+                />
+              ) : images.length > 0 ? (
                 <img
                   src={images[activeImage]?.url || images[activeImage]}
                   alt={title}
@@ -342,11 +369,11 @@ export default function PropertyDetails() {
               ) : (
                 <div className="w-full h-full flex flex-col items-center justify-center text-slate-400 gap-2">
                   <ImageIcon size={48} />
-                  <span className="text-xs font-medium">No images available</span>
+                  <span className="text-xs font-medium">No media available</span>
                 </div>
               )}
               <span className="absolute bottom-3 right-3 px-3 py-1 rounded-xl bg-slate-950/70 backdrop-blur-md text-xs font-extrabold text-white border border-white/10 shadow-xs">
-                {images.length > 0 ? `${activeImage + 1} / ${images.length}` : "0 / 0"}
+                {videoUrl ? "Video Tour" : images.length > 0 ? `${activeImage + 1} / ${images.length}` : "0 / 0"}
               </span>
             </div>
 
@@ -381,7 +408,12 @@ export default function PropertyDetails() {
               </div>
               <div className="h-px bg-slate-200 my-6"></div>
 
-              {!isAvailable ? (
+              {/* Conditionally render request button or landlord notice */}
+              {isLandlord ? (
+                <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl text-center text-xs text-slate-500 font-semibold">
+                  Landlord Account View (Rental requests are restricted to tenants)
+                </div>
+              ) : !isAvailable ? (
                 <button type="button" className="w-full py-4 bg-slate-100 text-slate-400 font-bold rounded-2xl cursor-not-allowed text-xs uppercase tracking-wider" disabled>
                   Property Unavailable
                 </button>
@@ -469,6 +501,36 @@ export default function PropertyDetails() {
                     <div>
                       <span className="text-[10px] uppercase font-extrabold text-slate-400 block">Landmark Description</span>
                       <strong className="text-sm font-extrabold text-slate-900">{landmark}</strong>
+                    </div>
+                  </div>
+                )}
+
+                {/* GPS Coordinates & Map integration display */}
+                {(gpsLat !== null && gpsLat !== "" && gpsLng !== null && gpsLng !== "") && (
+                  <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 shadow-xs space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Globe size={18} className="text-yellow-600" />
+                        <span className="text-xs font-black uppercase text-[#022036] tracking-wider">GPS Coordinates</span>
+                      </div>
+                      <a
+                        href={`https://www.google.com/maps/search/?api=1&query=${gpsLat},${gpsLng}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-xs font-extrabold text-yellow-600 hover:text-yellow-500 underline flex items-center gap-1 cursor-pointer"
+                      >
+                        Open in Google Maps →
+                      </a>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3 text-xs font-mono">
+                      <div className="bg-white p-2.5 rounded-xl border border-slate-200">
+                        <span className="text-[10px] text-slate-400 font-sans uppercase block font-bold">Latitude</span>
+                        <span className="text-slate-900 font-bold">{gpsLat}</span>
+                      </div>
+                      <div className="bg-white p-2.5 rounded-xl border border-slate-200">
+                        <span className="text-[10px] text-slate-400 font-sans uppercase block font-bold">Longitude</span>
+                        <span className="text-slate-900 font-bold">{gpsLng}</span>
+                      </div>
                     </div>
                   </div>
                 )}

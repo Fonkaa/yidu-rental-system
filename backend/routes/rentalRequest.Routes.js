@@ -12,16 +12,13 @@ const {
   verifyToken,
 } = require("../middleware/authMiddleware");
 
-// All rental request routes require login
-router.use(verifyToken);
+// GET    /api/rental-requests (Requires login to view your requests)
+router.get("/", verifyToken, listRequests);
 
-// GET    /api/rental-requests
-router.get("/", listRequests);
-
-// POST   /api/rental-requests
+// POST   /api/rental-requests (OPEN to guests for auto-registration & request submission)
 router.post("/", createRequest);
 
-// PATCH  /api/rental-requests/:id/status
-router.patch("/:id/status", updateRequestStatus);
+// PATCH  /api/rental-requests/:id/status (Requires login to approve/reject)
+router.patch("/:id/status", verifyToken, updateRequestStatus);
 
 module.exports = router;

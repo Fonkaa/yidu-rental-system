@@ -41,13 +41,13 @@ export default function RentalRequests() {
     loadRequests();
   }, []);
 
-  // Verify return payment with backend and reload requests so database is updated
+  // Verify return payment with backend and reload requests
   useEffect(() => {
     const verifyAndMarkPaid = async () => {
       if (successReturn && txRefReturn) {
         try {
           await api.get(`/payments/verify/${txRefReturn}`);
-          loadRequests(); // Refetches from backend where isPaid is evaluated from database
+          loadRequests(); 
         } catch (err) {
           console.error("Verification call failed:", err);
         }
@@ -101,7 +101,6 @@ export default function RentalRequests() {
     }
   };
 
-  // Handler to allow tenants to re-apply / renew an expired or finished property request
   const handleReapply = async (propertyId) => {
     try {
       setLoading(true);
@@ -137,12 +136,6 @@ export default function RentalRequests() {
             <XCircle size={13} /> Rejected
           </span>
         );
-      case "CANCELLED":
-        return (
-          <span className="flex items-center gap-1.5 px-3 py-1 bg-slate-100 border border-slate-200 text-slate-700 text-xs rounded-full font-bold">
-            <XCircle size={13} /> Cancelled
-          </span>
-        );
       default:
         return (
           <span className="px-3 py-1 bg-slate-100 text-slate-700 text-xs rounded-full font-bold">
@@ -167,7 +160,6 @@ export default function RentalRequests() {
 
       <div className="max-w-4xl mx-auto space-y-6 relative z-10 pb-16">
         
-        {/* BACK NAVIGATION */}
         <Link
           to={isLandlord ? "/landlord/properties" : "/dashboard"}
           className="inline-flex items-center gap-2 text-xs font-bold text-slate-600 hover:text-slate-950 bg-white border border-slate-200 px-4 py-2.5 rounded-xl transition-all shadow-xs"
@@ -176,7 +168,6 @@ export default function RentalRequests() {
           {isLandlord ? "Back to Landlord Dashboard" : "Back to Dashboard"}
         </Link>
 
-        {/* HEADER */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-6 border-b border-slate-200">
           <div>
             <h1 className="text-3xl font-black tracking-tight text-[#022036]">Rental Requests</h1>
@@ -232,14 +223,14 @@ export default function RentalRequests() {
               const isPayingThisOne = activePaymentRequestId === request.id;
               const isViewingReceipt = activeReceiptRequestId === request.id;
               
-              const isPaid = request.isPaid || successReturn;
+              // Correctly evaluate paid status from database/backend record rather than URL query string
+              const isPaid = request.isPaid || request.payment?.status === 'SUCCESS';
 
               return (
                 <div
                   key={request.id}
                   className="bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 shadow-xs space-y-6"
                 >
-                  {/* PROPERTY & STATUS */}
                   <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 pb-4 border-b border-slate-100">
                     <div>
                       <h2 className="text-lg font-black text-[#022036]">
@@ -253,7 +244,6 @@ export default function RentalRequests() {
                     <div>{getStatusBadge(request.status)}</div>
                   </div>
 
-                  {/* LANDLORD VIEW: TENANT INFO */}
                   {isLandlord && tenant && (
                     <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 space-y-3 shadow-xs">
                       <h3 className="text-xs font-black text-yellow-700 uppercase tracking-wider flex items-center gap-2">
@@ -276,19 +266,10 @@ export default function RentalRequests() {
                           <span className="text-slate-400 block text-[10px] font-bold uppercase">Fayda Number</span>
                           <strong className="text-slate-900 font-mono">{tenant.faydaNumber || "Not provided"}</strong>
                         </div>
-                        <div>
-                          <span className="text-slate-400 block text-[10px] font-bold uppercase">Gender / Status</span>
-                          <strong className="text-slate-900">{tenant.gender || "N/A"} • {tenant.maritalStatus || "N/A"}</strong>
-                        </div>
-                        <div>
-                          <span className="text-slate-400 block text-[10px] font-bold uppercase">Family Members</span>
-                          <strong className="text-slate-900">{tenant.familyNumber ?? "N/A"}</strong>
-                        </div>
                       </div>
                     </div>
                   )}
 
-                  {/* RENTAL TERMS GRID */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs bg-slate-50 p-4 rounded-2xl border border-slate-200">
                     <div>
                       <span className="text-slate-400 block text-[10px] font-bold uppercase tracking-wider mb-1">Message to Landlord</span>
@@ -304,18 +285,9 @@ export default function RentalRequests() {
                             : `${Number(property?.price || 0).toLocaleString()} ETB (Standard)`}
                         </strong>
                       </div>
-
-                      <div>
-                        <span className="text-slate-400 block text-[10px] font-bold uppercase tracking-wider">Move-in Period</span>
-                        <strong className="text-slate-900 font-mono">
-                          {request.startDate ? new Date(request.startDate).toLocaleDateString() : "Not specified"}
-                          {request.endDate ? ` → ${new Date(request.endDate).toLocaleDateString()}` : ""}
-                        </strong>
-                      </div>
                     </div>
                   </div>
 
-                  {/* TENANT PAYMENT & PERMANENT PAID STATUS */}
                   {!isLandlord && isApproved && (
                     <div className="pt-2">
                       {isPaid ? (
@@ -332,17 +304,6 @@ export default function RentalRequests() {
                             >
                               <Receipt size={16} /> {isViewingReceipt ? "Hide Receipt" : "View Digital Receipt"}
                             </button>
-
-                            {(property?.status === "APPROVED" || property?.status === "AVAILABLE") && (
-                              <button
-                                type="button"
-                                onClick={() => handleReapply(property.id)}
-                                className="px-4 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs uppercase tracking-wider flex items-center justify-center gap-1.5 cursor-pointer transition-all shadow-xs"
-                                title="Renew / Re-apply for this property"
-                              >
-                                <RotateCcw size={15} /> Re-apply
-                              </button>
-                            )}
                           </div>
 
                           {isViewingReceipt && (
@@ -354,7 +315,7 @@ export default function RentalRequests() {
                                 tenantName={tenant?.fullName || user?.fullName}
                                 tenantPhone={tenant?.phone || user?.phone}
                                 successReturn={true}
-                                txRefReturn={txRefReturn || "TX-0E865EA9"}
+                                txRefReturn={txRefReturn || "TX-RECEIPT"}
                               />
                             </div>
                           )}
@@ -391,7 +352,6 @@ export default function RentalRequests() {
                     </div>
                   )}
 
-                  {/* LANDLORD APPROVAL / REJECTION ACTIONS */}
                   {isLandlord && String(request.status || "").trim().toUpperCase() === "PENDING" && (
                     <div className="flex items-center gap-3 pt-2">
                       <button

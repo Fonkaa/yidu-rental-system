@@ -409,6 +409,11 @@ function Properties() {
                     property.images[0]
                   : null;
 
+              const rawVideoUrl = property.videoUrl;
+              const videoUrl = rawVideoUrl
+                ? rawVideoUrl.startsWith('http') ? rawVideoUrl : `http://localhost:5000${rawVideoUrl.startsWith('/') ? '' : '/'}${rawVideoUrl}`
+                : null;
+
               const title =
                 property.titleEn ||
                 "Untitled Property";
@@ -436,11 +441,18 @@ function Properties() {
                   key={property.id}
                 >
 
-                  {/* IMAGE */}
+                  {/* MEDIA (VIDEO PRIORITIZED AS COVER PAGE IF AVAILABLE) */}
 
                   <div className="property-image">
 
-                    {imageUrl ? (
+                    {videoUrl ? (
+                      <video
+                        src={videoUrl}
+                        controls
+                        preload="metadata"
+                        className="w-full h-full object-cover"
+                      />
+                    ) : imageUrl ? (
                       <img
                         src={imageUrl}
                         alt={title}
@@ -448,7 +460,7 @@ function Properties() {
                     ) : (
                       <div className="no-image">
                         <Home size={38} />
-                        <span>No Image</span>
+                        <span>No Media</span>
                       </div>
                     )}
 

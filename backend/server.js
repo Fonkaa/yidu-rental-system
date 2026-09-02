@@ -23,23 +23,21 @@ const openai = new OpenAI({
 // ==========================================
 const io = new Server(server, {
   cors: {
-    origin: ["http://localhost:5173", "http://localhost:3000"],
-    methods: ["GET", "POST"],
+    origin: ["http://localhost:5173", "http://localhost:5174", "http://localhost:3000"],
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
+    credentials: true,
   },
 });
 
-// Make io accessible globally via app if needed
 app.set('io', io);
 
 io.on("connection", (socket) => {
-  // Join user to their personal ID room for direct messaging
   socket.on("join_room", (userId) => {
     if (userId) {
       socket.join(userId);
     }
   });
 
-  // Relay real-time message to the designated receiver
   socket.on("send_message", (messageData) => {
     if (messageData && messageData.receiverId) {
       io.to(messageData.receiverId).emit("receive_message", messageData);
@@ -54,7 +52,11 @@ io.on("connection", (socket) => {
 // ==========================================
 const compression = require('compression');
 app.use(compression());
-app.use(cors());
+app.use(cors({
+  origin: ["http://localhost:5173", "http://localhost:5174", "http://localhost:3000"],
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
+}));
 app.use(express.json());
 
 // ==========================================
@@ -67,9 +69,10 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 const authRoutes = require('./routes/authRoutes');
 app.use('/api/auth', authRoutes);
 
-// 2. Property Routes
+// 2. Property & Landlord Routes
 const propertyRoutes = require('./routes/propertyRoutes');
 app.use('/api/properties', propertyRoutes);
+app.use('/api/landlord', propertyRoutes); // <-- Catches /api/landlord/financial-summary
 
 // 3. Rental Requests Routes
 const rentalRequestRoutes = require('./routes/rentalRequest.Routes');
@@ -103,7 +106,7 @@ app.use('/api/leases', leaseRoutes);
 const messageRoutes = require('./routes/message.Routes');
 app.use('/api/messages', messageRoutes);
 
-// 12. User Routes (for searching users/landlords)
+// 12. User Routes
 const userRoutes = require('./routes/authRoutes');
 app.use('/api/users', userRoutes);
 
@@ -112,6 +115,9 @@ app.use('/api/notifications', notificationRoutes);
 
 const settingsRoutes = require('./routes/settingsRoutes');
 app.use('/api/settings', settingsRoutes);
+
+const aiRoutes = require('./routes/aiRoutes');
+app.use('/api/ai', aiRoutes);
 
 // ==========================================
 // AI ASSISTANT ENDPOINT
@@ -129,7 +135,7 @@ app.post('/api/ai/ask', async (req, res) => {
       messages: [
         { 
           role: "system", 
-          content: "You are Yidu Smart Assistant, a helpful assistant for a real estate and house rental platform. You can answer general questions as well as guide users on property rentals." 
+          content: "You are Yidu Smart Assistant, a helpful assistant for a real estate and house rental platform." 
         },
         { role: "user", content: prompt }
       ],
@@ -162,9 +168,5 @@ app.get('/', (req, res) => {
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT} with Socket.io enabled`);
-  
-  // Run background job to check and expire listings every hour
   setInterval(checkAndExpireListings, 60 * 60 * 1000);
-});
-const aiRoutes = require('./routes/aiRoutes');
-app.use('/api/ai', aiRoutes);
+})

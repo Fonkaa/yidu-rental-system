@@ -10,7 +10,7 @@ const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(() => {
-    const saved = localStorage.getItem("hr_user");
+    const saved = localStorage.getItem("hr_user") || localStorage.getItem("user");
     return saved ? JSON.parse(saved) : null;
   });
   const [loading, setLoading] = useState(true);
@@ -51,6 +51,7 @@ export function AuthProvider({ children }) {
             id: userData.userId || userData.id || previousUser?.id,
           };
           localStorage.setItem("hr_user", JSON.stringify(updatedUser));
+          localStorage.setItem("user", JSON.stringify(updatedUser));
           return updatedUser;
         });
       } catch (error) {
@@ -65,6 +66,21 @@ export function AuthProvider({ children }) {
     restoreSession();
   }, []);
 
+  // --- REAL-TIME USER STATE & STORAGE UPDATER ---
+  const updateUser = (updatedUserData) => {
+    setUser((previousUser) => {
+      const updatedUser = {
+        ...(previousUser || {}),
+        ...updatedUserData,
+        id: updatedUserData.userId || updatedUserData.id || previousUser?.id,
+      };
+      // Save to both key patterns to ensure compatibility across all layouts
+      localStorage.setItem("hr_user", JSON.stringify(updatedUser));
+      localStorage.setItem("user", JSON.stringify(updatedUser));
+      return updatedUser;
+    });
+  };
+
   // Login (Explicitly stores token and user in localStorage)
   const login = async (credentials) => {
     const response = await apiLoginUser(credentials);
@@ -76,6 +92,7 @@ export function AuthProvider({ children }) {
     }
     if (userData) {
       localStorage.setItem("hr_user", JSON.stringify(userData));
+      localStorage.setItem("user", JSON.stringify(userData));
     }
 
     setUser(userData);
@@ -90,6 +107,10 @@ export function AuthProvider({ children }) {
   // Logout
   const logout = () => {
     apiLogoutUser();
+    localStorage.removeItem("hr_user");
+    localStorage.removeItem("user");
+    localStorage.removeItem("hr_token");
+    localStorage.removeItem("token");
     setUser(null);
   };
 
@@ -103,6 +124,7 @@ export function AuthProvider({ children }) {
     login,
     register,
     logout,
+    updateUser, // <--- Exposed to all components via useAuth()
   };
 
   return (

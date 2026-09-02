@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import AuthLayout from '../layouts/AuthLayout';
 import TenantLayout from '../layouts/TenantLayout';
 import LandlordLayout from '../layouts/LandlordLayout';
-import AdminLayout from '../layouts/AdminLayout'; // <--- IMPORTED ADMIN LAYOUT
+import AdminLayout from '../layouts/AdminLayout';
 
 // Auth
 import Login from '../pages/auth/Login';
@@ -21,6 +21,7 @@ import AdminDashboard from '../pages/AdminDashboard';
 import Dashboard from '../pages/tenant/Dashboard';
 import SearchProperty from '../pages/tenant/SearchProperty';
 import PropertyDetails from '../pages/tenant/PropertyDetails';
+import ExploreProperties from "../pages/ExploreProperties"; // <--- IMPORTED EXPLORE PROPERTIES PAGE
 import Favorites from '../pages/tenant/Favorites';
 import RentalRequests from '../pages/tenant/RentalRequests';
 import RequestDetails from '../pages/tenant/RequestDetails';
@@ -62,9 +63,10 @@ export default function AppRoutes() {
   return (
     <Routes>
 
-      {/* AUTH ROUTES */}
+      {/* AUTH & PUBLIC HOME ROUTES */}
       <Route element={<AuthLayout />}>
         <Route path="/" element={<PublicHome />} />
+        <Route path="/explore" element={<ExploreProperties />} /> {/* <--- ADDED EXPLORE ROUTE */}
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />

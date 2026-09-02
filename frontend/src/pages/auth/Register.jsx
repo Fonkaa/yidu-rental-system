@@ -239,7 +239,6 @@ export default function Register() {
               >
                 <option value="TENANT">Tenant (Looking for a home)</option>
                 <option value="LANDLORD">Landlord (Listing properties)</option>
-                <option value="ADMIN">ADMIN (Managing platform)</option>
               </select>
             </div>
 
