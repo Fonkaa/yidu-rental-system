@@ -89,10 +89,9 @@ async function updateProperty(req, res) {
   }
 }
 
-module.exports = {
-  updateProperty,
-};
-// backend controller example (e.g., propertyController.js or paymentController.js)
+// ==========================================
+// GET LANDLORD FINANCIAL SUMMARY
+// ==========================================
 async function getLandlordFinancialSummary(req, res) {
   try {
     const landlordId = req.user.userId;
@@ -132,3 +131,38 @@ async function getLandlordFinancialSummary(req, res) {
     return res.status(500).json({ success: false, error: "Failed to fetch financial summary" });
   }
 }
+
+// ==========================================
+// DELETE PROPERTY
+// ==========================================
+async function deleteProperty(req, res) {
+  try {
+    const { id } = req.params;
+    const landlordId = req.user.userId;
+
+    const property = await prisma.property.findUnique({ where: { id } });
+    if (!property) {
+      return res.status(404).json({ success: false, error: "Property not found" });
+    }
+
+    if (property.landlordId !== landlordId && req.user.role !== 'ADMIN') {
+      return res.status(403).json({ success: false, error: "Unauthorized to delete this property" });
+    }
+
+    // Delete associated images and request records if needed, then delete property
+    await prisma.propertyImage.deleteMany({ where: { propertyId: id } });
+    await prisma.rentalRequest.deleteMany({ where: { propertyId: id } });
+    await prisma.property.delete({ where: { id } });
+
+    return res.status(200).json({ success: true, message: "Property deleted successfully" });
+  } catch (error) {
+    console.error("DELETE PROPERTY ERROR:", error);
+    return res.status(500).json({ success: false, error: "Failed to delete property", details: error.message });
+  }
+}
+
+module.exports = {
+  updateProperty,
+  getLandlordFinancialSummary,
+  deleteProperty,
+};

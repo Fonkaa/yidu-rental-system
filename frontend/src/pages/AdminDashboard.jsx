@@ -34,7 +34,11 @@ import {
   Lock,
   Sparkles,
   Layers,
-  ShieldAlert as AlertIcon
+  ShieldAlert as AlertIcon,
+  X,
+  MessageSquareWarning,
+  Trash2,
+  BarChart3
 } from 'lucide-react';
 import api from '../services/api';
 
@@ -59,10 +63,18 @@ export default function AdminDashboard() {
   const [newRoleName, setNewRoleName] = useState('');
   const [roleMessage, setRoleMessage] = useState('');
 
+  // Modern Rejection Modal State
+  const [rejectModalOpen, setRejectModalOpen] = useState(false);
+  const [selectedPropertyToReject, setSelectedPropertyToReject] = useState(null);
+  const [rejectionReasonInput, setRejectionReasonInput] = useState('');
+
+  // Spotify-Style Custom Delete Alert Modal State
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [userToDelete, setUserToDelete] = useState(null);
+
   // Settings tab state
   const [savingSettings, setSavingSettings] = useState(false);
   const [settingsFeedback, setSettingsFeedback] = useState(null);
-  const [properties, setProperties] = useState([]);
   const [settingsForm, setSettingsForm] = useState({
     fullName: "",
     email: "",
@@ -151,20 +163,30 @@ export default function AdminDashboard() {
     }
   };
 
-  const handleReject = async (propertyId) => {
-    const reason = prompt("Please enter the reason for rejecting this property:");
-    if (reason === null) return;
-    
-    if (!reason.trim()) {
-      alert("You must provide a rejection reason!");
+  // Open modern rejection modal
+  const openRejectModal = (p) => {
+    setSelectedPropertyToReject(p);
+    setRejectionReasonInput('');
+    setRejectModalOpen(true);
+  };
+
+  // Confirm modern rejection modal submission
+  const handleConfirmReject = async (e) => {
+    e.preventDefault();
+    if (!selectedPropertyToReject || !rejectionReasonInput.trim()) {
+      alert("Please provide a valid rejection reason.");
       return;
     }
 
+    const propertyId = selectedPropertyToReject.id;
     try {
       setProcessingId(propertyId);
-      const response = await api.patch(`/admin/properties/${propertyId}/reject`, { reason });
-      const updatedProp = response.data?.property;
-      setProperties(prev => prev.map(p => p.id === propertyId ? updatedProp : p));
+      await api.patch(`/admin/properties/${propertyId}/reject`, { reason: rejectionReasonInput.trim() });
+      
+      setPending(prev => prev.filter(p => p.id !== propertyId));
+      setRejectModalOpen(false);
+      setSelectedPropertyToReject(null);
+      setRejectionReasonInput('');
       loadPending();
     } catch (err) {
       console.error("Rejection error:", err);
@@ -181,6 +203,29 @@ export default function AdminDashboard() {
       loadUsers();
     } catch (err) {
       alert(err.response?.data?.error || "Failed to toggle user status.");
+    } finally {
+      setProcessingId(null);
+    }
+  };
+
+  const promptDeleteUser = (u) => {
+    setUserToDelete(u);
+    setDeleteModalOpen(true);
+  };
+
+  const handleConfirmDeleteUser = async () => {
+    if (!userToDelete) return;
+    const userId = userToDelete.id;
+
+    setProcessingId(userId);
+    try {
+      await api.delete(`/admin/users/${userId}`);
+      setDeleteModalOpen(false);
+      setUserToDelete(null);
+      loadUsers();
+    } catch (err) {
+      console.error("Delete user error:", err);
+      alert(err.response?.data?.error || "Failed to delete user.");
     } finally {
       setProcessingId(null);
     }
@@ -266,14 +311,47 @@ export default function AdminDashboard() {
         </div>
       )}
 
-      {/* QUICK SUB-NAVIGATION BUTTONS FOR TABS */}
-      
+      {/* SPOTIFY-STYLE DARK IMMERSIVE DELETE CONFIRMATION MODAL */}
+      {deleteModalOpen && userToDelete && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div className="bg-[#121212] border border-white/10 rounded-3xl max-w-md w-full p-8 shadow-[0_25px_60px_rgba(0,0,0,0.8)] text-center space-y-6 relative">
+            <div className="w-16 h-16 bg-[#1db954]/10 rounded-full flex items-center justify-center mx-auto text-[#1db954] border border-[#1db954]/20 shadow-inner">
+              <Trash2 size={28} />
+            </div>
+
+            <div className="space-y-2">
+              <h3 className="text-xl font-black text-white tracking-tight">Permanent Removal</h3>
+              <p className="text-slate-400 text-xs leading-relaxed font-light">
+                Are you sure you want to delete <strong className="text-white font-bold">{userToDelete.fullName}</strong>? This action is irreversible and will purge their associated properties from the platform.
+              </p>
+            </div>
+
+            <div className="flex items-center gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => setDeleteModalOpen(false)}
+                disabled={processingId === userToDelete.id}
+                className="flex-1 py-3.5 bg-white/10 hover:bg-white/15 text-white font-extrabold rounded-full text-xs transition-all cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmDeleteUser}
+                disabled={processingId === userToDelete.id}
+                className="flex-1 py-3.5 bg-[#1db954] hover:bg-[#1ed760] text-black font-black rounded-full text-xs shadow-lg transition-all cursor-pointer flex items-center justify-center gap-2 uppercase tracking-wider disabled:opacity-50"
+              >
+                {processingId === userToDelete.id ? <Loader size={15} className="animate-spin text-black" /> : null}
+                <span>{processingId === userToDelete.id ? "Deleting..." : "Yes, Delete"}</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* TAB 0: FINANCIAL & ANALYTICS OVERVIEW */}
       {!loading && tab === 'overview' && (
         <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-          
-          {/* WELCOME BANNER */}
           <div className="relative rounded-3xl bg-[#022036] border border-[#FFC107]/30 p-8 sm:p-10 overflow-hidden shadow-2xl text-white group">
             <div className="absolute -right-20 -bottom-20 w-96 h-96 bg-[#FFC107]/15 rounded-full blur-3xl pointer-events-none group-hover:scale-125 transition-transform duration-1000"></div>
             <div className="absolute left-1/3 top-0 w-64 h-64 bg-sky-500/10 rounded-full blur-3xl pointer-events-none"></div>
@@ -304,9 +382,7 @@ export default function AdminDashboard() {
             </div>
           </div>
 
-          {/* KPI STAT CARDS */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-            
             <div className="bg-white rounded-3xl border border-slate-200/80 p-6 shadow-[0_10px_30px_rgba(0,0,0,0.03)] hover:shadow-2xl hover:-translate-y-1.5 transition-all duration-300 group relative overflow-hidden">
               <div className="absolute top-0 right-0 w-32 h-32 bg-amber-500/5 rounded-bl-full pointer-events-none group-hover:scale-110 transition-transform"></div>
               <div className="flex items-center justify-between mb-4">
@@ -374,107 +450,79 @@ export default function AdminDashboard() {
               </strong>
               <p className="text-[11px] text-slate-500 mt-2 font-medium">Listings waiting for review</p>
             </div>
-
           </div>
 
-          {/* PROPERTY METRICS GRID */}
-          <div className="bg-white border border-slate-200/80 rounded-3xl p-8 shadow-[0_10px_30px_rgba(0,0,0,0.03)] space-y-4">
-            <h3 className="text-sm font-black text-[#022036] uppercase tracking-wider">Live Platform Property Metrics</h3>
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-              <div className="p-4 bg-sky-50 border border-sky-100 rounded-2xl text-center">
-                <span className="text-[10px] text-sky-700 uppercase font-black block mb-1">Available</span>
-                <strong className="text-lg font-black text-sky-900 font-mono">{propStats.available}</strong>
-              </div>
-              <div className="p-4 bg-purple-50 border border-purple-100 rounded-2xl text-center">
-                <span className="text-[10px] text-purple-700 uppercase font-black block mb-1">Rented</span>
-                <strong className="text-lg font-black text-purple-900 font-mono">{propStats.rented}</strong>
-              </div>
-              <div className="p-4 bg-emerald-50 border border-emerald-100 rounded-2xl text-center">
-                <span className="text-[10px] text-emerald-700 uppercase font-black block mb-1">Approved</span>
-                <strong className="text-lg font-black text-emerald-900 font-mono">{propStats.approved}</strong>
-              </div>
-              <div className="p-4 bg-amber-50 border border-amber-200 rounded-2xl text-center">
-                <span className="text-[10px] text-amber-700 uppercase font-black block mb-1">Pending</span>
-                <strong className="text-lg font-black text-amber-900 font-mono">{propStats.pending}</strong>
-              </div>
-              <div className="p-4 bg-rose-50 border border-rose-100 rounded-2xl text-center">
-                <span className="text-[10px] text-rose-700 uppercase font-black block mb-1">Rejected</span>
-                <strong className="text-lg font-black text-rose-900 font-mono">{propStats.rejected}</strong>
-              </div>
-              <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-2xl text-center">
-                <span className="text-[10px] text-yellow-800 uppercase font-black block mb-1">Requested</span>
-                <strong className="text-lg font-black text-yellow-900 font-mono">{propStats.requested}</strong>
-              </div>
-            </div>
-          </div>
-
-          {/* CHARTS & RECENT PAYMENTS */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            
-            <div className="lg:col-span-2 bg-white border border-slate-200/80 rounded-3xl p-8 shadow-[0_10px_30px_rgba(0,0,0,0.03)] space-y-6">
-              <div className="flex justify-between items-center pb-4 border-b border-slate-200">
-                <div>
-                  <h3 className="text-base font-black text-[#022036] uppercase tracking-wider">Payment & Settlement Volume</h3>
-                  <p className="text-xs text-slate-500 font-light">Monthly platform volume performance tracking</p>
-                </div>
-                <span className="text-xs font-black text-[#FFC107] bg-[#022036] px-3.5 py-1 rounded-full font-mono">2026 Fiscal</span>
-              </div>
-
-              <div className="h-60 flex items-end justify-between gap-3 pt-8 px-4 bg-slate-50/80 rounded-2xl border border-slate-200/80">
-                {[
-                  { month: 'Jan', val: 35 },
-                  { month: 'Feb', val: 50 },
-                  { month: 'Mar', val: 45 },
-                  { month: 'Apr', val: 70 },
-                  { month: 'May', val: 85 },
-                  { month: 'Jun', val: 60 },
-                  { month: 'Jul', val: 90 },
-                  { month: 'Aug', val: 100 },
-                ].map((bar, idx) => (
-                  <div key={idx} className="flex-1 flex flex-col items-center gap-2 h-full justify-end">
-                    <span className="text-[10px] text-amber-600 font-bold font-mono">{bar.val}%</span>
-                    <div 
-                      className="w-full bg-gradient-to-t from-[#022036] to-[#FFC107] rounded-xl transition-all duration-500 hover:opacity-90 shadow-sm"
-                      style={{ height: `${bar.val}%` }}
-                    ></div>
-                    <span className="text-[10px] text-slate-500 font-bold">{bar.month}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="bg-white border border-slate-200/80 rounded-3xl p-8 shadow-[0_10px_30px_rgba(0,0,0,0.03)] flex flex-col justify-between">
+          {/* AMAZING DYNAMIC VISUAL BAR ANALYTICS CHART */}
+          <div className="bg-white border border-slate-200/80 rounded-3xl p-8 shadow-[0_10px_30px_rgba(0,0,0,0.03)] space-y-6">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between pb-4 border-b border-slate-100 gap-2">
               <div>
-                <div className="pb-4 border-b border-slate-200 mb-4">
-                  <h3 className="text-base font-black text-[#022036] uppercase tracking-wider">Recent Payment Activities</h3>
-                  <p className="text-xs text-slate-500 font-light">Latest gateway transaction settlements</p>
-                </div>
+                <h3 className="text-sm font-black text-[#022036] uppercase tracking-wider flex items-center gap-2">
+                  <BarChart3 size={20} className="text-[#FFC107]" /> Platform Property Status & Distribution Analytics
+                </h3>
+                <p className="text-xs text-slate-500 mt-0.5 font-light">Visual breakdown of all live property states across the database inventory.</p>
+              </div>
+              <span className="text-[10px] font-black uppercase tracking-widest bg-amber-50 text-amber-800 px-3 py-1.5 rounded-full border border-amber-200/60 shadow-inner">
+                Live Inventory Metrics
+              </span>
+            </div>
 
-                <div className="space-y-3 overflow-y-auto max-h-[240px] pr-1">
-                  {paymentsData.recentPayments && paymentsData.recentPayments.length > 0 ? (
-                    paymentsData.recentPayments.map((pay, i) => (
-                      <div key={i} className="p-3.5 bg-slate-50 rounded-2xl border border-slate-200/80 flex items-center justify-between text-xs">
-                        <div>
-                          <strong className="text-[#022036] block font-bold">{pay.tenantName}</strong>
-                          <span className="text-[10px] text-slate-400 font-light">{pay.propertyName}</span>
+            {/* DYNAMIC VERTICAL STACK / BAR CHART SHOWCASE */}
+            <div className="pt-4 pb-2">
+              <div className="flex items-end justify-between gap-3 sm:gap-6 h-64 px-2 sm:px-6 bg-slate-50/80 rounded-3xl border border-slate-200/70 shadow-inner overflow-x-auto pt-8">
+                {(() => {
+                  const chartItems = [
+                    { label: 'Available', count: propStats.available, bg: 'bg-sky-500', hoverBg: 'hover:bg-sky-400', border: 'border-sky-400' },
+                    { label: 'Rented', count: propStats.rented, bg: 'bg-purple-500', hoverBg: 'hover:bg-purple-400', border: 'border-purple-400' },
+                    { label: 'Approved', count: propStats.approved, bg: 'bg-emerald-500', hoverBg: 'hover:bg-emerald-400', border: 'border-emerald-400' },
+                    { label: 'Pending', count: propStats.pending, bg: 'bg-amber-500', hoverBg: 'hover:bg-amber-400', border: 'border-amber-400' },
+                    { label: 'Rejected', count: propStats.rejected, bg: 'bg-rose-500', hoverBg: 'hover:bg-rose-400', border: 'border-rose-400' },
+                    { label: 'Requested', count: propStats.requested, bg: 'bg-[#FFC107]', hoverBg: 'hover:bg-yellow-400', border: 'border-yellow-400' },
+                  ];
+                  const maxCount = Math.max(...chartItems.map(i => i.count), 1);
+
+                  return chartItems.map((bar, i) => {
+                    const heightPercent = Math.max(Math.round((bar.count / maxCount) * 100), 12);
+                    return (
+                      <div key={i} className="flex-1 flex flex-col items-center h-full justify-end group/bar min-w-[45px]">
+                        <span className="text-[11px] font-black text-slate-700 font-mono mb-2 group-hover/bar:scale-110 transition-transform">
+                          {bar.count}
+                        </span>
+                        <div className="w-full max-w-[56px] bg-slate-200/80 rounded-2xl p-1 shadow-inner flex flex-col justify-end h-[160px]">
+                          <div
+                            className={`w-full rounded-xl transition-all duration-700 shadow-md ${bar.bg} ${bar.hoverBg} ${bar.border} border-t`}
+                            style={{ height: `${heightPercent}%` }}
+                            title={`${bar.label}: ${bar.count}`}
+                          ></div>
                         </div>
-                        <div className="text-right">
-                          <strong className="text-emerald-700 block font-mono font-black">+{Number(pay.amount).toLocaleString()} ETB</strong>
-                          <span className="text-[9px] text-emerald-600 font-bold uppercase">Verified</span>
-                        </div>
+                        <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-500 mt-3 whitespace-nowrap group-hover/bar:text-[#022036] transition-colors">
+                          {bar.label}
+                        </span>
                       </div>
-                    ))
-                  ) : (
-                    <div className="text-center py-16 text-slate-400 text-xs font-medium">
-                      No recent payments recorded yet.
-                    </div>
-                  )}
-                </div>
+                    );
+                  });
+                })()}
               </div>
             </div>
 
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 pt-4 border-t border-slate-100">
+              {[
+                { label: 'Available', count: propStats.available, color: 'text-sky-600', dot: 'bg-sky-500' },
+                { label: 'Rented', count: propStats.rented, color: 'text-purple-600', dot: 'bg-purple-500' },
+                { label: 'Approved', count: propStats.approved, color: 'text-emerald-600', dot: 'bg-emerald-500' },
+                { label: 'Pending', count: propStats.pending, color: 'text-amber-600', dot: 'bg-amber-500' },
+                { label: 'Rejected', count: propStats.rejected, color: 'text-rose-600', dot: 'bg-rose-500' },
+                { label: 'Requested', count: propStats.requested, color: 'text-yellow-600', dot: 'bg-[#FFC107]' },
+              ].map((m, idx) => (
+                <div key={idx} className="p-3.5 bg-slate-50 rounded-2xl border border-slate-200/60 flex items-center justify-between shadow-xs">
+                  <div className="flex items-center gap-2">
+                    <span className={`w-2.5 h-2.5 rounded-full ${m.dot}`}></span>
+                    <span className="text-[11px] font-bold text-slate-600">{m.label}</span>
+                  </div>
+                  <strong className={`text-xs font-black font-mono ${m.color}`}>{m.count}</strong>
+                </div>
+              ))}
+            </div>
           </div>
-
         </div>
       )}
 
@@ -498,85 +546,191 @@ export default function AdminDashboard() {
             </div>
           ) : (
             <div className="space-y-6">
-              {pending.map((p) => (
-                <div 
-                  key={p.id} 
-                  className="bg-white border border-slate-200/90 rounded-3xl p-6 md:p-8 shadow-[0_10px_30px_rgba(0,0,0,0.02)]"
-                >
-                  {p.images && p.images.length > 0 ? (
-                    <div className="flex gap-3 overflow-x-auto mb-6 pb-2">
-                      {p.images.map((img) => (
-                        <img
-                          key={img.id}
-                          src={img.url?.startsWith('http') ? img.url : `http://localhost:5000${img.url}`}
-                          alt={p.titleEn || p.titleAm}
-                          loading="lazy"
-                          className="h-36 w-48 object-cover rounded-2xl flex-shrink-0 border border-slate-200 shadow-xs bg-slate-100"
-                        />
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="flex items-center gap-2 p-3.5 bg-rose-50 border border-rose-200 rounded-2xl text-rose-700 text-xs mb-6 font-medium">
-                      <AlertCircle size={16} />
-                      <span>Warning: No images uploaded for this listing.</span>
-                    </div>
-                  )}
+              {pending.map((p) => {
+                const rawVideoUrl = p.videoUrl;
+                const videoUrl = rawVideoUrl
+                  ? rawVideoUrl.startsWith('http') ? rawVideoUrl : `http://localhost:5000${rawVideoUrl.startsWith('/') ? '' : '/'}${rawVideoUrl}`
+                  : null;
 
-                  <div className="flex flex-col md:flex-row md:items-start justify-between gap-4 mb-4">
-                    <div>
-                      <h3 className="text-lg font-black text-[#022036] mb-1">{p.titleEn || p.titleAm}</h3>
-                      {p.titleAm && p.titleEn && <p className="text-xs text-slate-400 mb-2">{p.titleAm}</p>}
-                      
-                      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-amber-600 font-bold mb-3 font-mono">
-                        <span className="flex items-center gap-1">
-                          <MapPin size={13} />
-                          {p.location?.city}, {p.location?.subCity}
-                        </span>
-                        <span>•</span>
-                        <span>{p.category?.name}</span>
-                        <span>•</span>
-                        <strong className="text-slate-950 font-black">{Number(p.price).toLocaleString()} Birr / month</strong>
+                return (
+                  <div 
+                    key={p.id} 
+                    className="bg-white border border-slate-200/90 rounded-3xl p-6 md:p-8 shadow-[0_10px_30px_rgba(0,0,0,0.02)]"
+                  >
+                    {/* COVER PAGE MEDIA SHOWCASE (VIDEO PRIORITIZED) */}
+                    <div className="mb-6 rounded-2xl overflow-hidden bg-slate-900 border border-slate-200">
+                      {videoUrl ? (
+                        <div className="relative h-64 sm:h-80 w-full">
+                          <video
+                            src={videoUrl}
+                            controls
+                            preload="metadata"
+                            className="w-full h-full object-cover"
+                          />
+                          <span className="absolute top-3 left-3 px-3 py-1 bg-amber-500 text-black font-black text-[10px] uppercase tracking-wider rounded-full shadow-md">
+                            Video Tour Cover
+                          </span>
+                        </div>
+                      ) : p.images && p.images.length > 0 ? (
+                        <div className="flex gap-3 overflow-x-auto p-3 pb-2 bg-slate-50">
+                          {p.images.map((img) => (
+                            <img
+                              key={img.id}
+                              src={img.url?.startsWith('http') ? img.url : `http://localhost:5000${img.url}`}
+                              alt={p.titleEn || p.titleAm}
+                              loading="lazy"
+                              className="h-44 w-60 object-cover rounded-xl flex-shrink-0 border border-slate-200 shadow-xs bg-slate-100"
+                            />
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-2 p-4 bg-rose-50 text-rose-700 text-xs font-medium">
+                          <AlertCircle size={16} />
+                          <span>Warning: No media (photos or video) uploaded for this listing.</span>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="flex flex-col md:flex-row md:items-start justify-between gap-4 mb-4">
+                      <div>
+                        <h3 className="text-lg font-black text-[#022036] mb-1">{p.titleEn || p.titleAm}</h3>
+                        {p.titleAm && p.titleEn && <p className="text-xs text-slate-400 mb-2">{p.titleAm}</p>}
+                        
+                        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-amber-600 font-bold mb-3 font-mono">
+                          <span className="flex items-center gap-1">
+                            <MapPin size={13} />
+                            {p.location?.city}, {p.location?.subCity}
+                          </span>
+                          <span>•</span>
+                          <span>{p.category?.name}</span>
+                          <span>•</span>
+                          <strong className="text-slate-950 font-black">{Number(p.price).toLocaleString()} Birr / month</strong>
+                        </div>
                       </div>
+
+                      <span className={`self-start text-xs px-3.5 py-1.5 rounded-full font-black uppercase tracking-wider ${statusColors[p.status]}`}>
+                        {p.status}
+                      </span>
                     </div>
 
-                    <span className={`self-start text-xs px-3.5 py-1.5 rounded-full font-black uppercase tracking-wider ${statusColors[p.status]}`}>
-                      {p.status}
-                    </span>
-                  </div>
+                    <p className="text-xs text-slate-700 mb-4 whitespace-pre-wrap leading-relaxed bg-slate-50 p-4 rounded-2xl border border-slate-200/80 font-medium">
+                      {p.descriptionEn || 'No description provided.'}
+                    </p>
 
-                  <p className="text-xs text-slate-700 mb-4 whitespace-pre-wrap leading-relaxed bg-slate-50 p-4 rounded-2xl border border-slate-200/80 font-medium">
-                    {p.descriptionEn || 'No description provided.'}
-                  </p>
+                    <div className="text-xs text-slate-500 mb-6 space-y-1 font-mono font-medium">
+                      <p><strong>Owner:</strong> {p.landlord?.fullName} ({p.landlord?.email})</p>
+                      {p.landmarkDescription && <p><strong>Landmark:</strong> {p.landmarkDescription}</p>}
+                      {p.gpsLat && p.gpsLng && <p><strong>GPS Coordinates:</strong> {p.gpsLat}, {p.gpsLng}</p>}
+                    </div>
 
-                  <div className="text-xs text-slate-500 mb-6 space-y-1 font-mono font-medium">
-                    <p><strong>Owner:</strong> {p.landlord?.fullName} ({p.landlord?.email})</p>
-                    {p.landmarkDescription && <p><strong>Landmark:</strong> {p.landmarkDescription}</p>}
-                    {p.gpsLat && p.gpsLng && <p><strong>GPS Coordinates:</strong> {p.gpsLat}, {p.gpsLng}</p>}
+                    <div className="flex items-center gap-3 pt-4 border-t border-slate-200">
+                      <button 
+                        onClick={() => handleApprove(p.id)}
+                        disabled={processingId === p.id}
+                        className="px-6 py-3 bg-emerald-600 hover:bg-emerald-500 text-white rounded-2xl text-xs font-black transition-all cursor-pointer disabled:opacity-50 flex items-center gap-2 shadow-md uppercase tracking-wider"
+                      >
+                        {processingId === p.id ? <Loader size={15} className="animate-spin" /> : <CheckCircle2 size={16} />}
+                        <span>Approve Listing</span>
+                      </button>
+                      
+                      <button 
+                        onClick={() => openRejectModal(p)}
+                        disabled={processingId === p.id}
+                        className="px-6 py-3 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-2xl text-xs font-black transition-all cursor-pointer disabled:opacity-50 flex items-center gap-2 shadow-xs uppercase tracking-wider"
+                      >
+                        {processingId === p.id ? <Loader size={15} className="animate-spin" /> : <XCircle size={16} />}
+                        <span>Reject Listing</span>
+                      </button>
+                    </div>
                   </div>
-
-                  <div className="flex items-center gap-3 pt-4 border-t border-slate-200">
-                    <button 
-                      onClick={() => handleApprove(p.id)}
-                      disabled={processingId === p.id}
-                      className="px-6 py-3 bg-emerald-600 hover:bg-emerald-500 text-white rounded-2xl text-xs font-black transition-all cursor-pointer disabled:opacity-50 flex items-center gap-2 shadow-md uppercase tracking-wider"
-                    >
-                      {processingId === p.id ? <Loader size={15} className="animate-spin" /> : <CheckCircle2 size={16} />}
-                      <span>Approve Listing</span>
-                    </button>
-                    
-                    <button 
-                      onClick={() => handleReject(p.id)}
-                      disabled={processingId === p.id}
-                      className="px-6 py-3 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-2xl text-xs font-black transition-all cursor-pointer disabled:opacity-50 flex items-center gap-2 shadow-xs uppercase tracking-wider"
-                    >
-                      {processingId === p.id ? <Loader size={15} className="animate-spin" /> : <XCircle size={16} />}
-                      <span>Reject Listing</span>
-                    </button>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
+        </div>
+      )}
+
+      {/* MODERN SYSTEM COLOR MATCHED REJECTION MODAL */}
+      {rejectModalOpen && selectedPropertyToReject && (
+        <div className="fixed inset-0 bg-[#022036]/60 backdrop-blur-md z-50 flex items-center justify-center p-4">
+          <div className="bg-white border border-slate-200 rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl relative animate-in fade-in zoom-in-95 duration-200">
+            <div className="flex justify-between items-start pb-4 mb-6 border-b border-slate-100">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-amber-500/10 border border-amber-200 text-amber-700 flex items-center justify-center font-bold">
+                  <MessageSquareWarning size={20} />
+                </div>
+                <div>
+                  <h3 className="text-lg font-black text-[#022036] uppercase tracking-wider">Reject Listing</h3>
+                  <p className="text-xs text-slate-500 mt-0.5 font-light">Specify the reason to notify the property owner.</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                className="p-2 bg-slate-100 hover:bg-slate-200 rounded-xl text-slate-500 hover:text-slate-950 cursor-pointer transition-all"
+                onClick={() => setRejectModalOpen(false)}
+                disabled={processingId === selectedPropertyToReject.id}
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            <form onSubmit={handleConfirmReject} className="space-y-4">
+              <div className="space-y-1.5">
+                <label className="text-xs font-black text-slate-700 uppercase tracking-wider">
+                  Rejection Reason *
+                </label>
+                <textarea
+                  rows="4"
+                  value={rejectionReasonInput}
+                  onChange={(e) => setRejectionReasonInput(e.target.value)}
+                  placeholder="Explain clearly why this listing is being rejected (e.g., incorrect pricing format or unclear photos)..."
+                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-slate-900 placeholder-slate-400 text-xs focus:outline-none focus:border-[#FFC107] font-medium shadow-inner"
+                  required
+                />
+              </div>
+
+              {/* Quick Preset Rejection Chips Matching System Palette */}
+              <div className="space-y-2">
+                <span className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400 block">Quick Presets:</span>
+                <div className="flex flex-wrap gap-1.5">
+                  {[
+                    "Incorrect pricing structure or currency format.",
+                    "Missing or blurry property images.",
+                    "Incomplete structured location or landmark details.",
+                    "Duplicate listing submission."
+                  ].map((preset, idx) => (
+                    <button
+                      key={idx}
+                      type="button"
+                      onClick={() => setRejectionReasonInput(preset)}
+                      className="px-3 py-1.5 bg-slate-100 hover:bg-amber-50 hover:border-amber-200 text-slate-700 rounded-xl text-[11px] font-bold transition-all cursor-pointer border border-slate-200/90 shadow-xs"
+                    >
+                      {preset}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="flex gap-3 pt-4 border-t border-slate-100 mt-6">
+                <button
+                  type="button"
+                  className="flex-1 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-2xl text-xs font-bold cursor-pointer transition-all shadow-xs"
+                  onClick={() => setRejectModalOpen(false)}
+                  disabled={processingId === selectedPropertyToReject.id}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 py-3 bg-[#022036] hover:bg-[#032d4d] text-[#FFC107] font-black rounded-2xl text-xs shadow-md cursor-pointer transition-all flex items-center justify-center gap-2 uppercase tracking-wider disabled:opacity-50"
+                  disabled={processingId === selectedPropertyToReject.id}
+                >
+                  {processingId === selectedPropertyToReject.id ? <Loader size={16} className="animate-spin text-[#FFC107]" /> : <XCircle size={16} />}
+                  <span>{processingId === selectedPropertyToReject.id ? "Rejecting..." : "Confirm Rejection"}</span>
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
       )}
 
@@ -585,7 +739,7 @@ export default function AdminDashboard() {
         <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
           <div>
             <h2 className="text-2xl font-black text-[#022036]">User Compliance & Role Assignment</h2>
-            <p className="text-xs text-slate-500 mt-0.5 font-light">Manage platform accounts, role hierarchies, and active account status.</p>
+            <p className="text-xs text-slate-500 mt-0.5 font-light">Manage platform accounts, role hierarchies, account states, and complete user removals.</p>
           </div>
 
           <div className="bg-white border border-slate-200/90 rounded-3xl p-6 sm:p-8 shadow-sm max-w-xl space-y-3">
@@ -642,11 +796,11 @@ export default function AdminDashboard() {
                           {u.isActive ? 'Active' : 'Deactivated'}
                         </span>
                       </td>
-                      <td className="px-6 py-4 text-right">
+                      <td className="px-6 py-4 text-right space-x-2">
                         <button 
                           onClick={() => handleToggleUser(u.id)}
                           disabled={processingId === u.id}
-                          className={`px-4 py-2.5 rounded-2xl text-xs font-extrabold transition-all cursor-pointer disabled:opacity-50 inline-flex items-center gap-1.5 shadow-xs uppercase tracking-wider ${
+                          className={`px-3.5 py-2 rounded-xl text-xs font-extrabold transition-all cursor-pointer disabled:opacity-50 inline-flex items-center gap-1.5 shadow-xs uppercase tracking-wider ${
                             u.isActive 
                               ? 'bg-rose-50 hover:bg-rose-600 text-rose-700 hover:text-white border border-rose-200' 
                               : 'bg-emerald-50 hover:bg-emerald-600 text-emerald-700 hover:text-white border border-emerald-200'
@@ -654,6 +808,16 @@ export default function AdminDashboard() {
                         >
                           {processingId === u.id ? <Loader size={14} className="animate-spin" /> : u.isActive ? <UserX size={15} /> : <UserCheck size={15} />}
                           <span>{u.isActive ? 'Deactivate' : 'Activate'}</span>
+                        </button>
+
+                        <button 
+                          onClick={() => promptDeleteUser(u)}
+                          disabled={processingId === u.id}
+                          className="px-3 py-2 bg-slate-900 hover:bg-rose-600 text-white border border-slate-800 rounded-xl text-xs font-extrabold transition-all cursor-pointer disabled:opacity-50 inline-flex items-center gap-1 shadow-xs uppercase tracking-wider"
+                          title="Permanently Delete User"
+                        >
+                          {processingId === u.id ? <Loader size={14} className="animate-spin" /> : <Trash2 size={14} />}
+                          <span>Delete</span>
                         </button>
                       </td>
                     </tr>

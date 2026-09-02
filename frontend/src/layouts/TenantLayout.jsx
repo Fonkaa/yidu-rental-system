@@ -204,7 +204,7 @@ function TenantAIAssistant({ isOpen, setIsOpen }) {
               <div className="w-8 h-8 rounded-lg bg-[#FFC107] text-[#022036] flex items-center justify-center font-bold">
                 <Bot size={18} />
               </div>
-              <strong className="text-xs tracking-wider uppercase text-[#FFC107]">Yidu Smart Assistant</strong>
+              <strong className="text-xs tracking-wider uppercase text-[#FFC107]">Hose Rental system</strong>
             </div>
             <button onClick={() => setIsOpen(false)} className="p-1 text-white hover:bg-white/20 rounded-lg cursor-pointer">
               <X size={18} />
@@ -378,7 +378,7 @@ export default function TenantLayout() {
               <Home size={22} strokeWidth={2.5} />
             </div>
             <div className="flex flex-col">
-              <strong className="text-base tracking-tight leading-tight text-white">Yidu Rental</strong>
+              <strong className="text-base tracking-tight leading-tight text-white">Hose Rental system</strong>
               <span className="text-[10px] text-[#FFC107] tracking-wider uppercase font-extrabold">PROPERTY PLATFORM</span>
             </div>
           </div>

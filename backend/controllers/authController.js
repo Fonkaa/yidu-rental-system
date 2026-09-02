@@ -17,6 +17,29 @@ const transporter = nodemailer.createTransport({
   },
 });
 
+// ==========================================
+// DATABASE CONNECTION RETRY HELPER
+// ==========================================
+async function executeWithRetry(operation, retries = 3, delay = 1000) {
+  for (let i = 0; i < retries; i++) {
+    try {
+      return await operation();
+    } catch (error) {
+      const isConnectionError = 
+        error.code === 'P1001' || 
+        error.message?.includes("Can't reach database server") ||
+        error.message?.includes("PrismaClientInitializationError");
+
+      if (isConnectionError && i < retries - 1) {
+        console.warn(`Database connection lost. Retrying attempt ${i + 2} in ${delay}ms...`);
+        await new Promise(res => setTimeout(res, delay));
+        continue;
+      }
+      throw error;
+    }
+  }
+}
+
 async function register(req, res) {
   try {
     const { fullName, email, password, role } = req.body;
@@ -25,7 +48,7 @@ async function register(req, res) {
       return res.status(400).json({ error: 'fullName, email, and password are required' });
     }
 
-    const existingUser = await prisma.user.findUnique({ where: { email } });
+    const existingUser = await executeWithRetry(() => prisma.user.findUnique({ where: { email } }));
     if (existingUser) {
       return res.status(409).json({ error: 'An account with this email already exists' });
     }
@@ -35,21 +58,25 @@ async function register(req, res) {
     const allowedRoles = ['TENANT', 'LANDLORD', 'ADMIN'];
     const finalRole = allowedRoles.includes(role) ? role : 'TENANT';
 
-    const user = await prisma.user.create({
-      data: {
-        fullName,
-        email,
-        passwordHash,
-        role: finalRole,
-      },
-    });
+    const user = await executeWithRetry(() =>
+      prisma.user.create({
+        data: {
+          fullName,
+          email,
+          passwordHash,
+          role: finalRole,
+        },
+      })
+    );
 
     // --- NOTIFY ALL ADMINS ABOUT NEW USER REGISTRATION ---
     try {
-      const admins = await prisma.user.findMany({
-        where: { role: 'ADMIN' },
-        select: { id: true }
-      });
+      const admins = await executeWithRetry(() =>
+        prisma.user.findMany({
+          where: { role: 'ADMIN' },
+          select: { id: true }
+        })
+      );
 
       for (const admin of admins) {
         await notifyUser(
@@ -74,7 +101,7 @@ async function register(req, res) {
     });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: 'Something went wrong during registration' });
+    res.status(500).json({ error: 'Something went wrong during registration', details: error.message });
   }
 }
 
@@ -86,7 +113,7 @@ async function login(req, res) {
       return res.status(400).json({ error: 'email and password are required' });
     }
 
-    const user = await prisma.user.findUnique({ where: { email } });
+    const user = await executeWithRetry(() => prisma.user.findUnique({ where: { email } }));
     if (!user) {
       return res.status(401).json({ error: 'Invalid email or password' });
     }
@@ -117,7 +144,7 @@ async function login(req, res) {
     });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: 'Something went wrong during login' });
+    res.status(500).json({ error: 'Something went wrong during login', details: error.message });
   }
 }
 
@@ -127,7 +154,7 @@ async function forgotPassword(req, res) {
     const { email } = req.body;
     if (!email) return res.status(400).json({ error: 'Email is required' });
 
-    const user = await prisma.user.findUnique({ where: { email } });
+    const user = await executeWithRetry(() => prisma.user.findUnique({ where: { email } }));
     if (!user) {
       // Return a safe generic message so hackers can't check if an email exists
       return res.status(200).json({ message: 'If that email exists, an OTP has been sent' });
@@ -137,10 +164,12 @@ async function forgotPassword(req, res) {
     const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
     const otpExpiry = new Date(Date.now() + 10 * 60 * 1000);
 
-    await prisma.user.update({
-      where: { email },
-      data: { otpCode, otpExpiry },
-    });
+    await executeWithRetry(() =>
+      prisma.user.update({
+        where: { email },
+        data: { otpCode, otpExpiry },
+      })
+    );
 
     // Send email to the specific registered user's address
     await transporter.sendMail({
@@ -165,7 +194,7 @@ async function forgotPassword(req, res) {
     res.status(200).json({ message: 'If that email exists, an OTP has been sent' });
   } catch (error) {
     console.error("Forgot password error:", error);
-    res.status(500).json({ error: 'Something went wrong sending OTP email' });
+    res.status(500).json({ error: 'Something went wrong sending OTP email', details: error.message });
   }
 }
 
@@ -178,7 +207,7 @@ async function resetPassword(req, res) {
       return res.status(400).json({ error: 'Email, OTP code, and new password are required' });
     }
 
-    const user = await prisma.user.findUnique({ where: { email } });
+    const user = await executeWithRetry(() => prisma.user.findUnique({ where: { email } }));
     if (!user || !user.otpCode || !user.otpExpiry) {
       return res.status(400).json({ error: 'Invalid request or OTP not requested' });
     }
@@ -193,19 +222,21 @@ async function resetPassword(req, res) {
 
     const passwordHash = await bcrypt.hash(newPassword, 10);
     
-    await prisma.user.update({
-      where: { id: user.id },
-      data: { 
-        passwordHash, 
-        otpCode: null, 
-        otpExpiry: null 
-      },
-    });
+    await executeWithRetry(() =>
+      prisma.user.update({
+        where: { id: user.id },
+        data: { 
+          passwordHash, 
+          otpCode: null, 
+          otpExpiry: null 
+        },
+      })
+    );
 
     res.status(200).json({ message: 'Password reset successful. You can now login.' });
   } catch (error) {
     console.error("Reset password error:", error);
-    res.status(500).json({ error: 'Something went wrong resetting password' });
+    res.status(500).json({ error: 'Something went wrong resetting password', details: error.message });
   }
 }
 
@@ -216,11 +247,13 @@ async function updateIdNumber(req, res) {
       return res.status(400).json({ error: 'idNumber is required' });
     }
 
-    const updated = await prisma.user.update({
-      where: { id: req.user.userId },
-      data: { faydaNumber: idNumber },
-      select: { id: true, fullName: true, email: true, faydaNumber: true },
-    });
+    const updated = await executeWithRetry(() =>
+      prisma.user.update({
+        where: { id: req.user.userId },
+        data: { faydaNumber: idNumber },
+        select: { id: true, fullName: true, email: true, faydaNumber: true },
+      })
+    );
 
     res.json({
       id: updated.id,
@@ -230,16 +263,18 @@ async function updateIdNumber(req, res) {
     });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: 'Something went wrong updating your ID number' });
+    res.status(500).json({ error: 'Something went wrong updating your ID number', details: error.message });
   }
 }
 
 async function getMe(req, res) {
   try {
-    const user = await prisma.user.findUnique({
-      where: { id: req.user.userId },
-      select: { id: true, fullName: true, email: true, role: true, faydaNumber: true, phone: true },
-    });
+    const user = await executeWithRetry(() =>
+      prisma.user.findUnique({
+        where: { id: req.user.userId },
+        select: { id: true, fullName: true, email: true, role: true, faydaNumber: true, phone: true },
+      })
+    );
 
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
@@ -253,7 +288,7 @@ async function getMe(req, res) {
     });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: 'Something went wrong fetching your profile' });
+    res.status(500).json({ error: 'Something went wrong fetching your profile', details: error.message });
   }
 }
 
@@ -275,16 +310,18 @@ async function searchUsers(req, res) {
       ];
     }
 
-    const users = await prisma.user.findMany({
-      where: whereClause,
-      select: { id: true, fullName: true, email: true, role: true },
-      take: 10
-    });
+    const users = await executeWithRetry(() =>
+      prisma.user.findMany({
+        where: whereClause,
+        select: { id: true, fullName: true, email: true, role: true },
+        take: 10
+      })
+    );
 
     return res.status(200).json({ success: true, users });
   } catch (error) {
     console.error("SEARCH USERS ERROR:", error);
-    return res.status(500).json({ success: false, error: "Failed to search landlords" });
+    return res.status(500).json({ success: false, error: "Failed to search landlords", details: error.message });
   }
 }
 

@@ -13,12 +13,9 @@ import {
 
 export default function PublicHome() {
   const navigate = useNavigate();
-  const [properties, setProperties] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [activeTabRole, setActiveTabRole] = useState("tenant");
   const [activeMetricTab, setActiveMetricTab] = useState("yield");
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
-  const [selectedCityFilter, setSelectedCityFilter] = useState("All");
   const [viewMode3D, setViewMode3D] = useState(true);
   const [systemStats, setSystemStats] = useState({
     totalListings: 142,
@@ -49,39 +46,6 @@ export default function PublicHome() {
     };
   }, []);
 
-  useEffect(() => {
-    const fetchPublicProperties = async () => {
-      try {
-        setLoading(true);
-        const res = await api.get("/properties");
-        const data = res.data?.properties || res.data || [];
-        const available = Array.isArray(data) 
-          ? data.filter(p => String(p.status || "").trim().toUpperCase() === "APPROVED" || String(p.status || "").trim().toUpperCase() === "AVAILABLE")
-          : [];
-        setProperties(available);
-      } catch (err) {
-        console.error("Failed to load public properties:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchPublicProperties();
-  }, []);
-
-  const handleRequestRent = (propertyId) => {
-    const token = localStorage.getItem("token");
-    if (!token) {
-      navigate("/login", { state: { from: `/properties/${propertyId}` } });
-    } else {
-      navigate(`/properties/${propertyId}`);
-    }
-  };
-
-  const filteredProperties = selectedCityFilter === "All" 
-    ? properties.slice(0, 8) 
-    : properties.filter(p => (p.location?.city || p.location || "").toLowerCase() === selectedCityFilter.toLowerCase()).slice(0, 8);
-
   return (
     <div className="min-h-screen bg-slate-50 text-slate-800 font-sans selection:bg-yellow-500 selection:text-[#022036] relative overflow-x-hidden">
       
@@ -110,7 +74,7 @@ export default function PublicHome() {
               <Home size={24} strokeWidth={2.5} />
             </div>
             <div>
-              <strong className="text-base tracking-tight leading-none block text-[#022036]">Yidu RealEstate</strong>
+              <strong className="text-base tracking-tight leading-none block text-[#022036]">House Rental System</strong>
               <span className="text-[10px] text-yellow-600 tracking-widest uppercase font-black">Spatial 3D Engine</span>
             </div>
           </div>
@@ -119,11 +83,17 @@ export default function PublicHome() {
             <a href="#hero-section" className="hover:text-yellow-600 transition-colors">Overview</a>
             <a href="#ecosystem-roles" className="hover:text-yellow-600 transition-colors">Role Portals</a>
             <a href="#analytics-section" className="hover:text-yellow-600 transition-colors">Market Analytics</a>
-            <a href="#database-properties" className="hover:text-yellow-600 transition-colors">3D Listings</a>
             <a href="#tech-specs" className="hover:text-yellow-600 transition-colors">Architecture</a>
           </div>
 
           <div className="flex items-center gap-3">
+            <Link 
+              to="/explore"
+              className="px-5 py-2.5 bg-yellow-500 hover:bg-yellow-400 text-[#022036] font-black rounded-xl text-xs shadow-sm transition-all flex items-center gap-1.5 cursor-pointer uppercase tracking-wider"
+            >
+              <Compass size={15} />
+              <span>Explore Properties</span>
+            </Link>
             <Link 
               to="/login"
               className="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 transition-all flex items-center gap-1.5 cursor-pointer shadow-xs"
@@ -133,7 +103,7 @@ export default function PublicHome() {
             </Link>
             <Link 
               to="/register"
-              className="px-5 py-2.5 bg-yellow-500 hover:bg-yellow-400 text-[#022036] font-extrabold rounded-xl text-xs shadow-sm transition-all flex items-center gap-1.5 cursor-pointer hover:scale-105 uppercase tracking-wider"
+              className="px-5 py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl text-xs shadow-xs transition-all flex items-center gap-1.5 cursor-pointer uppercase tracking-wider"
             >
               <UserPlus size={15} />
               <span>Register</span>
@@ -150,7 +120,7 @@ export default function PublicHome() {
         </div>
         
         <h1 className="text-4xl sm:text-6xl lg:text-7xl font-black tracking-tight text-[#022036] mb-6 leading-tight">
-          Redefining Real Estate Through <br />
+          Redefining House Rental System Through <br />
           <span className="text-transparent bg-clip-text bg-gradient-to-r from-yellow-600 via-amber-500 to-yellow-600">
             Advanced 3D Spatial Architecture
           </span>
@@ -161,13 +131,13 @@ export default function PublicHome() {
         </p>
 
         <div className="flex flex-wrap justify-center gap-4 mb-16">
-          <a
-            href="#database-properties"
+          <Link
+            to="/explore"
             className="px-8 py-4 bg-yellow-500 hover:bg-yellow-400 text-[#022036] font-black rounded-2xl shadow-sm transition-all hover:scale-105 flex items-center gap-2 text-xs uppercase tracking-wider cursor-pointer"
           >
-            <span>Explore 3D Property Grid</span>
+            <span>Open Explore Page (9 per page)</span>
             <ArrowRight size={16} />
-          </a>
+          </Link>
           <button
             onClick={() => setViewMode3D(!viewMode3D)}
             className="px-8 py-4 bg-slate-900 hover:bg-slate-800 border border-slate-800 text-white font-bold rounded-2xl backdrop-blur-xl transition-all hover:scale-105 text-xs uppercase tracking-wider cursor-pointer flex items-center gap-2 shadow-xs"
@@ -564,109 +534,6 @@ export default function PublicHome() {
         </div>
       </section>
 
-      {/* LIVE DATABASE 3D PROPERTIES GRID WITH FILTERS */}
-      <section id="database-properties" className="max-w-7xl mx-auto px-6 py-20 border-t border-slate-200">
-        <div className="flex flex-col md:flex-row md:items-end justify-between mb-10 gap-6">
-          <div>
-            <span className="text-xs font-black text-yellow-600 tracking-widest uppercase">Live Neon DB Synced</span>
-            <h2 className="text-3xl font-black text-[#022036] mt-1">Featured 3D Spatial Properties</h2>
-            <p className="text-xs text-slate-500 mt-1 font-light">Select a district to filter available database listings instantly.</p>
-          </div>
-
-          {/* City Filter Pills */}
-          <div className="flex items-center gap-2 flex-wrap">
-            {["All", "Addis Ababa", "Bole", "Kazanchis", "CMC"].map((city) => (
-              <button
-                key={city}
-                onClick={() => setSelectedCityFilter(city)}
-                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer shadow-xs ${
-                  selectedCityFilter === city 
-                    ? 'bg-yellow-500 text-[#022036] font-extrabold shadow-sm' 
-                    : 'bg-white hover:bg-slate-100 text-slate-700 border border-slate-200'
-                }`}
-              >
-                {city}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {loading ? (
-          <div className="text-center py-28 text-slate-400 text-xs font-semibold">Querying Neon PostgreSQL database...</div>
-        ) : filteredProperties.length === 0 ? (
-          <div className="text-center py-28 text-slate-400 text-xs bg-white rounded-3xl border border-slate-200 shadow-xs font-light">
-            No properties currently match your filter criteria.
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {filteredProperties.map((property) => {
-              let imgUrl = "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?auto=format&fit=crop&w=1000&q=85";
-              if (Array.isArray(property.images) && property.images.length > 0) {
-                const rawUrl = property.images[0]?.url || property.images[0];
-                if (rawUrl) {
-                  imgUrl = rawUrl.startsWith('http') ? rawUrl : `http://localhost:5000${rawUrl.startsWith('/') ? '' : '/'}${rawUrl}`;
-                }
-              }
-
-              return (
-                <div 
-                  key={property.id}
-                  className="group bg-white border border-slate-200 rounded-3xl overflow-hidden shadow-xs hover:shadow-md transition-all duration-500 hover:scale-[1.03] hover:border-yellow-400 flex flex-col justify-between"
-                  style={{
-                    transformStyle: 'preserve-3d',
-                    perspective: '1000px'
-                  }}
-                >
-                  <div>
-                    <div className="relative h-48 overflow-hidden bg-slate-100">
-                      <img 
-                        src={imgUrl} 
-                        alt={property.titleEn || property.title}
-                        loading="lazy"
-                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
-                      />
-                      <div className="absolute top-3 left-3 px-3 py-1 bg-emerald-50 text-emerald-700 rounded-full text-[9px] font-black uppercase tracking-wider border border-emerald-200 shadow-xs">
-                        Verified 3D
-                      </div>
-                    </div>
-
-                    <div className="p-5 space-y-3">
-                      <div className="flex items-center gap-1 text-[11px] text-yellow-600 font-semibold">
-                        <MapPin size={12} />
-                        <span>{property.location?.city || property.location || "Addis Ababa"}</span>
-                      </div>
-                      <h3 className="text-base font-extrabold text-[#022036] truncate">{property.titleEn || property.title}</h3>
-                      <p className="text-xs text-slate-500 line-clamp-2 font-light">{property.descriptionEn || property.description}</p>
-                    </div>
-                  </div>
-
-                  <div className="p-5 pt-0 space-y-4">
-                    <div className="flex items-center justify-between pt-3 border-t border-slate-100 text-xs text-slate-600 font-mono">
-                      <span className="flex items-center gap-1"><BedDouble size={13} className="text-slate-400" /> {property.rooms || 2} Rooms</span>
-                      <span className="flex items-center gap-1"><Sofa size={13} className="text-slate-400" /> {property.furnished ? "Furnished" : "Unfurnished"}</span>
-                    </div>
-
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <strong className="text-lg font-black text-slate-950 font-mono">{Number(property.price || 500).toLocaleString()}</strong>
-                        <span className="text-[9px] text-slate-400 ml-1 font-semibold">ETB</span>
-                      </div>
-                      
-                      <button
-                        onClick={() => handleRequestRent(property.id)}
-                        className="px-3.5 py-2 bg-slate-900 hover:bg-yellow-500 hover:text-[#022036] text-white rounded-xl text-xs font-extrabold transition-all cursor-pointer shadow-xs uppercase tracking-wider"
-                      >
-                        Request →
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </section>
-
       {/* TECHNICAL ARCHITECTURE & STACK SECTION */}
       <section id="tech-specs" className="max-w-7xl mx-auto px-6 py-20 border-t border-slate-200">
         <div className="text-center mb-16">
@@ -726,7 +593,7 @@ export default function PublicHome() {
               <div className="w-9 h-9 rounded-xl bg-yellow-500 text-[#022036] flex items-center justify-center font-black shadow-md">
                 <Home size={20} />
               </div>
-              <strong className="text-base text-white">Yidu RealEstate</strong>
+              <strong className="text-base text-white">House Rental System</strong>
             </div>
             <p className="text-xs text-slate-400 leading-relaxed font-light">
               Spatial 3D real estate platform engineered by software engineering students and development interns at Teamwork IT Solutions.
@@ -739,7 +606,7 @@ export default function PublicHome() {
               <li><a href="#hero-section" className="hover:text-white transition-colors">Platform Overview</a></li>
               <li><a href="#ecosystem-roles" className="hover:text-white transition-colors">Role Portals</a></li>
               <li><a href="#analytics-section" className="hover:text-white transition-colors">Market Analytics</a></li>
-              <li><a href="#database-properties" className="hover:text-white transition-colors">3D Listings Grid</a></li>
+              <li><Link to="/explore" className="hover:text-white transition-colors">Explore Properties</Link></li>
             </ul>
           </div>
 
@@ -763,7 +630,7 @@ export default function PublicHome() {
         </div>
 
         <div className="max-w-7xl mx-auto pt-8 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-400">
-          <p>© 2026 Yidu House Rental System • All rights reserved.</p>
+          <p>© 2026 House Rental System • All rights reserved.</p>
           <p className="mt-2 sm:mt-0 font-light">Built with React, Node.js, Prisma, and PostgreSQL.</p>
         </div>
       </footer>

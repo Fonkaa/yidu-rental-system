@@ -32,6 +32,8 @@ import {
 
   Headphones,
 
+  MessageSquare,
+
 } from "lucide-react";
 
 
@@ -181,6 +183,16 @@ export default function Dashboard() {
     fetchDashboardData();
 
   }, [user?.id]);
+
+
+
+  const handleMessageOwner = (landlordId, propertyId) => {
+    if (!landlordId) {
+      alert("Owner contact information is unavailable for this listing.");
+      return;
+    }
+    navigate(`/messages/${landlordId}`, { state: { propertyId } });
+  };
 
 
 
@@ -394,6 +406,8 @@ export default function Dashboard() {
 
                 const isRented = statusVal === "RENTED" || statusVal === "OCCUPIED" || statusVal === "LEASED" || statusVal === "UNAVAILABLE";
 
+                const landlordId = property.landlordId || property.landlord?.id;
+
 
 
                 let imgUrl = "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?auto=format&fit=crop&w=1000&q=85";
@@ -420,27 +434,55 @@ export default function Dashboard() {
 
 
 
+                const rawVideoUrl = property.videoUrl;
+
+                const videoUrl = rawVideoUrl
+
+                  ? rawVideoUrl.startsWith('http') ? rawVideoUrl : `http://localhost:5000${rawVideoUrl.startsWith('/') ? '' : '/'}${rawVideoUrl}`
+
+                  : null;
+
+
+
                 return (
 
                   <div key={property.id} className="min-w-[300px] sm:min-w-[340px] max-w-[340px] bg-slate-50 border border-slate-200 rounded-2xl overflow-hidden group/card hover:border-[#FFC107]/50 transition-all shadow-xs flex flex-col snap-start flex-shrink-0">
 
-                    <div className="relative h-48 overflow-hidden bg-slate-200">
+                    <div className="relative h-48 overflow-hidden bg-slate-900">
 
-                      <img
+                      {videoUrl ? (
 
-                        src={imgUrl}
+                        <video
 
-                        alt={property.titleEn || property.title || "Property"}
+                          src={videoUrl}
 
-                        loading="lazy"
+                          controls
 
-                        className="w-full h-full object-cover group-hover/card:scale-105 transition-transform duration-500"
+                          preload="metadata"
 
-                      />
+                          className="w-full h-full object-cover"
+
+                        />
+
+                      ) : (
+
+                        <img
+
+                          src={imgUrl}
+
+                          alt={property.titleEn || property.title || "Property"}
+
+                          loading="lazy"
+
+                          className="w-full h-full object-cover group-hover/card:scale-105 transition-transform duration-500"
+
+                        />
+
+                      )}
 
                       <span className={`absolute top-3 left-3 px-3 py-1 rounded-full backdrop-blur-md text-[10px] font-extrabold tracking-wider uppercase border shadow-xs ${isRented ? 'bg-red-500 text-white border-red-400' : 'bg-emerald-600 text-white border-emerald-500'}`}>
 
-                        {isRented ? t.rented : t.available}
+                        {isRented ? t.rented : videoUrl ? "Video Tour" : t.available}
 
                       </span>
 
@@ -498,9 +540,29 @@ export default function Dashboard() {
 
 
 
-                        <button
+                        <div className="flex items-center gap-2">
 
-                          className="w-full py-2.5 bg-[#022036] hover:bg-[#FFC107] text-[#FFC107] hover:text-[#022036] rounded-xl text-xs font-bold transition-all cursor-pointer shadow-xs"
+                          <button
+
+                            type="button"
+
+                            onClick={() => handleMessageOwner(landlordId, property.id)}
+
+                            className="p-2.5 bg-slate-200 hover:bg-[#FFC107] text-[#022036] rounded-xl transition-all cursor-pointer shadow-xs font-bold flex items-center justify-center"
+
+                            title="Message Property Owner"
+
+                          >
+
+                            <MessageSquare size={16} />
+
+                          </button>
+
+
+
+                          <button
+
+                            className="flex-1 py-2.5 bg-[#022036] hover:bg-[#FFC107] text-[#FFC107] hover:text-[#022036] rounded-xl text-xs font-bold transition-all cursor-pointer shadow-xs"
 
                           onClick={() => navigate(`/properties/${property.id}`)}
 
@@ -509,6 +571,8 @@ export default function Dashboard() {
                           {t.viewDetails}
 
                         </button>
+
+                        </div>
 
                       </div>
 
@@ -580,5 +644,4 @@ export default function Dashboard() {
 
   );
 
-} 
-
+}

@@ -77,7 +77,6 @@ function Register() {
           >
             <option value="LANDLORD">{t('register.landlord') || 'Landlord'}</option>
             <option value="TENANT">{t('register.tenant') || 'Tenant'}</option>
-            <option value="ADMIN">Admin</option>
           </select>
         </fieldset>
 

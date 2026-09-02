@@ -18,7 +18,10 @@ const getDashboardData = async (req, res) => {
     // --------------------------------------------------
     if (userRole === "LANDLORD") {
       const properties = await prisma.property.findMany({
-        where: { landlordId: userId },
+        where: { 
+          landlordId: userId,
+          landlord: { isActive: true } // Hide properties if landlord is deactivated
+        },
         include: {
           category: true,
           location: true,
@@ -31,7 +34,11 @@ const getDashboardData = async (req, res) => {
         where: {
           property: {
             landlordId: userId,
+            landlord: { isActive: true }
           },
+          tenant: {
+            isActive: true // Hide requests from deactivated tenants
+          }
         },
         include: {
           property: { select: { titleEn: true, titleAm: true, price: true } },
@@ -87,9 +94,14 @@ const getDashboardData = async (req, res) => {
     }
 
     // --------------------------------------------------
-    // TENANT DASHBOARD DATA (Default - Filters out Rented homes older than 3 days)
+    // TENANT DASHBOARD DATA (Filters out properties from deactivated landlords)
     // --------------------------------------------------
     const rawProperties = await prisma.property.findMany({
+      where: {
+        landlord: {
+          isActive: true // Exclude properties owned by deactivated landlords
+        }
+      },
       include: {
         category: true,
         location: true,

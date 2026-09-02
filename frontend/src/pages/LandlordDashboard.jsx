@@ -35,7 +35,8 @@ import {
   Sparkles,
   ShieldAlert,
   Layers,
-  ArrowUpRight
+  ArrowUpRight,
+  Trash2
 } from 'lucide-react';
 
 const statusConfig = {
@@ -60,6 +61,10 @@ export default function LandlordDashboard() {
   const [loading, setLoading] = useState(true);
   const [processingId, setProcessingId] = useState(null);
 
+  // Spotify-Style Immersive Delete Modal State
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [propertyToDelete, setPropertyToDelete] = useState(null);
+
   // Automatically sync tab view based on the URL path clicked from the sidebar
   useEffect(() => {
     const path = location.pathname;
@@ -81,6 +86,7 @@ export default function LandlordDashboard() {
     furnished: false,
   });
   const [newImages, setNewImages] = useState([]);
+  const [newVideo, setNewVideo] = useState(null);
   const [savingProperty, setSavingProperty] = useState(false);
   const [editFeedback, setEditFeedback] = useState(null);
 
@@ -132,7 +138,6 @@ export default function LandlordDashboard() {
         });
       }
 
-      // Dynamic database financial summary calculations
       if (finRes.status === 'fulfilled' && finRes.value?.data) {
         const fData = finRes.value.data;
         const rentedUnits = fetchedProperties.filter(p => p.status === 'RENTED');
@@ -192,6 +197,7 @@ export default function LandlordDashboard() {
       furnished: property.furnished || false,
     });
     setNewImages([]);
+    setNewVideo(null);
     setEditFeedback(null);
     setActiveTab('edit-property');
   };
@@ -225,9 +231,13 @@ export default function LandlordDashboard() {
         });
       }
 
+      if (newVideo) {
+        formData.append('video', newVideo);
+      }
+
       await api.put(`/properties/${selectedProperty.id}`, formData);
 
-      setEditFeedback({ type: 'success', text: 'Property and photos updated successfully!' });
+      setEditFeedback({ type: 'success', text: 'Property and media updated successfully!' });
       await loadData();
       
       setTimeout(() => {
@@ -238,6 +248,29 @@ export default function LandlordDashboard() {
       setEditFeedback({ type: 'error', text: err.response?.data?.error || 'Failed to update property.' });
     } finally {
       setSavingProperty(false);
+    }
+  };
+
+  const promptDeleteProperty = (property) => {
+    setPropertyToDelete(property);
+    setDeleteModalOpen(true);
+  };
+
+  const handleConfirmDeleteProperty = async () => {
+    if (!propertyToDelete) return;
+    const propertyId = propertyToDelete.id;
+
+    setProcessingId(propertyId);
+    try {
+      await api.delete(`/properties/${propertyId}`);
+      setDeleteModalOpen(false);
+      setPropertyToDelete(null);
+      loadData();
+    } catch (err) {
+      console.error("Delete property error:", err);
+      alert(err.response?.data?.error || "Failed to delete property.");
+    } finally {
+      setProcessingId(null);
     }
   };
 
@@ -327,10 +360,6 @@ export default function LandlordDashboard() {
     .filter(p => p.status === 'RENTED')
     .reduce((acc, p) => acc + Number(p.price || 0), 0);
   
-  const occupancyRate = properties.length > 0 
-    ? Math.round((groupedProperties.RENTED.length / properties.length) * 100) 
-    : 0;
-
   const annualizedYield = totalRentedEarnings * 12;
 
   const recentActivities = [
@@ -364,6 +393,44 @@ export default function LandlordDashboard() {
             </div>
           </div>
           <p className="text-slate-500 text-xs font-bold tracking-widest uppercase animate-pulse">Loading Database Financials...</p>
+        </div>
+      )}
+
+      {/* SPOTIFY-STYLE DARK IMMERSIVE DELETE CONFIRMATION MODAL */}
+      {deleteModalOpen && propertyToDelete && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div className="bg-[#121212] border border-white/10 rounded-3xl max-w-md w-full p-8 shadow-[0_25px_60px_rgba(0,0,0,0.8)] text-center space-y-6 relative">
+            <div className="w-16 h-16 bg-[#1db954]/10 rounded-full flex items-center justify-center mx-auto text-[#1db954] border border-[#1db954]/20 shadow-inner">
+              <Trash2 size={28} />
+            </div>
+
+            <div className="space-y-2">
+              <h3 className="text-xl font-black text-white tracking-tight">Permanent Removal</h3>
+              <p className="text-slate-400 text-xs leading-relaxed font-light">
+                Are you sure you want to delete <strong className="text-white font-bold">{propertyToDelete.titleEn || propertyToDelete.titleAm || "this property"}</strong>? This action is permanent and cannot be undone.
+              </p>
+            </div>
+
+            <div className="flex items-center gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => setDeleteModalOpen(false)}
+                disabled={processingId === propertyToDelete.id}
+                className="flex-1 py-3.5 bg-white/10 hover:bg-white/15 text-white font-extrabold rounded-full text-xs transition-all cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmDeleteProperty}
+                disabled={processingId === propertyToDelete.id}
+                className="flex-1 py-3.5 bg-[#1db954] hover:bg-[#1ed760] text-black font-black rounded-full text-xs shadow-lg transition-all cursor-pointer flex items-center justify-center gap-2 uppercase tracking-wider disabled:opacity-50"
+              >
+                {processingId === propertyToDelete.id ? <Loader size={15} className="animate-spin text-black" /> : null}
+                <span>{processingId === propertyToDelete.id ? "Deleting..." : "Yes, Delete"}</span>
+              </button>
+            </div>
+          </div>
         </div>
       )}
 
@@ -688,6 +755,17 @@ export default function LandlordDashboard() {
                           <Link to={`/landlord/properties/${p.id}`} className="px-4 py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-2xl text-xs font-extrabold flex items-center gap-1.5 shadow-md">
                             View <ArrowUpRight size={14} />
                           </Link>
+
+                          {/* SPOTIFY-INSPIRED DARK DELETE BUTTON */}
+                          <button
+                            type="button"
+                            onClick={() => promptDeleteProperty(p)}
+                            disabled={processingId === p.id}
+                            className="p-2.5 bg-slate-900 hover:bg-rose-600 text-white rounded-2xl transition-all cursor-pointer flex items-center justify-center shadow-xs"
+                            title="Permanently Delete Property"
+                          >
+                            {processingId === p.id ? <Loader size={15} className="animate-spin" /> : <Trash2 size={15} />}
+                          </button>
                         </div>
                       </div>
                     ))}
@@ -797,9 +875,9 @@ export default function LandlordDashboard() {
 
             <div className="bg-slate-50/80 border border-slate-200/80 rounded-3xl p-6 space-y-4">
               <h4 className="text-xs font-black uppercase tracking-widest text-amber-600 flex items-center gap-2">
-                <ImageIcon size={16} /> Existing & New Photos
+                <ImageIcon size={16} /> Existing & New Photos / Video Tour
               </h4>
-              <p className="text-xs text-slate-500 font-light">Current uploaded photos for this property:</p>
+              <p className="text-xs text-slate-500 font-light">Current uploaded media preview:</p>
 
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                 {selectedProperty.images && selectedProperty.images.length > 0 ? (
@@ -818,15 +896,27 @@ export default function LandlordDashboard() {
                 )}
               </div>
 
-              <div className="pt-4 border-t border-slate-200">
-                <label className="block text-slate-700 font-bold mb-2 text-xs">Upload Additional / Replacement Photos</label>
-                <input
-                  type="file"
-                  multiple
-                  accept="image/*"
-                  onChange={(e) => setNewImages(Array.from(e.target.files))}
-                  className="w-full text-xs text-slate-600 file:mr-4 file:py-3 file:px-5 file:rounded-2xl file:border-0 file:text-xs file:font-black file:bg-[#FFC107] file:text-[#022036] hover:file:bg-yellow-400 file:cursor-pointer cursor-pointer"
-                />
+              <div className="pt-4 border-t border-slate-200 space-y-3">
+                <div>
+                  <label className="block text-slate-700 font-bold mb-2 text-xs">Upload Additional / Replacement Photos</label>
+                  <input
+                    type="file"
+                    multiple
+                    accept="image/*"
+                    onChange={(e) => setNewImages(Array.from(e.target.files))}
+                    className="w-full text-xs text-slate-600 file:mr-4 file:py-3 file:px-5 file:rounded-2xl file:border-0 file:text-xs file:font-black file:bg-[#FFC107] file:text-[#022036] hover:file:bg-yellow-400 file:cursor-pointer cursor-pointer"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-slate-700 font-bold mb-2 text-xs">Upload or Update Property Tour Video (Optional)</label>
+                  <input
+                    type="file"
+                    accept="video/mp4,video/webm"
+                    onChange={(e) => setNewVideo(e.target.files[0] || null)}
+                    className="w-full text-xs text-slate-600 file:mr-4 file:py-3 file:px-5 file:rounded-2xl file:border-0 file:text-xs file:font-black file:bg-slate-200 file:text-slate-700 hover:file:bg-slate-300 file:cursor-pointer cursor-pointer"
+                  />
+                </div>
               </div>
             </div>
 
@@ -836,7 +926,7 @@ export default function LandlordDashboard() {
               className="w-full py-4 bg-[#FFC107] hover:bg-yellow-400 text-[#022036] font-black rounded-2xl text-xs uppercase tracking-wider shadow-lg transition-all cursor-pointer flex items-center justify-center gap-2 disabled:opacity-50"
             >
               {savingProperty ? <Loader size={16} className="animate-spin" /> : <Save size={16} />}
-              <span>{savingProperty ? "Saving Changes..." : "Save Property & Photo Updates"}</span>
+              <span>{savingProperty ? "Saving Changes..." : "Save Property & Media Updates"}</span>
             </button>
           </form>
         </div>
@@ -907,7 +997,7 @@ export default function LandlordDashboard() {
 
           {rentalHistory.length === 0 ? (
             <div className="p-16 text-center bg-white border border-slate-200 rounded-3xl shadow-sm">
-              <History size={40} className="text-amber-500 mx-auto mb-3" />
+              <FileText size={40} className="text-amber-500 mx-auto mb-3" />
               <p className="text-xs text-slate-500 font-light">No lease history records found.</p>
             </div>
           ) : (

@@ -17,13 +17,15 @@ model User {
   role                     Role            @default(TENANT)
   resetToken               String?
   resetTokenExpiry         DateTime?
-  otpCode                  String? // <--- Added OTP Code field
-  otpExpiry                DateTime? // <--- Added OTP Expiry field
+  otpCode                  String?         // <--- Added OTP Code field
+  otpExpiry                DateTime?       // <--- Added OTP Expiry field
   createdAt                DateTime        @default(now())
   updatedAt                DateTime        @updatedAt
   isActive                 Boolean         @default(true)
   familyNumber             Int?
   faydaNumber              String?
+  faydaFrontImage          String?
+  faydaBackImage           String?
   gender                   String?
   maritalStatus            String?
   favorites                Favorite[]
@@ -48,7 +50,8 @@ model Property {
   gpsLat              Float?
   gpsLng              Float?
   status              ListingStatus   @default(PENDING)
-  rejectionReason     String? // <--- Added rejection reason here
+  videoUrl            String?
+  rejectionReason     String?         // <--- Added rejection reason here
   publishedAt         DateTime?
   expiresAt           DateTime?
   createdAt           DateTime        @default(now())
@@ -172,7 +175,7 @@ model Lease {
 
 model Notification {
   id                String    @id @default(uuid())
-  userId            String // <--- Add this foreign key field
+  userId            String    // <--- Add this foreign key field
   type              String
   title             String
   message           String

@@ -154,7 +154,6 @@ export default function LandlordLayout() {
           <Outlet />
         </main>
       </div>
-
     </div>
   );
 }
