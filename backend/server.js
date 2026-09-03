@@ -85,6 +85,8 @@ app.use('/api/favorites', favoriteRoutes);
 // 5. Admin Routes
 const adminRoutes = require('./routes/adminRoutes');
 app.use('/api/admin', adminRoutes);
+const backupRoutes = require("./routes/backupRoutes");
+app.use("/api/admin/backup", backupRoutes);
 
 // 7. Lookup Routes
 const lookupRoutes = require('./routes/lookupRoutes');
