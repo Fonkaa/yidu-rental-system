@@ -1,4 +1,10 @@
-import { createContext, useContext, useEffect, useState } from "react";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+} from "react";
+
 import {
   loginUser as apiLoginUser,
   registerUser as apiRegisterUser,
@@ -10,63 +16,133 @@ const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(() => {
-    const saved = localStorage.getItem("hr_user") || localStorage.getItem("user");
-    return saved ? JSON.parse(saved) : null;
+    try {
+      const savedUser =
+        localStorage.getItem("hr_user") ||
+        localStorage.getItem("user");
+
+      if (!savedUser) {
+        return null;
+      }
+
+      return JSON.parse(savedUser);
+    } catch (error) {
+      console.error("Failed to load saved user:", error);
+      localStorage.removeItem("hr_user");
+      localStorage.removeItem("user");
+      return null;
+    }
   });
+
   const [loading, setLoading] = useState(true);
 
-  // Restore authentication after page refresh
-  useEffect(() => {
-    const restoreSession = async () => {
-      const token = localStorage.getItem("hr_token") || localStorage.getItem("token");
-      const savedUser = localStorage.getItem("hr_user") || localStorage.getItem("user");
+  // ==========================================
+  // RESTORE SESSION
+  // ==========================================
 
+  useEffect(() => {
+    let mounted = true;
+
+    const restoreSession = async () => {
+      const token =
+        localStorage.getItem("hr_token") ||
+        localStorage.getItem("token");
+
+      const savedUser =
+        localStorage.getItem("hr_user") ||
+        localStorage.getItem("user");
+
+      // No token = not logged in
       if (!token) {
-        setLoading(false);
+        if (mounted) {
+          setUser(null);
+          setLoading(false);
+        }
         return;
       }
 
+      // Restore saved user immediately
       if (savedUser) {
         try {
-          setUser(JSON.parse(savedUser));
+          const parsedUser = JSON.parse(savedUser);
+
+          if (mounted) {
+            setUser(parsedUser);
+          }
         } catch (error) {
-          console.error("Invalid saved user:", error);
+          console.error(
+            "Invalid saved user:",
+            error
+          );
+
           localStorage.removeItem("hr_user");
           localStorage.removeItem("user");
         }
       }
 
+      // Verify token with backend
       try {
         const response = await getCurrentUser();
-        const userData = response?.user || response;
 
-        if (!userData) {
-          throw new Error("Invalid user response");
+        const userData =
+          response?.user || response?.data?.user || response;
+
+        if (!userData || !userData.id) {
+          throw new Error(
+            "Invalid user response from server"
+          );
         }
 
-        setUser((previousUser) => {
-          const updatedUser = {
-            ...(previousUser || {}),
-            ...userData,
-            id: userData.userId || userData.id || previousUser?.id,
-          };
-          localStorage.setItem("hr_user", JSON.stringify(updatedUser));
-          localStorage.setItem("user", JSON.stringify(updatedUser));
-          return updatedUser;
-        });
+        if (mounted) {
+          setUser((previousUser) => {
+            const updatedUser = {
+              ...(previousUser || {}),
+              ...userData,
+              id: userData.userId || userData.id || previousUser?.id,
+            };
+
+            localStorage.setItem(
+              "hr_user",
+              JSON.stringify(updatedUser)
+            );
+
+            localStorage.setItem(
+              "user",
+              JSON.stringify(updatedUser)
+            );
+
+            return updatedUser;
+          });
+        }
       } catch (error) {
-        console.error("Session verification failed:", error);
+        console.error(
+          "Session verification failed:",
+          error
+        );
+
         apiLogoutUser();
-        setUser(null);
+
+        if (mounted) {
+          setUser(null);
+        }
       } finally {
-        setLoading(false);
+        if (mounted) {
+          setLoading(false);
+        }
       }
     };
 
     restoreSession();
+
+    return () => {
+      mounted = false;
+    };
   }, []);
 
-  // --- REAL-TIME USER STATE & STORAGE UPDATER ---
+  // ==========================================
+  // REAL-TIME USER STATE & STORAGE UPDATER
+  // ==========================================
+
   const updateUser = (updatedUserData) => {
     setUser((previousUser) => {
       const updatedUser = {
@@ -81,30 +157,67 @@ export function AuthProvider({ children }) {
     });
   };
 
-  // Login (Explicitly stores token and user in localStorage)
+  // ==========================================
+  // LOGIN
+  // ==========================================
+
   const login = async (credentials) => {
     const response = await apiLoginUser(credentials);
-    const token = response.token;
-    const userData = response.user || response;
 
-    if (token) {
-      localStorage.setItem("hr_token", token);
+    const token = response?.token;
+
+    const userData =
+      response?.user || response?.data?.user;
+
+    if (!token) {
+      throw new Error(
+        "Login successful but no token was returned"
+      );
     }
-    if (userData) {
-      localStorage.setItem("hr_user", JSON.stringify(userData));
-      localStorage.setItem("user", JSON.stringify(userData));
+
+    if (!userData) {
+      throw new Error(
+        "Login successful but no user data was returned"
+      );
     }
+
+    localStorage.setItem(
+      "hr_token",
+      token
+    );
+
+    localStorage.setItem(
+      "token",
+      token
+    );
+
+    localStorage.setItem(
+      "hr_user",
+      JSON.stringify(userData)
+    );
+
+    localStorage.setItem(
+      "user",
+      JSON.stringify(userData)
+    );
 
     setUser(userData);
+
     return response;
   };
 
-  // Register
+  // ==========================================
+  // REGISTER
+  // ==========================================
+
   const register = async (userData) => {
     return await apiRegisterUser(userData);
   };
 
-  // Logout
+  // ==========================================
+  // LOGOUT
+  // ==========================================
+
   const logout = () => {
     apiLogoutUser();
     localStorage.removeItem("hr_user");
@@ -114,8 +227,20 @@ export function AuthProvider({ children }) {
     setUser(null);
   };
 
+  // ==========================================
+  // AUTHENTICATION STATUS
+  // ==========================================
+
+  const token =
+    localStorage.getItem("hr_token") ||
+    localStorage.getItem("token");
+
   const isAuthenticated =
-    Boolean(localStorage.getItem("hr_token") || localStorage.getItem("token")) && Boolean(user);
+    Boolean(token) && Boolean(user);
+
+  // ==========================================
+  // CONTEXT VALUE
+  // ==========================================
 
   const value = {
     user,
@@ -134,11 +259,19 @@ export function AuthProvider({ children }) {
   );
 }
 
+// ==========================================
+// USE AUTH
+// ==========================================
+
 export function useAuth() {
   const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error("useAuth must be used inside AuthProvider");
+
+  if (context === null) {
+    throw new Error(
+      "useAuth must be used inside AuthProvider"
+    );
   }
+
   return context;
 }
 

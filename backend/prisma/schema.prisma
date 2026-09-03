@@ -8,17 +8,15 @@ datasource db {
 }
 
 model User {
-  notifications            Notification[]
-  id                       String          @id @default(uuid())
-  fullName                 String
-  email                    String          @unique
-  passwordHash             String
-  phone                    String?
-  role                     Role            @default(TENANT)
-  resetToken               String?
-  resetTokenExpiry         DateTime?
-  otpCode                  String?         // <--- Added OTP Code field
-  otpExpiry                DateTime?       // <--- Added OTP Expiry field
+  id               String    @id @default(uuid())
+  fullName         String
+  email            String    @unique
+  passwordHash     String
+  phone            String?
+  role             Role      @default(TENANT)
+  resetToken       String?
+  resetTokenExpiry DateTime?
+
   createdAt                DateTime        @default(now())
   updatedAt                DateTime        @updatedAt
   isActive                 Boolean         @default(true)
@@ -28,50 +26,57 @@ model User {
   faydaBackImage           String?
   gender                   String?
   maritalStatus            String?
+  otpCode                  String?
+  otpExpiry                DateTime?
   favorites                Favorite[]
   leases                   Lease[]
   receivedMessages         Message[]       @relation("MessageReceiver")
   sentMessages             Message[]       @relation("MessageSender")
+  notifications            Notification[]
   properties               Property[]
   rentalRequestsAsLandlord RentalRequest[] @relation("LandlordRentalRequests")
   rentalRequestsAsTenant   RentalRequest[] @relation("TenantRentalRequests")
 }
 
+/// This model contains an expression index which requires additional setup for migrations. Visit https://pris.ly/d/expression-indexes for more info.
 model Property {
-  id                  String          @id @default(uuid())
+  id                  String        @id @default(uuid())
   titleEn             String
   titleAm             String?
   descriptionEn       String
   descriptionAm       String?
   price               Float
   rooms               Int
-  furnished           Boolean         @default(false)
+  furnished           Boolean       @default(false)
   landmarkDescription String?
   gpsLat              Float?
   gpsLng              Float?
-  status              ListingStatus   @default(PENDING)
-  videoUrl            String?
-  rejectionReason     String?         // <--- Added rejection reason here
-  publishedAt         DateTime?
-  expiresAt           DateTime?
-  createdAt           DateTime        @default(now())
-  updatedAt           DateTime        @updatedAt
-  landlordId          String
-  categoryId          String
-  locationId          String
-  favorites           Favorite[]
-  leases              Lease[]
-  messages            Message[]
-  category            Category        @relation(fields: [categoryId], references: [id])
-  landlord            User            @relation(fields: [landlordId], references: [id])
-  location            Location        @relation(fields: [locationId], references: [id])
-  images              PropertyImage[]
-  rentalRequests      RentalRequest[]
+  status              ListingStatus @default(PENDING)
+
+  publishedAt     DateTime?
+  expiresAt       DateTime?
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  landlordId      String
+  categoryId      String
+  locationId      String
+  rejectionReason String?
+  videoUrl        String?
+  favorites       Favorite[]
+  leases          Lease[]
+  messages        Message[]
+  category        Category        @relation(fields: [categoryId], references: [id])
+  landlord        User            @relation(fields: [landlordId], references: [id])
+  location        Location        @relation(fields: [locationId], references: [id])
+  images          PropertyImage[]
+  rentalRequests  RentalRequest[]
 
   @@index([landlordId])
   @@index([categoryId])
   @@index([locationId])
   @@index([status])
+  @@index([categoryId], map: "idx_property_category")
+  @@index([locationId], map: "idx_property_location")
 }
 
 model PropertyImage {
@@ -175,7 +180,7 @@ model Lease {
 
 model Notification {
   id                String    @id @default(uuid())
-  userId            String    // <--- Add this foreign key field
+  userId            String
   type              String
   title             String
   message           String
@@ -184,7 +189,7 @@ model Notification {
   isRead            Boolean   @default(false)
   createdAt         DateTime  @default(now())
   readAt            DateTime?
-  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade) // <--- Add this relation link
+  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([isRead])

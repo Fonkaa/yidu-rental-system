@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 
@@ -306,7 +307,7 @@ export default function PropertyDetails() {
   const isLandlord = userRole.toLowerCase() === "landlord";
 
   return (
-    <div className="h-full w-full bg-slate-50 text-slate-800 py-10 px-4 sm:px-8 relative overflow-y-auto pb-24 font-sans selection:bg-yellow-500 selection:text-[#022036]">
+    <div className="min-h-screen w-full bg-slate-50 text-slate-800 py-10 px-4 sm:px-8 relative overflow-y-auto overflow-x-hidden pb-24 font-sans selection:bg-yellow-500 selection:text-[#022036]">
       <div className="absolute -top-40 -left-40 w-96 h-96 bg-yellow-500/10 rounded-full blur-3xl pointer-events-none"></div>
 
       <div className="max-w-6xl mx-auto space-y-8 relative z-10">

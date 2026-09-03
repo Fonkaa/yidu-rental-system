@@ -475,7 +475,6 @@ async function getPaymentsSummary(req, res) {
 
         paidAt: payment.paidAt,
       }));
-
     // ========================================================
     // PROPERTY STATISTICS
     // ========================================================
@@ -553,8 +552,63 @@ async function getPaymentsSummary(req, res) {
 }
 
 // ============================================================
-// EXPORTS
+// DELETE USER
 // ============================================================
+async function deleteUser(req, res) {
+  try {
+    const { id } = req.params;
+
+    const currentAdminId = req.user?.id || req.user?.userId;
+
+    if (currentAdminId && currentAdminId === id) {
+      return res.status(400).json({
+        success: false,
+        error: 'You cannot delete your own admin account',
+      });
+    }
+
+    const user = await prisma.user.findUnique({ where: { id } });
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        error: 'User not found',
+      });
+    }
+
+    await prisma.user.delete({ where: { id } });
+
+    return res.status(200).json({
+      success: true,
+      message: 'User deleted successfully',
+    });
+  } catch (error) {
+    console.error('DELETE USER ERROR:', error);
+    return res.status(500).json({
+      success: false,
+      error: 'Something went wrong deleting the user',
+    });
+  }
+}
+
+// ============================================================
+// CREATE ROLE (placeholder - adjust based on your schema)
+// ============================================================
+async function createRole(req, res) {
+  try {
+    return res.status(501).json({
+      success: false,
+      error: 'createRole not implemented yet',
+    });
+  } catch (error) {
+    console.error('CREATE ROLE ERROR:', error);
+    return res.status(500).json({
+      success: false,
+      error: 'Something went wrong creating the role',
+    });
+  }
+}
+
 module.exports = {
   getPendingProperties,
   approveProperty,
@@ -563,4 +617,6 @@ module.exports = {
   toggleUserActive,
   updateUserRole,
   getPaymentsSummary,
+  deleteUser,
+  createRole,
 };
