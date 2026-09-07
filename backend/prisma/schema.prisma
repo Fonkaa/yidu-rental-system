@@ -148,9 +148,12 @@ model RentalRequest {
   landlordId    String
   proposedPrice Float?
   startDate     DateTime?
-  landlord      User                @relation("LandlordRentalRequests", fields: [landlordId], references: [id], onDelete: Cascade)
-  property      Property            @relation(fields: [propertyId], references: [id], onDelete: Cascade)
-  tenant        User                @relation("TenantRentalRequests", fields: [tenantId], references: [id], onDelete: Cascade)
+
+  landlord  User     @relation("LandlordRentalRequests", fields: [landlordId], references: [id], onDelete: Cascade)
+  property  Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  tenant    User     @relation("TenantRentalRequests", fields: [tenantId], references: [id], onDelete: Cascade)
+  payment   Payment? @relation(fields: [paymentId], references: [id])
+  paymentId String?
 
   @@unique([tenantId, propertyId])
   @@index([tenantId])
@@ -169,9 +172,10 @@ model Lease {
   status     LeaseStatus @default(ACTIVE)
   createdAt  DateTime    @default(now())
   updatedAt  DateTime    @updatedAt
-  property   Property    @relation(fields: [propertyId], references: [id], onDelete: Cascade)
-  tenant     User        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  payment    Payment?
+
+  property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  tenant   User     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  payment  Payment?
 
   @@index([tenantId])
   @@index([propertyId])
@@ -209,11 +213,13 @@ model Payment {
   amount               Decimal       @db.Decimal(10, 2)
   commissionAmount     Decimal       @db.Decimal(10, 2)
   gatewayTransactionId String?       @unique
-  method               String        @default("Telebirr")
+  method               String        @default("Chapa")
   status               PaymentStatus @default(PENDING)
   paidAt               DateTime?
   createdAt            DateTime      @default(now())
-  lease                Lease         @relation(fields: [leaseId], references: [id], onDelete: Cascade)
+
+  lease          Lease           @relation(fields: [leaseId], references: [id], onDelete: Cascade)
+  rentalRequests RentalRequest[]
 
   @@index([status])
   @@index([createdAt])

@@ -5,74 +5,180 @@ const prisma = require("../prisma/client");
 // ==========================================
 async function getTenantLeases(req, res) {
   try {
-    if (!req.user || !req.user.userId) {
-      return res.status(401).json({ success: false, error: "Authentication required" });
+    if (
+      !req.user ||
+      !req.user.userId
+    ) {
+      return res.status(401).json({
+        success: false,
+        error:
+          "Authentication required",
+      });
     }
 
     const tenantId = req.user.userId;
 
-    // 1. Auto-release expired active leases (Only expire if endDate date is strictly past today)
+    // ========================================
+    // EXPIRE OLD ACTIVE LEASES
+    // ========================================
     const now = new Date();
-    now.setHours(23, 59, 59, 999); // Give until end of the expiry day
 
-    const expiredLeases = await prisma.lease.findMany({
-      where: {
-        status: 'ACTIVE',
-        endDate: { lt: now }
-      }
-    }).catch(() => []);
+    // Lease remains active until the
+    // end of its endDate.
+    now.setHours(
+      23,
+      59,
+      59,
+      999
+    );
 
+    const expiredLeases =
+      await prisma.lease.findMany({
+        where: {
+          status: "ACTIVE",
+
+          endDate: {
+            lt: now,
+          },
+        },
+
+        select: {
+          id: true,
+          propertyId: true,
+        },
+      });
+
+    // ========================================
+    // EXPIRE LEASES
+    // ========================================
     if (expiredLeases.length > 0) {
-      const propertyIdsToRelease = expiredLeases.map(l => l.propertyId);
-      
       await prisma.lease.updateMany({
-        where: { id: { in: expiredLeases.map(l => l.id) } },
-        data: { status: 'EXPIRED' }
+        where: {
+          id: {
+            in: expiredLeases.map(
+              (lease) => lease.id
+            ),
+          },
+        },
+
+        data: {
+          status: "EXPIRED",
+        },
       });
 
-      await prisma.property.updateMany({
-        where: { id: { in: propertyIdsToRelease } },
-        data: { status: 'APPROVED' }
-      });
+      // ======================================
+      // RELEASE PROPERTY ONLY IF THERE IS
+      // NO OTHER ACTIVE LEASE
+      // ======================================
+      for (const lease of expiredLeases) {
+        const anotherActiveLease =
+          await prisma.lease.findFirst({
+            where: {
+              propertyId:
+                lease.propertyId,
+
+              status: "ACTIVE",
+            },
+          });
+
+        if (!anotherActiveLease) {
+          await prisma.property.update({
+            where: {
+              id: lease.propertyId,
+            },
+
+            data: {
+              status: "APPROVED",
+            },
+          });
+        }
+      }
     }
 
-    // 2. Fetch all leases belonging to this tenant with correct relations
-    const rawLeases = await prisma.lease.findMany({
-      where: { tenantId },
-      include: {
-        property: {
-          include: {
-            location: true,
-            images: true,
-          }
+    // ========================================
+    // GET TENANT LEASES
+    // ========================================
+    const rawLeases =
+      await prisma.lease.findMany({
+        where: {
+          tenantId,
         },
-        tenant: { select: { id: true, fullName: true, email: true } },
-        payment: true,
-      },
-      orderBy: { createdAt: 'desc' }
-    });
 
-    // 3. STRICT LEASE-ID DEDUPLICATION
-    const uniqueLeaseMap = new Map();
+        include: {
+          property: {
+            include: {
+              location: true,
+              images: true,
+            },
+          },
+
+          tenant: {
+            select: {
+              id: true,
+              fullName: true,
+              email: true,
+            },
+          },
+
+          payment: true,
+        },
+
+        orderBy: {
+          createdAt: "desc",
+        },
+      });
+
+    // ========================================
+    // DEDUPLICATE BY REAL LEASE ID
+    // ========================================
+    const uniqueLeaseMap =
+      new Map();
+
     rawLeases.forEach((lease) => {
-      if (!uniqueLeaseMap.has(lease.id)) {
-        uniqueLeaseMap.set(lease.id, lease);
+      if (
+        !uniqueLeaseMap.has(
+          lease.id
+        )
+      ) {
+        uniqueLeaseMap.set(
+          lease.id,
+          lease
+        );
       }
     });
 
-    const leases = Array.from(uniqueLeaseMap.values());
+    const leases = Array.from(
+      uniqueLeaseMap.values()
+    );
 
     return res.status(200).json({
       success: true,
+      count: leases.length,
       leases,
     });
-
   } catch (error) {
-    console.error("GET TENANT LEASES ERROR:", error);
-    return res.status(500).json({ success: false, error: "Failed to load tenant leases." });
+    console.error(
+      "GET TENANT LEASES ERROR:",
+      error
+    );
+
+    return res.status(500).json({
+      success: false,
+      error:
+        "Failed to load tenant leases.",
+
+      details:
+        process.env.NODE_ENV ===
+        "development"
+          ? error.message
+          : undefined,
+    });
   }
 }
 
+// ==========================================
+// EXPORT
+// ==========================================
 module.exports = {
   getTenantLeases,
 };

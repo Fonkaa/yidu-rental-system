@@ -259,10 +259,11 @@ export default function AppRoutes() {
             path="/admin/settings"
             element={<AdminDashboard />}
           />
+
           <Route
-  path="/admin/backup"
-  element={<SystemBackup />}
-/>
+            path="/admin/backup"
+            element={<SystemBackup />}
+          />
 
         </Route>
 

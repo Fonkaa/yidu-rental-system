@@ -1,19 +1,49 @@
-import api from './api';
+import api from "./api";
 
-export async function createRentalRequest(requestData) {
-  const response = await api.post('/rental-requests', requestData);
+// ==========================================
+// CREATE RENTAL REQUEST
+// ==========================================
+export async function createRentalRequest(
+  requestData
+) {
+  const response = await api.post(
+    "/rental-requests",
+    requestData
+  );
+
   return response.data;
 }
 
+// ==========================================
+// GET RENTAL REQUESTS
+// ==========================================
 export async function getRentalRequestsForUser() {
-  const response = await api.get('/rental-requests');
+  const response = await api.get(
+    "/rental-requests"
+  );
+
   return response.data;
 }
 
-// Alias export to satisfy LandlordDashboard.jsx import expectations
-export const getRentalRequests = getRentalRequestsForUser;
+// ==========================================
+// ALIAS
+// ==========================================
+export const getRentalRequests =
+  getRentalRequestsForUser;
 
-export async function updateRentalRequestStatus(id, status) {
-  const response = await api.patch(`/rental-requests/${id}/status`, { status });
+// ==========================================
+// UPDATE RENTAL REQUEST STATUS
+// ==========================================
+export async function updateRentalRequestStatus(
+  id,
+  status
+) {
+  const response = await api.patch(
+    `/rental-requests/${id}/status`,
+    {
+      status,
+    }
+  );
+
   return response.data;
 }

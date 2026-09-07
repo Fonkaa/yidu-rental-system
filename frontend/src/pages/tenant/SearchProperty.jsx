@@ -15,12 +15,16 @@ import {
   Sofa,
   ChevronLeft,
   ChevronRight,
+<<<<<<< HEAD
   Sparkles,
   Building2,
   Filter,
   LayoutGrid,
   List,
   TrendingUp,
+=======
+  Play,
+>>>>>>> 7f717b18418d24f4c597bdce3c03fa7ee00961f6
 } from "lucide-react";
 
 import { getProperties } from "../../services/propertyService";
@@ -46,7 +50,7 @@ export default function SearchProperty() {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalProperties, setTotalProperties] = useState(0);
-  const limit = 12;
+  const limit = 6; // Set to 6 per page as requested so pagination activates immediately
 
   const [showFilters, setShowFilters] = useState(false);
   const [favoriteIds, setFavoriteIds] = useState([]);
@@ -196,16 +200,27 @@ export default function SearchProperty() {
     return parts.length > 0 ? parts.join(", ") : location.region || "Location not available";
   };
   const getCategory = (property) => property?.category?.nameEn || property?.category?.nameAm || property?.category?.name || "Property";
-  const getImage = (property) => {
+  
+  const getMediaAsset = (property) => {
+    const videoUrl = property?.videoUrl || property?.video;
+    if (videoUrl) {
+      const cleanUrl = typeof videoUrl === "string" ? videoUrl : videoUrl?.url;
+      if (cleanUrl) {
+        const fullUrl = cleanUrl.startsWith("http") ? cleanUrl : `http://localhost:5000${cleanUrl}`;
+        return { type: 'video', url: fullUrl };
+      }
+    }
+
     const images = property?.images;
     if (Array.isArray(images) && images.length > 0) {
       const imgUrl = typeof images[0] === "string" ? images[0] : images[0]?.url;
       if (imgUrl) {
-        if (imgUrl.startsWith("http://") || imgUrl.startsWith("https://")) return imgUrl;
-        return `http://localhost:5000${imgUrl}`;
+        const fullUrl = imgUrl.startsWith("http") ? imgUrl : `http://localhost:5000${imgUrl}`;
+        return { type: 'image', url: fullUrl };
       }
     }
-    return FALLBACK_IMAGE;
+
+    return { type: 'image', url: FALLBACK_IMAGE };
   };
 
   const changePage = (newPage) => {
@@ -300,6 +315,426 @@ export default function SearchProperty() {
             Search
           </button>
         </div>
+<<<<<<< HEAD
+=======
+
+        {/* CONTENT LAYOUT WITH FIXED SIDEBAR */}
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 items-start">
+          
+          {/* STICKY FIXED FILTER SIDEBAR CUT AT APPLY/RESET BUTTON */}
+          <aside
+            className={`lg:sticky lg:top-24 bg-white border border-slate-200 p-6 rounded-2xl z-40 transition-transform duration-300 flex flex-col gap-5 shadow-xs ${
+              showFilters ? "fixed inset-y-0 left-0 w-80 h-full z-50 overflow-y-auto translate-x-0" : "hidden lg:flex"
+            }`}
+          >
+            <div className="flex items-center justify-between pb-4 border-b border-slate-100">
+              <div>
+                <span className="text-[10px] tracking-widest uppercase font-black text-yellow-600">FILTER</span>
+                <h2 className="text-base font-black text-[#022036]">Search Properties</h2>
+              </div>
+              <button
+                type="button"
+                className="lg:hidden p-2 text-slate-500 hover:text-slate-900 bg-slate-100 rounded-xl cursor-pointer"
+                onClick={() => setShowFilters(false)}
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {/* CATEGORY */}
+            <div className="space-y-1.5">
+              <label htmlFor="category" className="text-xs font-bold text-slate-700 uppercase tracking-wider">Property Category</label>
+              <div className="relative">
+                <Home size={16} className="absolute left-3.5 top-3.5 text-yellow-600" />
+                <select
+                  id="category"
+                  value={categoryId}
+                  onChange={(e) => {
+                    setCategoryId(e.target.value);
+                    setPage(1);
+                  }}
+                  className="w-full pl-10 pr-8 py-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 text-xs font-semibold focus:outline-none focus:border-yellow-500 cursor-pointer appearance-none"
+                >
+                  <option value="">All Categories</option>
+                  {categoryOptions.map((cat) => (
+                    <option key={cat.id} value={cat.id}>{cat.label}</option>
+                  ))}
+                </select>
+                <ChevronDown size={15} className="absolute right-3.5 top-3.5 text-slate-400 pointer-events-none" />
+              </div>
+            </div>
+
+            {/* LOCATION */}
+            <div className="space-y-1.5">
+              <label htmlFor="location" className="text-xs font-bold text-slate-700 uppercase tracking-wider">Location</label>
+              <div className="relative">
+                <MapPin size={16} className="absolute left-3.5 top-3.5 text-yellow-600" />
+                <select
+                  id="location"
+                  value={locationId}
+                  onChange={(e) => {
+                    setLocationId(e.target.value);
+                    setPage(1);
+                  }}
+                  className="w-full pl-10 pr-8 py-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 text-xs font-semibold focus:outline-none focus:border-yellow-500 cursor-pointer appearance-none"
+                >
+                  <option value="">All Locations</option>
+                  {locationOptions.map((loc) => (
+                    <option key={loc.id} value={loc.id}>{loc.label}</option>
+                  ))}
+                </select>
+                <ChevronDown size={15} className="absolute right-3.5 top-3.5 text-slate-400 pointer-events-none" />
+              </div>
+            </div>
+
+            {/* ROOMS */}
+            <div className="space-y-1.5">
+              <label htmlFor="rooms" className="text-xs font-bold text-slate-700 uppercase tracking-wider">Rooms</label>
+              <div className="relative">
+                <BedDouble size={16} className="absolute left-3.5 top-3.5 text-yellow-600" />
+                <select
+                  id="rooms"
+                  value={rooms}
+                  onChange={(e) => {
+                    setRooms(e.target.value);
+                    setPage(1);
+                  }}
+                  className="w-full pl-10 pr-8 py-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 text-xs font-semibold focus:outline-none focus:border-yellow-500 cursor-pointer appearance-none"
+                >
+                  <option value="">Any Rooms</option>
+                  <option value="1">1+ Room</option>
+                  <option value="2">2+ Rooms</option>
+                  <option value="3">3+ Rooms</option>
+                  <option value="4">4+ Rooms</option>
+                  <option value="5">5+ Rooms</option>
+                </select>
+                <ChevronDown size={15} className="absolute right-3.5 top-3.5 text-slate-400 pointer-events-none" />
+              </div>
+            </div>
+
+            {/* PRICE */}
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">Monthly Price (Birr)</label>
+              <div className="flex items-center gap-2">
+                <input
+                  type="number"
+                  min="0"
+                  placeholder="Min"
+                  value={minPrice}
+                  onChange={(e) => {
+                    setMinPrice(e.target.value);
+                    setPage(1);
+                  }}
+                  className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 placeholder-slate-400 text-xs font-mono focus:outline-none focus:border-yellow-500"
+                />
+                <span className="text-slate-400">—</span>
+                <input
+                  type="number"
+                  min="0"
+                  placeholder="Max"
+                  value={maxPrice}
+                  onChange={(e) => {
+                    setMaxPrice(e.target.value);
+                    setPage(1);
+                  }}
+                  className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 placeholder-slate-400 text-xs font-mono focus:outline-none focus:border-yellow-500"
+                />
+              </div>
+            </div>
+
+            {/* FURNISHED */}
+            <div className="space-y-1.5">
+              <label htmlFor="furnished" className="text-xs font-bold text-slate-700 uppercase tracking-wider">Furnished</label>
+              <div className="relative">
+                <Sofa size={16} className="absolute left-3.5 top-3.5 text-yellow-600" />
+                <select
+                  id="furnished"
+                  value={furnished}
+                  onChange={(e) => {
+                    setFurnished(e.target.value);
+                    setPage(1);
+                  }}
+                  className="w-full pl-10 pr-8 py-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 text-xs font-semibold focus:outline-none focus:border-yellow-500 cursor-pointer appearance-none"
+                >
+                  <option value="">Any</option>
+                  <option value="true">Furnished</option>
+                  <option value="false">Unfurnished</option>
+                </select>
+                <ChevronDown size={15} className="absolute right-3.5 top-3.5 text-slate-400 pointer-events-none" />
+              </div>
+            </div>
+
+            {/* ACTIONS */}
+            <div className="flex gap-2 pt-4 border-t border-slate-100 mt-2">
+              <button
+                type="button"
+                className="flex-1 py-2.5 px-3 bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-700 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5"
+                onClick={clearFilters}
+              >
+                <RefreshCw size={14} />
+                Reset
+              </button>
+              <button
+                type="button"
+                className="flex-1 py-2.5 px-3 bg-yellow-500 hover:bg-yellow-400 text-[#022036] rounded-xl text-xs font-extrabold transition-all cursor-pointer shadow-sm uppercase tracking-wider"
+                onClick={() => setShowFilters(false)}
+              >
+                Apply
+              </button>
+            </div>
+          </aside>
+
+          {/* RESULTS AREA */}
+          <main className="lg:col-span-3 space-y-6">
+            
+            {/* TOOLBAR */}
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white border border-slate-200 p-5 rounded-2xl shadow-xs">
+              <div>
+                <h2 className="text-base font-black text-[#022036] uppercase tracking-wider">Available Properties</h2>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  <strong className="text-yellow-600 font-bold">{totalProperties}</strong> properties found matching your criteria
+                </p>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <label htmlFor="result-sort" className="text-xs text-slate-500 font-bold">Sort:</label>
+                <div className="relative">
+                  <select
+                    id="result-sort"
+                    value={sort}
+                    onChange={(e) => {
+                      setSort(e.target.value);
+                      setPage(1);
+                    }}
+                    className="pl-3 pr-8 py-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 text-xs font-semibold focus:outline-none focus:border-yellow-500 cursor-pointer appearance-none"
+                  >
+                    <option value="newest">Newest</option>
+                    <option value="price_asc">Price Low to High</option>
+                    <option value="price_desc">Price High to Low</option>
+                    <option value="oldest">Oldest</option>
+                  </select>
+                  <ChevronDown size={14} className="absolute right-2.5 top-3 text-slate-400 pointer-events-none" />
+                </div>
+              </div>
+            </div>
+
+            {/* LOADING */}
+            {loading && (
+              <div className="flex flex-col items-center justify-center py-28 gap-4 bg-white border border-slate-200 rounded-3xl shadow-xs">
+                <Loader2 size={40} className="animate-spin text-yellow-500" />
+                <h3 className="text-base font-extrabold text-[#022036]">Loading properties...</h3>
+                <p className="text-slate-400 text-xs">Finding available homes for you.</p>
+              </div>
+            )}
+
+            {/* ERROR */}
+            {!loading && error && (
+              <div className="flex flex-col items-center justify-center text-center py-20 px-6 bg-rose-50 border border-rose-200 rounded-3xl shadow-xs">
+                <div className="w-16 h-16 bg-rose-100 rounded-full flex items-center justify-center text-rose-700 mb-4">
+                  <AlertCircle size={30} />
+                </div>
+                <h3 className="text-lg font-black text-[#022036] mb-1">Unable to load properties</h3>
+                <p className="text-rose-700 text-xs max-w-md mb-6 font-semibold">{error}</p>
+                <button
+                  type="button"
+                  className="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 border border-slate-200 shadow-xs"
+                  onClick={loadProperties}
+                >
+                  <RefreshCw size={14} />
+                  Try Again
+                </button>
+              </div>
+            )}
+
+            {/* EMPTY */}
+            {!loading && !error && properties.length === 0 && (
+              <div className="flex flex-col items-center justify-center text-center py-24 px-6 bg-white border border-slate-200 rounded-3xl shadow-xs">
+                <div className="w-20 h-20 bg-yellow-50 border border-yellow-200 rounded-full flex items-center justify-center text-yellow-600 mb-4 shadow-inner">
+                  <Home size={34} />
+                </div>
+                <h3 className="text-xl font-black text-[#022036] mb-1">No properties found</h3>
+                <p className="text-slate-500 text-xs max-w-xs mb-6 font-light">Try changing your search keywords or active filter options.</p>
+                <button
+                  type="button"
+                  className="px-6 py-3 bg-yellow-500 hover:bg-yellow-400 text-[#022036] font-extrabold text-xs uppercase tracking-wider rounded-xl shadow-sm transition-all cursor-pointer"
+                  onClick={clearFilters}
+                >
+                  Clear Filters
+                </button>
+              </div>
+            )}
+
+            {/* PROPERTY GRID */}
+            {!loading && !error && properties.length > 0 && (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {properties.map((property) => {
+                  const favorite = favoriteIds.includes(property.id);
+                  const favoriteIsLoading = Boolean(favoriteLoading[property.id]);
+                  const mediaAsset = getMediaAsset(property);
+
+                  return (
+                    <article
+                      key={property.id}
+                      className="bg-white border border-slate-200 rounded-2xl overflow-hidden group hover:border-yellow-400 transition-all duration-300 shadow-xs hover:shadow-md flex flex-col"
+                    >
+                      {/* MEDIA CONTAINER */}
+                      <div className="relative h-48 overflow-hidden bg-black">
+                        {mediaAsset.type === 'video' ? (
+                          <div className="relative w-full h-full">
+                            <video
+                              src={mediaAsset.url}
+                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                              muted
+                              loop
+                              onMouseEnter={(e) => e.target.play().catch(() => {})}
+                              onMouseLeave={(e) => { e.target.pause(); e.target.currentTime = 0; }}
+                            />
+                            <div className="absolute inset-0 bg-black/20 flex items-center justify-center pointer-events-none">
+                              <div className="w-10 h-10 rounded-full bg-black/60 backdrop-blur-md text-amber-400 flex items-center justify-center border border-white/20 shadow-lg">
+                                <Play size={16} fill="currentColor" />
+                              </div>
+                            </div>
+                          </div>
+                        ) : (
+                          <img
+                            src={mediaAsset.url}
+                            alt={getTitle(property)}
+                            loading="lazy"
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                            onError={(e) => {
+                              e.currentTarget.src = FALLBACK_IMAGE;
+                            }}
+                          />
+                        )}
+
+                        <span className="absolute top-3 left-3 px-2.5 py-1 rounded-full bg-emerald-50 backdrop-blur-md text-[10px] font-black tracking-wider uppercase text-emerald-700 border border-emerald-200 z-10 shadow-xs">
+                          APPROVED
+                        </span>
+
+                        <button
+                          type="button"
+                          aria-label={favorite ? "Remove from favorites" : "Add to favorites"}
+                          disabled={favoriteIsLoading}
+                          className={`absolute top-3 right-3 p-2.5 rounded-full backdrop-blur-md transition-all cursor-pointer z-20 shadow-xs ${
+                            favorite ? "bg-rose-50 text-rose-600 border border-rose-200" : "bg-slate-950/50 text-white/80 hover:text-white border border-white/15"
+                          }`}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            e.preventDefault();
+                            toggleFavorite(property.id);
+                          }}
+                        >
+                          {favoriteIsLoading ? (
+                            <Loader2 size={16} className="animate-spin text-yellow-500" />
+                          ) : (
+                            <Heart size={16} fill={favorite ? "currentColor" : "none"} />
+                          )}
+                        </button>
+                      </div>
+
+                      {/* CONTENT */}
+                      <div className="p-5 flex flex-col flex-1 justify-between">
+                        <div>
+                          <div className="text-[10px] uppercase font-black tracking-widest text-yellow-600 mb-1">
+                            {getCategory(property)}
+                          </div>
+                          <h3 className="font-extrabold text-[#022036] text-base mb-1 truncate">{getTitle(property)}</h3>
+                          <p className="text-xs text-slate-500 line-clamp-2 mb-3 leading-relaxed font-light">
+                            {getDescription(property)}
+                          </p>
+
+                          <div className="flex items-center gap-1.5 text-xs text-slate-600 mb-4 font-medium">
+                            <MapPin size={14} className="text-yellow-600" />
+                            <span className="truncate">{getLocation(property)}</span>
+                          </div>
+                        </div>
+
+                        <div>
+                          <div className="flex items-center justify-between text-xs text-slate-600 py-2.5 border-t border-b border-slate-100 mb-4 font-mono">
+                            <span className="flex items-center gap-1">
+                              <BedDouble size={14} className="text-slate-400" />
+                              {property.rooms || 0} Rooms
+                            </span>
+                            <span className="text-slate-700 font-semibold">
+                              {property.furnished ? "Furnished" : "Unfurnished"}
+                            </span>
+                          </div>
+
+                          <div className="flex items-center justify-between gap-2">
+                            <div>
+                              <strong className="text-lg font-black text-slate-950 font-mono">
+                                {formatPrice(property.price)}
+                              </strong>
+                              <span className="text-[10px] text-slate-400 block font-semibold">Birr / month</span>
+                            </div>
+
+                            <Link
+                              to={`/properties/${property.id}`}
+                              className="px-4 py-2 bg-slate-900 hover:bg-yellow-500 hover:text-[#022036] text-white rounded-xl text-xs font-extrabold transition-all shadow-xs cursor-pointer uppercase tracking-wider"
+                            >
+                              View Details
+                            </Link>
+                          </div>
+                        </div>
+                      </div>
+                    </article>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* PROFESSIONAL SIDE-BY-SIDE PAGINATION */}
+            {!loading && !error && totalPages > 1 && (
+              <div className="flex flex-col sm:flex-row items-center justify-between bg-white border border-slate-200 p-4 rounded-2xl shadow-xs gap-4 mt-8">
+                <span className="text-xs text-slate-500 font-medium">
+                  Showing page <strong className="text-slate-900 font-black">{page}</strong> of <strong className="text-slate-900 font-black">{totalPages}</strong> ({totalProperties} total listings)
+                </span>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    disabled={page === 1}
+                    onClick={() => changePage(page - 1)}
+                    className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer flex items-center gap-1"
+                  >
+                    <ChevronLeft size={14} /> Previous
+                  </button>
+
+                  <div className="hidden sm:flex items-center gap-1">
+                    {Array.from({ length: totalPages }, (_, index) => index + 1)
+                      .slice(Math.max(0, page - 3), Math.min(totalPages, page + 2))
+                      .map((pageNumber) => (
+                        <button
+                          type="button"
+                          key={pageNumber}
+                          className={`w-8 h-8 rounded-xl text-xs font-bold transition-all cursor-pointer shadow-xs ${
+                            pageNumber === page
+                              ? "bg-yellow-500 text-[#022036] font-black"
+                              : "bg-white border border-slate-200 text-slate-700 hover:bg-slate-50"
+                          }`}
+                          onClick={() => changePage(pageNumber)}
+                        >
+                          {pageNumber}
+                        </button>
+                      ))}
+                  </div>
+
+                  <button
+                    type="button"
+                    disabled={page === totalPages}
+                    onClick={() => changePage(page + 1)}
+                    className="px-4 py-2 rounded-xl bg-yellow-500 hover:bg-yellow-400 text-[#022036] font-black text-xs disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer flex items-center gap-1 shadow-sm"
+                  >
+                    Next <ChevronRight size={14} />
+                  </button>
+                </div>
+              </div>
+            )}
+
+          </main>
+        </div>
+
+>>>>>>> 7f717b18418d24f4c597bdce3c03fa7ee00961f6
       </div>
 
       {/* =====================================================

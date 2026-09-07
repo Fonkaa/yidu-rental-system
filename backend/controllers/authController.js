@@ -1,4 +1,3 @@
-
 const bcrypt = require("bcrypt");
 const prisma = require("../prisma/client");
 const jwt = require("jsonwebtoken");
@@ -11,6 +10,10 @@ console.log(
   process.env.EMAIL_PASS ? "Password Loaded" : "Password Missing"
 );
 
+// ======================================================
+// EMAIL TRANSPORTER
+// ======================================================
+
 const transporter = nodemailer.createTransport({
   host: process.env.EMAIL_HOST || "smtp.gmail.com",
   port: Number(process.env.EMAIL_PORT) || 587,
@@ -21,13 +24,18 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-// ==========================================
+// ======================================================
 // REGISTER
-// ==========================================
+// ======================================================
 
 async function register(req, res) {
   try {
-    const { fullName, email, password, role } = req.body;
+    const {
+      fullName,
+      email,
+      password,
+      role,
+    } = req.body;
 
     if (!fullName || !email || !password) {
       return res.status(400).json({
@@ -47,8 +55,15 @@ async function register(req, res) {
 
     const passwordHash = await bcrypt.hash(password, 10);
 
-    const allowedRoles = ["TENANT", "LANDLORD", "ADMIN"];
-    const finalRole = allowedRoles.includes(role) ? role : "TENANT";
+    const allowedRoles = [
+      "TENANT",
+      "LANDLORD",
+      "ADMIN",
+    ];
+
+    const finalRole = allowedRoles.includes(role)
+      ? role
+      : "TENANT";
 
     const user = await prisma.user.create({
       data: {
@@ -59,10 +74,15 @@ async function register(req, res) {
       },
     });
 
+    // Notify admins
     try {
       const admins = await prisma.user.findMany({
-        where: { role: "ADMIN" },
-        select: { id: true },
+        where: {
+          role: "ADMIN",
+        },
+        select: {
+          id: true,
+        },
       });
 
       for (const admin of admins) {
@@ -98,13 +118,16 @@ async function register(req, res) {
   }
 }
 
-// ==========================================
+// ======================================================
 // LOGIN
-// ==========================================
+// ======================================================
 
 async function login(req, res) {
   try {
-    const { email, password } = req.body;
+    const {
+      email,
+      password,
+    } = req.body;
 
     if (!email || !password) {
       return res.status(400).json({
@@ -168,13 +191,15 @@ async function login(req, res) {
   }
 }
 
-// ==========================================
+// ======================================================
 // FORGOT PASSWORD
-// ==========================================
+// ======================================================
 
 async function forgotPassword(req, res) {
   try {
-    const { email } = req.body;
+    const {
+      email,
+    } = req.body;
 
     if (!email) {
       return res.status(400).json({
@@ -182,13 +207,19 @@ async function forgotPassword(req, res) {
       });
     }
 
+    const normalizedEmail = email.trim().toLowerCase();
+
     const user = await prisma.user.findUnique({
-      where: { email },
+      where: {
+        email: normalizedEmail,
+      },
     });
 
+    // Do not reveal whether an email exists
     if (!user) {
       return res.status(200).json({
-        message: "If that email exists, an OTP has been sent",
+        message:
+          "If that email exists, an OTP has been sent",
       });
     }
 
@@ -201,7 +232,9 @@ async function forgotPassword(req, res) {
     );
 
     await prisma.user.update({
-      where: { email },
+      where: {
+        id: user.id,
+      },
       data: {
         otpCode,
         otpExpiry,
@@ -210,53 +243,79 @@ async function forgotPassword(req, res) {
 
     await transporter.sendMail({
       from: `"HouseRental Security" <${process.env.EMAIL_USER}>`,
-      to: email,
-      subject: "Password Reset OTP Code - HouseRental",
+      to: normalizedEmail,
+      subject:
+        "Password Reset OTP Code - HouseRental",
       html: `
-        <div style="font-family: Arial, sans-serif; padding: 24px;">
+        <div
+          style="
+            font-family: Arial, sans-serif;
+            padding: 24px;
+            max-width: 600px;
+            margin: auto;
+          "
+        >
           <h2>HouseRental Security Verification</h2>
 
-          <p>You requested a password reset for your account.</p>
+          <p>
+            You requested a password reset for your
+            HouseRental account.
+          </p>
 
-          <p>Your one-time verification OTP code is:</p>
+          <p>
+            Your one-time verification OTP code is:
+          </p>
 
           <div style="margin: 20px 0;">
-            <span style="
-              background: #FFC107;
-              color: #022036;
-              font-size: 28px;
-              font-weight: bold;
-              padding: 12px 24px;
-              display: inline-block;
-              border-radius: 12px;
-              letter-spacing: 6px;
-            ">
+            <span
+              style="
+                background: #FFC107;
+                color: #022036;
+                font-size: 28px;
+                font-weight: bold;
+                padding: 12px 24px;
+                display: inline-block;
+                border-radius: 12px;
+                letter-spacing: 6px;
+              "
+            >
               ${otpCode}
             </span>
           </div>
 
-          <p>This code will expire in <strong>10 minutes</strong>.</p>
+          <p>
+            This code will expire in
+            <strong>10 minutes</strong>.
+          </p>
 
-          <p>If you didn't request this, please ignore this email.</p>
+          <p>
+            If you didn't request this password reset,
+            please ignore this email.
+          </p>
         </div>
       `,
     });
 
     return res.status(200).json({
-      message: "If that email exists, an OTP has been sent",
+      message:
+        "If that email exists, an OTP has been sent",
     });
   } catch (error) {
-    console.error("FORGOT PASSWORD ERROR:", error);
+    console.error(
+      "FORGOT PASSWORD ERROR:",
+      error
+    );
 
     return res.status(500).json({
-      error: "Something went wrong sending OTP email",
+      error:
+        "Something went wrong sending OTP email",
     });
   }
 }
 
-// ==========================================
+// ======================================================
 // RESET PASSWORD
-// ==========================================
+// ======================================================
 
 async function resetPassword(req, res) {
   try {
@@ -266,41 +325,67 @@ async function resetPassword(req, res) {
       newPassword,
     } = req.body;
 
-    if (!email || !otpCode || !newPassword) {
+    if (
+      !email ||
+      !otpCode ||
+      !newPassword
+    ) {
       return res.status(400).json({
-        error: "Email, OTP code, and new password are required",
+        error:
+          "Email, OTP code, and new password are required",
       });
     }
+
+    if (newPassword.length < 6) {
+      return res.status(400).json({
+        error:
+          "New password must be at least 6 characters",
+      });
+    }
+
+    const normalizedEmail =
+      email.trim().toLowerCase();
 
     const user = await prisma.user.findUnique({
-      where: { email },
+      where: {
+        email: normalizedEmail,
+      },
     });
 
-    if (!user || !user.otpCode || !user.otpExpiry) {
+    if (
+      !user ||
+      !user.otpCode ||
+      !user.otpExpiry
+    ) {
       return res.status(400).json({
-        error: "Invalid request or OTP not requested",
+        error:
+          "Invalid request or OTP not requested",
       });
     }
 
-    if (user.otpCode !== otpCode) {
+    if (user.otpCode !== otpCode.trim()) {
       return res.status(400).json({
         error: "Incorrect OTP code",
       });
     }
 
-    if (new Date() > new Date(user.otpExpiry)) {
+    if (
+      new Date() >
+      new Date(user.otpExpiry)
+    ) {
       return res.status(400).json({
-        error: "OTP has expired. Please request a new one",
+        error:
+          "OTP has expired. Please request a new one",
       });
     }
 
-    const passwordHash = await bcrypt.hash(
-      newPassword,
-      10
-    );
+    const passwordHash =
+      await bcrypt.hash(newPassword, 10);
 
     await prisma.user.update({
-      where: { id: user.id },
+      where: {
+        id: user.id,
+      },
       data: {
         passwordHash,
         otpCode: null,
@@ -309,37 +394,45 @@ async function resetPassword(req, res) {
     });
 
     return res.status(200).json({
-      message: "Password reset successful. You can now login.",
+      message:
+        "Password reset successful. You can now login.",
     });
   } catch (error) {
-    console.error("RESET PASSWORD ERROR:", error);
+    console.error(
+      "RESET PASSWORD ERROR:",
+      error
+    );
 
     return res.status(500).json({
-      error: "Something went wrong resetting password",
+      error:
+        "Something went wrong resetting password",
     });
   }
 }
 
-// ==========================================
-// UPDATE FAYDA
-// ==========================================
+// ======================================================
+// UPDATE FAYDA ID + IMAGES
+// ======================================================
 
 async function updateIdNumber(req, res) {
   try {
     console.log("FAYDA BODY:", req.body);
     console.log("FAYDA FILES:", req.files);
 
-    const idNumber = req.body?.idNumber?.trim();
+    const idNumber =
+      req.body?.idNumber?.trim();
 
     if (!idNumber) {
       return res.status(400).json({
-        error: "Fayda ID number is required",
+        error:
+          "Fayda ID number is required",
       });
     }
 
     if (!/^\d{16}$/.test(idNumber)) {
       return res.status(400).json({
-        error: "Fayda ID number must be exactly 16 digits",
+        error:
+          "Fayda ID number must be exactly 16 digits",
       });
     }
 
@@ -351,51 +444,58 @@ async function updateIdNumber(req, res) {
 
     if (!frontImage) {
       return res.status(400).json({
-        error: "Fayda front image is required",
+        error:
+          "Fayda front image is required",
       });
     }
 
     if (!backImage) {
       return res.status(400).json({
-        error: "Fayda back image is required",
+        error:
+          "Fayda back image is required",
       });
     }
 
     if (!req.user?.userId) {
       return res.status(401).json({
-        error: "User authentication required",
+        error:
+          "User authentication required",
       });
     }
 
-    const updated = await prisma.user.update({
-      where: {
-        id: req.user.userId,
-      },
+    const updated =
+      await prisma.user.update({
+        where: {
+          id: req.user.userId,
+        },
 
-      data: {
-        faydaNumber: idNumber,
+        data: {
+          faydaNumber: idNumber,
 
-        faydaFrontImage:
-          `/uploads/fayda/${frontImage.filename}`,
+          faydaFrontImage:
+            `/uploads/fayda/${frontImage.filename}`,
 
-        faydaBackImage:
-          `/uploads/fayda/${backImage.filename}`,
-      },
+          faydaBackImage:
+            `/uploads/fayda/${backImage.filename}`,
+        },
 
-      select: {
-        id: true,
-        fullName: true,
-        email: true,
-        role: true,
-        phone: true,
-        faydaNumber: true,
-        faydaFrontImage: true,
-        faydaBackImage: true,
-      },
-    });
+        select: {
+          id: true,
+          fullName: true,
+          email: true,
+          role: true,
+          phone: true,
+          faydaNumber: true,
+          faydaFrontImage: true,
+          faydaBackImage: true,
+        },
+      });
 
     return res.status(200).json({
-      message: "Fayda information saved successfully",
+      success: true,
+
+      message:
+        "Fayda information saved successfully",
 
       user: {
         id: updated.id,
@@ -404,7 +504,8 @@ async function updateIdNumber(req, res) {
         role: updated.role,
         phone: updated.phone,
 
-        idNumber: updated.faydaNumber,
+        idNumber:
+          updated.faydaNumber,
 
         faydaFrontImage:
           updated.faydaFrontImage,
@@ -414,7 +515,10 @@ async function updateIdNumber(req, res) {
       },
     });
   } catch (error) {
-    console.error("UPDATE FAYDA ERROR:", error);
+    console.error(
+      "UPDATE FAYDA ERROR:",
+      error
+    );
 
     return res.status(500).json({
       error:
@@ -423,34 +527,135 @@ async function updateIdNumber(req, res) {
   }
 }
 
-// ==========================================
+// ======================================================
+// VERIFY FAYDA
+// ======================================================
+
+async function verifyFayda(req, res) {
+  try {
+    const idNumber =
+      req.body?.idNumber?.trim();
+
+    if (
+      !idNumber ||
+      !/^\d{16}$/.test(idNumber)
+    ) {
+      return res.status(400).json({
+        error:
+          "Fayda ID number must be exactly 16 numeric digits.",
+      });
+    }
+
+    if (!req.user?.userId) {
+      return res.status(401).json({
+        error:
+          "User authentication required",
+      });
+    }
+
+    const files = req.files || {};
+
+    const frontFile =
+      files.faydaFrontImage?.[0];
+
+    const backFile =
+      files.faydaBackImage?.[0];
+
+    if (!frontFile || !backFile) {
+      return res.status(400).json({
+        error:
+          "Both front and back images of your Fayda ID card are required.",
+      });
+    }
+
+    const frontImagePath =
+      `/uploads/fayda/${frontFile.filename}`;
+
+    const backImagePath =
+      `/uploads/fayda/${backFile.filename}`;
+
+    const updated =
+      await prisma.user.update({
+        where: {
+          id: req.user.userId,
+        },
+
+        data: {
+          faydaNumber: idNumber,
+          faydaFrontImage:
+            frontImagePath,
+          faydaBackImage:
+            backImagePath,
+        },
+
+        select: {
+          id: true,
+          fullName: true,
+          email: true,
+          role: true,
+          phone: true,
+          faydaNumber: true,
+          faydaFrontImage: true,
+          faydaBackImage: true,
+        },
+      });
+
+    return res.status(200).json({
+      success: true,
+
+      message:
+        "Fayda verification details saved successfully.",
+
+      user: {
+        ...updated,
+
+        idNumber:
+          updated.faydaNumber,
+      },
+    });
+  } catch (error) {
+    console.error(
+      "FAYDA VERIFICATION ERROR:",
+      error
+    );
+
+    return res.status(500).json({
+      error:
+        "Failed to verify and save Fayda credentials",
+    });
+  }
+}
+
+// ======================================================
 // GET CURRENT USER
-// ==========================================
+// ======================================================
 
 async function getMe(req, res) {
   try {
     if (!req.user?.userId) {
       return res.status(401).json({
-        error: "Authentication required",
+        error:
+          "Authentication required",
       });
     }
 
-    const user = await prisma.user.findUnique({
-      where: {
-        id: req.user.userId,
-      },
+    const user =
+      await prisma.user.findUnique({
+        where: {
+          id: req.user.userId,
+        },
 
-      select: {
-        id: true,
-        fullName: true,
-        email: true,
-        role: true,
-        phone: true,
-        faydaNumber: true,
-        faydaFrontImage: true,
-        faydaBackImage: true,
-      },
-    });
+        select: {
+          id: true,
+          fullName: true,
+          email: true,
+          role: true,
+          phone: true,
+          faydaNumber: true,
+          faydaFrontImage: true,
+          faydaBackImage: true,
+        },
+      });
 
     if (!user) {
       return res.status(404).json({
@@ -461,84 +666,103 @@ async function getMe(req, res) {
     return res.status(200).json({
       user: {
         ...user,
-        idNumber: user.faydaNumber,
+
+        idNumber:
+          user.faydaNumber,
       },
     });
   } catch (error) {
-    console.error("GET ME ERROR:", error);
+    console.error(
+      "GET ME ERROR:",
+      error
+    );
 
     return res.status(500).json({
-      error: "Something went wrong fetching your profile",
+      error:
+        "Something went wrong fetching your profile",
     });
   }
 }
 
-// ==========================================
+// ======================================================
 // SEARCH LANDLORDS
-// ==========================================
+// ======================================================
 
 async function searchUsers(req, res) {
   try {
-    const { q } = req.query;
+    const {
+      q,
+    } = req.query;
 
-    const currentUserId = req.user?.userId;
+    const currentUserId =
+      req.user?.userId;
 
     const whereClause = {
-      NOT: {
-        id: currentUserId,
-      },
-
       role: "LANDLORD",
     };
 
-    if (q && q.trim() !== "") {
+    if (currentUserId) {
+      whereClause.NOT = {
+        id: currentUserId,
+      };
+    }
+
+    if (
+      q &&
+      q.trim() !== ""
+    ) {
       whereClause.OR = [
         {
           fullName: {
-            contains: q,
+            contains: q.trim(),
             mode: "insensitive",
           },
         },
 
         {
           email: {
-            contains: q,
+            contains: q.trim(),
             mode: "insensitive",
           },
         },
       ];
     }
 
-    const users = await prisma.user.findMany({
-      where: whereClause,
+    const users =
+      await prisma.user.findMany({
+        where: whereClause,
 
-      select: {
-        id: true,
-        fullName: true,
-        email: true,
-        role: true,
-      },
+        select: {
+          id: true,
+          fullName: true,
+          email: true,
+          role: true,
+        },
 
-      take: 10,
-    });
+        take: 10,
+      });
 
     return res.status(200).json({
       success: true,
       users,
     });
   } catch (error) {
-    console.error("SEARCH USERS ERROR:", error);
+    console.error(
+      "SEARCH USERS ERROR:",
+      error
+    );
 
     return res.status(500).json({
       success: false,
-      error: "Failed to search landlords",
+      error:
+        "Failed to search landlords",
     });
   }
 }
 
-// ==========================================
+// ======================================================
 // EXPORTS
-// ==========================================
+// ======================================================
 
 module.exports = {
   register,
@@ -546,6 +770,7 @@ module.exports = {
   forgotPassword,
   resetPassword,
   updateIdNumber,
+  verifyFayda,
   getMe,
   searchUsers,
 };
