@@ -15,6 +15,7 @@ import {
   Sofa,
   ChevronLeft,
   ChevronRight,
+  Play,
 } from "lucide-react";
 
 import { getProperties } from "../../services/propertyService";
@@ -40,7 +41,7 @@ export default function SearchProperty() {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalProperties, setTotalProperties] = useState(0);
-  const limit = 12;
+  const limit = 6; // Set to 6 per page as requested so pagination activates immediately
 
   const [showFilters, setShowFilters] = useState(false);
   const [favoriteIds, setFavoriteIds] = useState([]);
@@ -190,16 +191,27 @@ export default function SearchProperty() {
     return parts.length > 0 ? parts.join(", ") : location.region || "Location not available";
   };
   const getCategory = (property) => property?.category?.nameEn || property?.category?.nameAm || property?.category?.name || "Property";
-  const getImage = (property) => {
+  
+  const getMediaAsset = (property) => {
+    const videoUrl = property?.videoUrl || property?.video;
+    if (videoUrl) {
+      const cleanUrl = typeof videoUrl === "string" ? videoUrl : videoUrl?.url;
+      if (cleanUrl) {
+        const fullUrl = cleanUrl.startsWith("http") ? cleanUrl : `http://localhost:5000${cleanUrl}`;
+        return { type: 'video', url: fullUrl };
+      }
+    }
+
     const images = property?.images;
     if (Array.isArray(images) && images.length > 0) {
       const imgUrl = typeof images[0] === "string" ? images[0] : images[0]?.url;
       if (imgUrl) {
-        if (imgUrl.startsWith("http://") || imgUrl.startsWith("https://")) return imgUrl;
-        return `http://localhost:5000${imgUrl}`;
+        const fullUrl = imgUrl.startsWith("http") ? imgUrl : `http://localhost:5000${imgUrl}`;
+        return { type: 'image', url: fullUrl };
       }
     }
-    return FALLBACK_IMAGE;
+
+    return { type: 'image', url: FALLBACK_IMAGE };
   };
 
   const changePage = (newPage) => {
@@ -277,13 +289,13 @@ export default function SearchProperty() {
           </button>
         </div>
 
-        {/* CONTENT LAYOUT */}
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+        {/* CONTENT LAYOUT WITH FIXED SIDEBAR */}
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 items-start">
           
-          {/* FILTER SIDEBAR */}
+          {/* STICKY FIXED FILTER SIDEBAR CUT AT APPLY/RESET BUTTON */}
           <aside
-            className={`fixed lg:static top-0 left-0 h-full lg:h-auto w-80 lg:w-auto bg-white lg:bg-white border-r lg:border border-slate-200 p-6 lg:p-6 rounded-r-3xl lg:rounded-2xl z-50 transition-transform duration-300 flex flex-col gap-5 overflow-y-auto shadow-xl lg:shadow-xs ${
-              showFilters ? "translate-x-0" : "-translate-x-full lg:translate-x-0 hidden lg:flex"
+            className={`lg:sticky lg:top-24 bg-white border border-slate-200 p-6 rounded-2xl z-40 transition-transform duration-300 flex flex-col gap-5 shadow-xs ${
+              showFilters ? "fixed inset-y-0 left-0 w-80 h-full z-50 overflow-y-auto translate-x-0" : "hidden lg:flex"
             }`}
           >
             <div className="flex items-center justify-between pb-4 border-b border-slate-100">
@@ -529,23 +541,43 @@ export default function SearchProperty() {
                 {properties.map((property) => {
                   const favorite = favoriteIds.includes(property.id);
                   const favoriteIsLoading = Boolean(favoriteLoading[property.id]);
+                  const mediaAsset = getMediaAsset(property);
 
                   return (
                     <article
                       key={property.id}
                       className="bg-white border border-slate-200 rounded-2xl overflow-hidden group hover:border-yellow-400 transition-all duration-300 shadow-xs hover:shadow-md flex flex-col"
                     >
-                      {/* IMAGE CONTAINER */}
-                      <div className="relative h-48 overflow-hidden bg-slate-100">
-                        <img
-                          src={getImage(property)}
-                          alt={getTitle(property)}
-                          loading="lazy"
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                          onError={(e) => {
-                            e.currentTarget.src = FALLBACK_IMAGE;
-                          }}
-                        />
+                      {/* MEDIA CONTAINER */}
+                      <div className="relative h-48 overflow-hidden bg-black">
+                        {mediaAsset.type === 'video' ? (
+                          <div className="relative w-full h-full">
+                            <video
+                              src={mediaAsset.url}
+                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                              muted
+                              loop
+                              onMouseEnter={(e) => e.target.play().catch(() => {})}
+                              onMouseLeave={(e) => { e.target.pause(); e.target.currentTime = 0; }}
+                            />
+                            <div className="absolute inset-0 bg-black/20 flex items-center justify-center pointer-events-none">
+                              <div className="w-10 h-10 rounded-full bg-black/60 backdrop-blur-md text-amber-400 flex items-center justify-center border border-white/20 shadow-lg">
+                                <Play size={16} fill="currentColor" />
+                              </div>
+                            </div>
+                          </div>
+                        ) : (
+                          <img
+                            src={mediaAsset.url}
+                            alt={getTitle(property)}
+                            loading="lazy"
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                            onError={(e) => {
+                              e.currentTarget.src = FALLBACK_IMAGE;
+                            }}
+                          />
+                        )}
+
                         <span className="absolute top-3 left-3 px-2.5 py-1 rounded-full bg-emerald-50 backdrop-blur-md text-[10px] font-black tracking-wider uppercase text-emerald-700 border border-emerald-200 z-10 shadow-xs">
                           APPROVED
                         </span>
@@ -622,45 +654,51 @@ export default function SearchProperty() {
               </div>
             )}
 
-            {/* PAGINATION */}
+            {/* PROFESSIONAL SIDE-BY-SIDE PAGINATION */}
             {!loading && !error && totalPages > 1 && (
-              <div className="flex items-center justify-center gap-2 pt-6">
-                <button
-                  type="button"
-                  disabled={page === 1}
-                  onClick={() => changePage(page - 1)}
-                  className="p-2.5 rounded-xl bg-white border border-slate-200 text-slate-700 hover:text-slate-950 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer shadow-xs"
-                  aria-label="Previous page"
-                >
-                  <ChevronLeft size={16} />
-                </button>
+              <div className="flex flex-col sm:flex-row items-center justify-between bg-white border border-slate-200 p-4 rounded-2xl shadow-xs gap-4 mt-8">
+                <span className="text-xs text-slate-500 font-medium">
+                  Showing page <strong className="text-slate-900 font-black">{page}</strong> of <strong className="text-slate-900 font-black">{totalPages}</strong> ({totalProperties} total listings)
+                </span>
 
-                {Array.from({ length: totalPages }, (_, index) => index + 1)
-                  .slice(Math.max(0, page - 3), Math.min(totalPages, page + 2))
-                  .map((pageNumber) => (
-                    <button
-                      type="button"
-                      key={pageNumber}
-                      className={`w-9 h-9 rounded-xl text-xs font-bold transition-all cursor-pointer shadow-xs ${
-                        pageNumber === page
-                          ? "bg-yellow-500 text-[#022036] font-black"
-                          : "bg-white border border-slate-200 text-slate-700 hover:bg-slate-50"
-                      }`}
-                      onClick={() => changePage(pageNumber)}
-                    >
-                      {pageNumber}
-                    </button>
-                  ))}
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    disabled={page === 1}
+                    onClick={() => changePage(page - 1)}
+                    className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer flex items-center gap-1"
+                  >
+                    <ChevronLeft size={14} /> Previous
+                  </button>
 
-                <button
-                  type="button"
-                  disabled={page === totalPages}
-                  onClick={() => changePage(page + 1)}
-                  className="p-2.5 rounded-xl bg-white border border-slate-200 text-slate-700 hover:text-slate-950 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer shadow-xs"
-                  aria-label="Next page"
-                >
-                  <ChevronRight size={16} />
-                </button>
+                  <div className="hidden sm:flex items-center gap-1">
+                    {Array.from({ length: totalPages }, (_, index) => index + 1)
+                      .slice(Math.max(0, page - 3), Math.min(totalPages, page + 2))
+                      .map((pageNumber) => (
+                        <button
+                          type="button"
+                          key={pageNumber}
+                          className={`w-8 h-8 rounded-xl text-xs font-bold transition-all cursor-pointer shadow-xs ${
+                            pageNumber === page
+                              ? "bg-yellow-500 text-[#022036] font-black"
+                              : "bg-white border border-slate-200 text-slate-700 hover:bg-slate-50"
+                          }`}
+                          onClick={() => changePage(pageNumber)}
+                        >
+                          {pageNumber}
+                        </button>
+                      ))}
+                  </div>
+
+                  <button
+                    type="button"
+                    disabled={page === totalPages}
+                    onClick={() => changePage(page + 1)}
+                    className="px-4 py-2 rounded-xl bg-yellow-500 hover:bg-yellow-400 text-[#022036] font-black text-xs disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer flex items-center gap-1 shadow-sm"
+                  >
+                    Next <ChevronRight size={14} />
+                  </button>
+                </div>
               </div>
             )}
 

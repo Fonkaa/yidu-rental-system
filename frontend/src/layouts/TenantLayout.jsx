@@ -458,14 +458,6 @@ export default function TenantLayout() {
               </div>
 
               <NotificationsDropdown />
-
-              <button
-                className="p-2.5 bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 rounded-xl text-red-400 hover:text-red-300 transition-all cursor-pointer"
-                onClick={handleLogout}
-                title={t.logout}
-              >
-                <LogOut size={16} />
-              </button>
             </div>
           </div>
         </header>

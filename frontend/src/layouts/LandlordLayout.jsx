@@ -59,7 +59,7 @@ export default function LandlordLayout() {
         />
       )}
 
-      {/* ================= CONSTANT SIDEBAR ================= */}
+      {/* ================= CONSTANT SIDEBAR (FIXED) ================= */}
       <aside
         className={`fixed lg:static top-0 left-0 h-full w-72 bg-[#022036] border-r border-yellow-500/20 p-6 z-50 transition-transform duration-300 flex flex-col justify-between flex-shrink-0 text-white shadow-md ${
           sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
@@ -97,7 +97,7 @@ export default function LandlordLayout() {
           {/* NAVIGATION LINKS */}
           <nav className="space-y-1.5">
             {menuItems.map((item) => {
-              const isActive = location.pathname === item.path;
+              const isActive = location.pathname.startsWith(item.path);
               return (
                 <button
                   key={item.id}
@@ -123,17 +123,17 @@ export default function LandlordLayout() {
         </button>
       </aside>
 
-      {/* ================= CONTENT & NAVBAR CONTAINER ================= */}
-      <div className="flex-1 flex flex-1 flex-col h-full overflow-y-auto bg-white">
+      {/* ================= CONSTANT CONTENT & NAVBAR CONTAINER ================= */}
+      <div className="flex-1 flex flex-col h-screen overflow-hidden bg-white">
         
-        {/* STICKY NAVBAR */}
+        {/* STICKY TOP NAVBAR */}
         <header className="sticky top-0 z-30 bg-[#022036] border-b border-yellow-500/20 px-4 sm:px-8 py-3.5 flex-shrink-0 flex items-center justify-between text-white shadow-xs">
           <div className="flex items-center gap-3">
             <button className="lg:hidden p-2 text-white/80 bg-white/10 rounded-xl border border-white/10 cursor-pointer" onClick={() => setSidebarOpen(true)}>
               <Menu size={20} />
             </button>
             <h2 className="text-base font-bold text-white capitalize">
-              {location.pathname.includes('properties') ? 'Portfolio Management' : location.pathname.includes('requests') ? 'Tenant Rental Inquiries' : location.pathname.includes('history') ? 'Lease History' : location.pathname.includes('messages') ? 'In-App Messages' : location.pathname.includes('settings') ? 'Account Settings' : 'Real Estate Portfolio & Yield Performance'}
+              {location.pathname.includes('properties/new') ? 'Create Property Listing' : location.pathname.includes('properties') ? 'Portfolio Management' : location.pathname.includes('requests') ? 'Tenant Rental Inquiries' : location.pathname.includes('history') ? 'Lease History' : location.pathname.includes('messages') ? 'In-App Messages' : location.pathname.includes('settings') ? 'Account Settings' : 'Real Estate Portfolio & Yield Performance'}
             </h2>
           </div>
 
@@ -149,7 +149,7 @@ export default function LandlordLayout() {
           </div>
         </header>
 
-        {/* OUTLET RENDER AREA */}
+        {/* OUTLET RENDER AREA (SCROLLABLE INDEPENDENTLY) */}
         <main className="flex-1 flex flex-col bg-white overflow-y-auto">
           <Outlet />
         </main>

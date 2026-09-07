@@ -143,9 +143,13 @@ model RentalRequest {
   landlordId    String
   proposedPrice Float?
   startDate     DateTime?
+  
   landlord      User                @relation("LandlordRentalRequests", fields: [landlordId], references: [id], onDelete: Cascade)
   property      Property            @relation(fields: [propertyId], references: [id], onDelete: Cascade)
   tenant        User                @relation("TenantRentalRequests", fields: [tenantId], references: [id], onDelete: Cascade)
+
+  // Add this line so Prisma allows including payment in queries
+  payment       Payment?
 
   @@unique([tenantId, propertyId])
   @@index([tenantId])

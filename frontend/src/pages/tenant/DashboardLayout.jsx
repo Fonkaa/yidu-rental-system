@@ -31,7 +31,7 @@ function TenantAIAssistant({ isOpen, setIsOpen }) {
   const [messages, setMessages] = useState([
     {
       sender: "ai",
-      text: "Hello! I am your Yidu Rental Assistant. How can I help you find, rent, or manage your home today?",
+      text: "Hello! I am your hosuse Rental Assistant. How can I help you find, rent, or manage your home today?",
       time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     }
   ]);

@@ -85,8 +85,8 @@ export default function AppRoutes() {
           <Route path="/landlord/properties/:id" element={<PropertyDetails />} />
           <Route path="/landlord/messages/:contactId" element={<ChatRoom />} />
           <Route path="/landlord/settings" element={<LandlordDashboard />} />
+          <Route path="/landlord/properties/new" element={<CreateProperty />} />
         </Route>
-        <Route path="/landlord/properties/new" element={<CreateProperty />} />
       </Route>
 
       {/* ADMIN ROUTES WRAPPED WITH PERMANENT CONSTANT ADMIN LAYOUT */}

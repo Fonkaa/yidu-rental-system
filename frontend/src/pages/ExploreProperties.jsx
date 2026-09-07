@@ -21,7 +21,7 @@ export default function ExploreProperties() {
   const [sortBy, setSortBy] = useState("newest");
 
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 9;
+  const itemsPerPage = 6; // Set to 6 per page as requested
 
   // Rental Request Modal States for Guest / Quick Request flow
   const [selectedProperty, setSelectedProperty] = useState(null);
@@ -205,7 +205,7 @@ export default function ExploreProperties() {
               <span>Lightning-Fast Advanced Explorer</span>
             </div>
             <h1 className="text-3xl sm:text-4xl font-black text-[#022036] tracking-tight">Explore Available Properties</h1>
-            <p className="text-xs sm:text-sm text-slate-500 mt-1 font-light">Showing {sortedProperties.length} verified database listings (9 listings per page).</p>
+            <p className="text-xs sm:text-sm text-slate-500 mt-1 font-light">Showing {sortedProperties.length} verified database listings (6 listings per page).</p>
           </div>
 
           <button
@@ -355,9 +355,12 @@ export default function ExploreProperties() {
                 }
               }
 
-              const rawVideoUrl = property.videoUrl;
+              const rawVideoUrl = property.videoUrl || property.video;
               const videoUrl = rawVideoUrl
-                ? rawVideoUrl.startsWith('http') ? rawVideoUrl : `http://localhost:5000${rawVideoUrl.startsWith('/') ? '' : '/'}${rawVideoUrl}`
+                ? (typeof rawVideoUrl === 'string' ? rawVideoUrl : rawVideoUrl?.url)
+                : null;
+              const cleanVideoUrl = videoUrl
+                ? videoUrl.startsWith('http') ? videoUrl : `http://localhost:5000${videoUrl.startsWith('/') ? '' : '/'}${videoUrl}`
                 : null;
 
               return (
@@ -367,9 +370,9 @@ export default function ExploreProperties() {
                 >
                   <div>
                     <div className="relative h-56 overflow-hidden bg-slate-900">
-                      {videoUrl ? (
+                      {cleanVideoUrl ? (
                         <video
-                          src={videoUrl}
+                          src={cleanVideoUrl}
                           controls
                           preload="metadata"
                           className="w-full h-full object-cover"
@@ -383,7 +386,7 @@ export default function ExploreProperties() {
                         />
                       )}
                       <div className="absolute top-3 left-3 px-3 py-1 bg-emerald-50 text-emerald-700 rounded-full text-[10px] font-black uppercase tracking-wider border border-emerald-200 shadow-xs">
-                        {videoUrl ? "Video Tour" : "Verified 3D"}
+                        {cleanVideoUrl ? "Video Tour" : "Verified 3D"}
                       </div>
                     </div>
 
@@ -423,28 +426,49 @@ export default function ExploreProperties() {
           </div>
         )}
 
-        {/* PAGINATION FOOTER CONTROLS */}
+        {/* PROFESSIONAL SIDE-BY-SIDE PAGINATION */}
         {!loading && totalPages > 1 && (
-          <div className="flex items-center justify-between mt-12 pt-6 border-t border-slate-200">
-            <button
-              onClick={() => setCurrentPage(p => Math.max(p - 1, 1))}
-              disabled={currentPage === 1}
-              className="px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-700 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-100 transition-all flex items-center gap-1 cursor-pointer shadow-xs"
-            >
-              <ChevronLeft size={16} /> Previous
-            </button>
-
-            <span className="text-xs font-bold text-slate-600">
-              Page {currentPage} of {totalPages}
+          <div className="flex flex-col sm:flex-row items-center justify-between bg-white border border-slate-200 p-4 rounded-2xl shadow-xs gap-4 mt-12">
+            <span className="text-xs text-slate-500 font-medium">
+              Showing page <strong className="text-slate-900 font-black">{currentPage}</strong> of <strong className="text-slate-900 font-black">{totalPages}</strong> ({sortedProperties.length} total listings)
             </span>
 
-            <button
-              onClick={() => setCurrentPage(p => Math.min(p + 1, totalPages))}
-              disabled={currentPage === totalPages}
-              className="px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-700 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-100 transition-all flex items-center gap-1 cursor-pointer shadow-xs"
-            >
-              Next <ChevronRight size={16} />
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setCurrentPage(p => Math.max(p - 1, 1))}
+                disabled={currentPage === 1}
+                className="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer flex items-center gap-1 shadow-xs"
+              >
+                <ChevronLeft size={16} /> Previous
+              </button>
+
+              <div className="hidden sm:flex items-center gap-1">
+                {Array.from({ length: totalPages }, (_, index) => index + 1)
+                  .slice(Math.max(0, currentPage - 3), Math.min(totalPages, currentPage + 2))
+                  .map((pageNumber) => (
+                    <button
+                      type="button"
+                      key={pageNumber}
+                      className={`w-8 h-8 rounded-xl text-xs font-bold transition-all cursor-pointer shadow-xs ${
+                        pageNumber === currentPage
+                          ? "bg-yellow-500 text-[#022036] font-black"
+                          : "bg-white border border-slate-200 text-slate-700 hover:bg-slate-50"
+                      }`}
+                      onClick={() => setCurrentPage(pageNumber)}
+                    >
+                      {pageNumber}
+                    </button>
+                  ))}
+              </div>
+
+              <button
+                onClick={() => setCurrentPage(p => Math.min(p + 1, totalPages))}
+                disabled={currentPage === totalPages}
+                className="px-4 py-2.5 rounded-xl bg-yellow-500 hover:bg-yellow-400 text-[#022036] font-black text-xs disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer flex items-center gap-1 shadow-sm"
+              >
+                Next <ChevronRight size={16} />
+              </button>
+            </div>
           </div>
         )}
       </main>

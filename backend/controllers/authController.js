@@ -156,11 +156,9 @@ async function forgotPassword(req, res) {
 
     const user = await executeWithRetry(() => prisma.user.findUnique({ where: { email } }));
     if (!user) {
-      // Return a safe generic message so hackers can't check if an email exists
       return res.status(200).json({ message: 'If that email exists, an OTP has been sent' });
     }
 
-    // Generate random 6-digit OTP code & 10-minute expiration
     const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
     const otpExpiry = new Date(Date.now() + 10 * 60 * 1000);
 
@@ -171,7 +169,6 @@ async function forgotPassword(req, res) {
       })
     );
 
-    // Send email to the specific registered user's address
     await transporter.sendMail({
       from: `"HouseRental Security" <${process.env.EMAIL_USER}>`,
       to: email,
@@ -198,7 +195,7 @@ async function forgotPassword(req, res) {
   }
 }
 
-// 2. RESET PASSWORD WITH OTP (Single, Clean Definition)
+// 2. RESET PASSWORD WITH OTP
 async function resetPassword(req, res) {
   try {
     const { email, otpCode, newPassword } = req.body;
@@ -267,12 +264,76 @@ async function updateIdNumber(req, res) {
   }
 }
 
+// ==========================================
+// STRICT 16-DIGIT FAYDA ID & IMAGES VERIFICATION
+// ==========================================
+async function verifyFayda(req, res) {
+  try {
+    const { idNumber } = req.body;
+
+    if (!idNumber || !/^\d{16}$/.test(idNumber.trim())) {
+      return res.status(400).json({ error: 'Fayda ID number must be exactly 16 numeric digits.' });
+    }
+
+    const files = req.files || {};
+    const frontFile = files.faydaFrontImage?.[0];
+    const backFile = files.faydaBackImage?.[0];
+
+    if (!frontFile || !backFile) {
+      return res.status(400).json({ error: 'Both front and back images of your Fayda ID card are required.' });
+    }
+
+    const frontImagePath = `/uploads/${frontFile.filename}`;
+    const backImagePath = `/uploads/${backFile.filename}`;
+
+    const updated = await executeWithRetry(() =>
+      prisma.user.update({
+        where: { id: req.user.userId },
+        data: {
+          faydaNumber: idNumber.trim(),
+          faydaFrontImage: frontImagePath,
+          faydaBackImage: backImagePath,
+        },
+        select: {
+          id: true,
+          fullName: true,
+          email: true,
+          faydaNumber: true,
+          faydaFrontImage: true,
+          faydaBackImage: true,
+        },
+      })
+    );
+
+    return res.status(200).json({
+      success: true,
+      message: 'Fayda verification details saved successfully.',
+      user: {
+        ...updated,
+        idNumber: updated.faydaNumber,
+      }
+    });
+  } catch (error) {
+    console.error("Fayda verification server error:", error);
+    return res.status(500).json({ error: 'Failed to verify and save Fayda credentials', details: error.message });
+  }
+}
+
 async function getMe(req, res) {
   try {
     const user = await executeWithRetry(() =>
       prisma.user.findUnique({
         where: { id: req.user.userId },
-        select: { id: true, fullName: true, email: true, role: true, faydaNumber: true, phone: true },
+        select: { 
+          id: true, 
+          fullName: true, 
+          email: true, 
+          role: true, 
+          faydaNumber: true, 
+          faydaFrontImage: true,
+          faydaBackImage: true,
+          phone: true 
+        },
       })
     );
 
@@ -331,6 +392,7 @@ module.exports = {
   forgotPassword, 
   resetPassword, 
   updateIdNumber, 
+  verifyFayda,
   getMe, 
   searchUsers 
 };
