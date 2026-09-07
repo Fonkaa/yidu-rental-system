@@ -17,6 +17,7 @@ import ResetPassword from "../pages/auth/ResetPassword";
 import LandlordDashboard from "../pages/LandlordDashboard";
 import CreateProperty from "../pages/landlord/PropertyForm";
 import AdminDashboard from "../pages/AdminDashboard";
+import SystemBackup from "../pages/SystemBackup";
 
 // Tenant
 import Dashboard from "../pages/tenant/Dashboard";
@@ -258,6 +259,10 @@ export default function AppRoutes() {
             path="/admin/settings"
             element={<AdminDashboard />}
           />
+          <Route
+  path="/admin/backup"
+  element={<SystemBackup />}
+/>
 
         </Route>
 

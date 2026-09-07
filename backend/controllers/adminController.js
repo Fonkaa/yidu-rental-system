@@ -1,6 +1,10 @@
-
 const prisma = require('../prisma/client');
 const { notifyUser } = require('../services/notificationService');
+
+const { execFile } = require('child_process');
+const fs = require('fs');
+const path = require('path');
+const archiver = require('archiver');
 
 // ============================================================
 // GET PENDING PROPERTIES
@@ -608,7 +612,154 @@ async function createRole(req, res) {
     });
   }
 }
+// ============================================================
+// DATABASE BACKUP
+// ============================================================
+async function backupDatabase(req, res) {
+  try {
+    const backupDir = path.join(__dirname, '../backups');
 
+    // Create backups folder if it doesn't exist
+    if (!fs.existsSync(backupDir)) {
+      fs.mkdirSync(backupDir, { recursive: true });
+    }
+
+    const timestamp = new Date()
+      .toISOString()
+      .replace(/[:.]/g, '-');
+
+    const sqlFile = path.join(
+      backupDir,
+      `database-${timestamp}.sql`
+    );
+
+    const zipFile = path.join(
+      backupDir,
+      `backup-${timestamp}.zip`
+    );
+
+    // PostgreSQL connection string
+    const databaseUrl = process.env.DATABASE_URL;
+
+    if (!databaseUrl) {
+      return res.status(500).json({
+        success: false,
+        error: 'DATABASE_URL is not configured',
+      });
+    }
+
+    console.log('Starting database backup...');
+
+    // Run pg_dump
+    execFile(
+      'pg_dump',
+      [
+        databaseUrl,
+        '-f',
+        sqlFile,
+      ],
+      (dumpError) => {
+        if (dumpError) {
+          console.error(
+            'PG_DUMP ERROR:',
+            dumpError
+          );
+
+          // Remove incomplete SQL file
+          if (fs.existsSync(sqlFile)) {
+            fs.unlinkSync(sqlFile);
+          }
+
+          return res.status(500).json({
+            success: false,
+            error:
+              'Database backup failed. Make sure pg_dump is installed and available in PATH.',
+          });
+        }
+
+        console.log(
+          'Database SQL backup created:',
+          sqlFile
+        );
+
+        // Create ZIP file
+        const output = fs.createWriteStream(zipFile);
+        const archive = archiver('zip', {
+          zlib: { level: 9 },
+        });
+
+        output.on('close', () => {
+          console.log(
+            `Backup ZIP created: ${archive.pointer()} bytes`
+          );
+
+          // Remove temporary SQL file
+          if (fs.existsSync(sqlFile)) {
+            fs.unlinkSync(sqlFile);
+          }
+
+          // Send ZIP to admin
+          res.download(
+            zipFile,
+            path.basename(zipFile),
+            (downloadError) => {
+              if (downloadError) {
+                console.error(
+                  'BACKUP DOWNLOAD ERROR:',
+                  downloadError
+                );
+              }
+
+              // Delete ZIP after download
+              setTimeout(() => {
+                if (fs.existsSync(zipFile)) {
+                  fs.unlinkSync(zipFile);
+                  console.log(
+                    'Temporary backup deleted.'
+                  );
+                }
+              }, 5000);
+            }
+          );
+        });
+
+        archive.on('error', (archiveError) => {
+          console.error(
+            'ARCHIVE ERROR:',
+            archiveError
+          );
+
+          if (!res.headersSent) {
+            return res.status(500).json({
+              success: false,
+              error: 'Failed to create backup ZIP',
+            });
+          }
+        });
+
+        archive.pipe(output);
+
+        archive.file(sqlFile, {
+          name: path.basename(sqlFile),
+        });
+
+        archive.finalize();
+      }
+    );
+  } catch (error) {
+    console.error(
+      'BACKUP DATABASE ERROR:',
+      error
+    );
+
+    if (!res.headersSent) {
+      return res.status(500).json({
+        success: false,
+        error: 'Something went wrong creating database backup',
+      });
+    }
+  }
+}
 module.exports = {
   getPendingProperties,
   approveProperty,
@@ -619,4 +770,5 @@ module.exports = {
   getPaymentsSummary,
   deleteUser,
   createRole,
+  backupDatabase,
 };

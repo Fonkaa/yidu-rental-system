@@ -1,4 +1,4 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router();
 
 const {
@@ -11,20 +11,31 @@ const {
   createRole,
   getPaymentsSummary,
   deleteUser,
-} = require('../controllers/adminController');
+} = require("../controllers/adminController");
 
 const {
   verifyToken,
   requireAdmin,
-} = require('../middleware/authMiddleware');
-
+} = require("../middleware/authMiddleware");
+console.log("=== ADMIN ROUTES CHECK ===");
+console.log("getPendingProperties:", typeof getPendingProperties);
+console.log("approveProperty:", typeof approveProperty);
+console.log("rejectProperty:", typeof rejectProperty);
+console.log("getAllUsers:", typeof getAllUsers);
+console.log("toggleUserActive:", typeof toggleUserActive);
+console.log("updateUserRole:", typeof updateUserRole);
+console.log("createRole:", typeof createRole);
+console.log("getPaymentsSummary:", typeof getPaymentsSummary);
+console.log("deleteUser:", typeof deleteUser);
+console.log("verifyToken:", typeof verifyToken);
+console.log("requireAdmin:", typeof requireAdmin);
 // ============================================================
 // ADMIN PROPERTY MANAGEMENT
 // ============================================================
 
 // Get all pending properties
 router.get(
-  '/properties/pending',
+  "/properties/pending",
   verifyToken,
   requireAdmin,
   getPendingProperties
@@ -32,7 +43,7 @@ router.get(
 
 // Approve property
 router.patch(
-  '/properties/:id/approve',
+  "/properties/:id/approve",
   verifyToken,
   requireAdmin,
   approveProperty
@@ -40,7 +51,7 @@ router.patch(
 
 // Reject property
 router.patch(
-  '/properties/:id/reject',
+  "/properties/:id/reject",
   verifyToken,
   requireAdmin,
   rejectProperty
@@ -52,16 +63,15 @@ router.patch(
 
 // Get all users
 router.get(
-  '/users',
+  "/users",
   verifyToken,
   requireAdmin,
   getAllUsers
 );
 
 // Activate / Deactivate user
-// Uses Prisma Transaction in adminController.js
 router.patch(
-  '/users/:id/toggle-active',
+  "/users/:id/toggle-active",
   verifyToken,
   requireAdmin,
   toggleUserActive
@@ -69,17 +79,15 @@ router.patch(
 
 // Delete user
 router.delete(
-  '/users/:id',
+  "/users/:id",
   verifyToken,
   requireAdmin,
   deleteUser
 );
 
 // Change user role
-// TENANT / LANDLORD / ADMIN
-// Uses Prisma Transaction in adminController.js
 router.patch(
-  '/users/:id/role',
+  "/users/:id/role",
   verifyToken,
   requireAdmin,
   updateUserRole
@@ -87,7 +95,7 @@ router.patch(
 
 // Create role
 router.post(
-  '/roles',
+  "/roles",
   verifyToken,
   requireAdmin,
   createRole
@@ -99,7 +107,7 @@ router.post(
 
 // Payments summary
 router.get(
-  '/payments-summary',
+  "/payments-summary",
   verifyToken,
   requireAdmin,
   getPaymentsSummary

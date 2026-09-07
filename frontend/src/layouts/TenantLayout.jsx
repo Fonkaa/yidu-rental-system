@@ -190,23 +190,23 @@ function TenantAIAssistant({ isOpen, setIsOpen }) {
       {!isOpen ? (
         <button
           onClick={() => setIsOpen(true)}
-          className="group relative flex items-center gap-2.5 px-5 py-3.5 bg-[#FFC107] hover:bg-[#ffcd38] text-[#022036] font-extrabold rounded-2xl shadow-2xl transition-all duration-300 hover:scale-105 cursor-pointer border border-white/20"
+          className="group relative flex items-center gap-2.5 px-5 py-3.5 bg-[#FFC107] hover:bg-[#ffcd38] text-[#022036] font-extrabold rounded-2xl shadow-2xl transition-all duration-300 hover:scale-105 cursor-pointer border-2 border-black"
         >
           <Bot size={22} className="text-[#022036]" />
           <span className="text-xs uppercase tracking-wider">AI Assistant</span>
         </button>
       ) : (
-        <div className="w-[380px] sm:w-[420px] h-[640px] bg-white border border-slate-200 rounded-3xl shadow-2xl flex flex-col overflow-hidden">
+        <div className="w-[380px] sm:w-[420px] h-[640px] bg-white border-2 border-black rounded-3xl shadow-2xl flex flex-col overflow-hidden">
           
           {/* HEADER */}
-          <div className="px-5 py-4 bg-[#022036] border-b border-[#FFC107]/20 flex items-center justify-between text-white flex-shrink-0">
+          <div className="px-5 py-4 bg-[#022036] border-b-2 border-black flex items-center justify-between text-white flex-shrink-0">
             <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-lg bg-[#FFC107] text-[#022036] flex items-center justify-center font-bold">
+              <div className="w-8 h-8 rounded-lg bg-[#FFC107] text-[#022036] flex items-center justify-center font-bold border-2 border-black">
                 <Bot size={18} />
               </div>
               <strong className="text-xs tracking-wider uppercase text-[#FFC107]">Hose Rental system</strong>
             </div>
-            <button onClick={() => setIsOpen(false)} className="p-1 text-white hover:bg-white/20 rounded-lg cursor-pointer">
+            <button onClick={() => setIsOpen(false)} className="p-1 text-white hover:bg-white/20 rounded-lg cursor-pointer border-2 border-transparent hover:border-white/20">
               <X size={18} />
             </button>
           </div>
@@ -215,7 +215,7 @@ function TenantAIAssistant({ isOpen, setIsOpen }) {
           <div className="flex-1 overflow-y-auto p-4 space-y-3.5 bg-slate-50 scrollbar-thin scrollbar-thumb-slate-200">
             {messages.map((msg, index) => (
               <div key={index} className={`flex flex-col ${msg.sender === 'user' ? 'items-end' : 'items-start'}`}>
-                <div className={`max-w-[85%] p-3.5 rounded-2xl text-xs leading-relaxed ${msg.sender === 'user' ? 'bg-[#FFC107] text-[#022036] font-bold rounded-br-sm' : 'bg-white text-slate-800 border border-slate-200 rounded-bl-sm shadow-xs font-medium'}`}>
+                <div className={`max-w-[85%] p-3.5 rounded-2xl text-xs leading-relaxed border-2 border-black ${msg.sender === 'user' ? 'bg-[#FFC107] text-[#022036] font-bold rounded-br-sm' : 'bg-white text-slate-800 rounded-bl-sm shadow-xs font-medium'}`}>
                   {msg.text}
                 </div>
                 <span className="text-[9px] text-slate-400 mt-1 px-1 font-mono">{msg.time}</span>
@@ -225,7 +225,7 @@ function TenantAIAssistant({ isOpen, setIsOpen }) {
           </div>
 
           {/* SCROLLABLE 20 QUESTIONS LIST CONTAINER */}
-          <div className="bg-slate-100 border-t border-slate-200 p-3 flex-shrink-0">
+          <div className="bg-slate-100 border-t-2 border-black p-3 flex-shrink-0">
             <div className="flex items-center gap-1 text-[10px] font-extrabold uppercase tracking-wider text-slate-500 mb-2 px-1">
               <HelpCircle size={12} className="text-amber-600" />
               <span>Click any question below for an instant answer:</span>
@@ -236,7 +236,7 @@ function TenantAIAssistant({ isOpen, setIsOpen }) {
                   key={idx}
                   type="button"
                   onClick={() => handleQuestionSelect(item)}
-                  className="w-full text-left px-3 py-2 bg-white hover:bg-amber-50 border border-slate-200/90 text-slate-700 hover:text-[#022036] rounded-xl text-[11px] font-medium transition-all cursor-pointer shadow-xs flex items-center justify-between group"
+                  className="w-full text-left px-3 py-2 bg-white hover:bg-amber-50 border-2 border-black/30 hover:border-black text-slate-700 hover:text-[#022036] rounded-xl text-[11px] font-medium transition-all cursor-pointer shadow-xs flex items-center justify-between group"
                 >
                   <span className="truncate">{item.q}</span>
                   <span className="text-[10px] text-amber-600 font-bold opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 ml-2">Get Answer →</span>
@@ -246,15 +246,15 @@ function TenantAIAssistant({ isOpen, setIsOpen }) {
           </div>
 
           {/* INPUT FORM */}
-          <form onSubmit={handleSend} className="p-3 bg-white border-t border-slate-200 flex items-center gap-2 flex-shrink-0">
+          <form onSubmit={handleSend} className="p-3 bg-white border-t-2 border-black flex items-center gap-2 flex-shrink-0">
             <input
               type="text"
               placeholder="Or type your own question..."
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              className="flex-1 bg-slate-100 border border-slate-200 rounded-xl px-4 py-2 text-xs focus:outline-none focus:border-[#FFC107] font-medium"
+              className="flex-1 bg-slate-100 border-2 border-black rounded-xl px-4 py-2 text-xs focus:outline-none focus:border-[#FFC107] font-medium"
             />
-            <button type="submit" className="p-2 bg-[#FFC107] hover:bg-[#ffcd38] text-[#022036] rounded-xl font-bold cursor-pointer">
+            <button type="submit" className="p-2 bg-[#FFC107] hover:bg-[#ffcd38] text-[#022036] rounded-xl font-bold cursor-pointer border-2 border-black">
               <Send size={16} />
             </button>
           </form>
@@ -368,13 +368,13 @@ export default function TenantLayout() {
 
       {/* SIDEBAR */}
       <aside
-        className={`fixed lg:static top-0 left-0 h-full w-72 bg-[#022036] border-r border-[#FFC107]/20 p-6 z-50 transition-transform duration-300 flex flex-col justify-between flex-shrink-0 text-white shadow-md ${
+        className={`fixed lg:static top-0 left-0 h-full w-72 bg-[#022036] border-r-2 border-black p-6 z-50 transition-transform duration-300 flex flex-col justify-between flex-shrink-0 text-white shadow-md ${
           sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
         }`}
       >
         <div className="overflow-y-auto pr-1 scrollbar-thin">
           <div className="hidden lg:flex items-center gap-3 mb-6 cursor-pointer px-2" onClick={() => navigateTo("/dashboard")}>
-            <div className="w-10 h-10 rounded-xl bg-[#FFC107] text-[#022036] flex items-center justify-center font-extrabold shadow-md">
+            <div className="w-10 h-10 rounded-xl bg-[#FFC107] text-[#022036] flex items-center justify-center font-extrabold shadow-md border-2 border-black">
               <Home size={22} strokeWidth={2.5} />
             </div>
             <div className="flex flex-col">
@@ -383,13 +383,13 @@ export default function TenantLayout() {
             </div>
           </div>
 
-          <div className="flex items-center gap-3 p-3 bg-[#0B2C45] border border-white/10 rounded-2xl mb-8 shadow-md">
-            <div className="w-9 h-9 rounded-xl bg-[#FFC107] text-[#022036] flex items-center justify-center font-extrabold text-sm shadow-sm">
+          <div className="flex items-center gap-3 p-3 bg-[#0B2C45] border-2 border-black rounded-2xl mb-8 shadow-md">
+            <div className="w-9 h-9 rounded-xl bg-[#FFC107] text-[#022036] flex items-center justify-center font-extrabold text-sm shadow-sm border-2 border-black">
               {userName.charAt(0)}
             </div>
             <div className="flex flex-col min-w-0">
               <strong className="text-xs font-bold text-white truncate">{userName}</strong>
-              <span className="text-[10px] bg-[#FFC107] text-[#022036] font-black px-1.5 py-0.5 rounded uppercase tracking-wider w-fit mt-0.5">TENANT</span>
+              <span className="text-[10px] bg-[#FFC107] text-[#022036] font-black px-1.5 py-0.5 rounded uppercase tracking-wider w-fit mt-0.5 border border-black">TENANT</span>
             </div>
           </div>
 
@@ -399,10 +399,10 @@ export default function TenantLayout() {
               return (
                 <button
                   key={item.id}
-                  className={`w-full flex items-center justify-between px-4 py-3 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                  className={`w-full flex items-center justify-between px-4 py-3 rounded-xl text-xs font-bold transition-all cursor-pointer border-2 ${
                     isActive
-                      ? "bg-[#FFC107] text-[#022036] shadow-md font-black"
-                      : "text-slate-300 hover:text-white hover:bg-white/5 border border-transparent"
+                      ? "bg-[#FFC107] text-[#022036] shadow-md font-black border-black"
+                      : "text-slate-300 hover:text-white hover:bg-white/5 border-transparent"
                   }`}
                   onClick={() => navigateTo(item.path, item.id)}
                 >
@@ -416,10 +416,10 @@ export default function TenantLayout() {
           </nav>
         </div>
 
-        <div className="pt-4 border-t border-white/10 flex-shrink-0">
+        <div className="pt-4 border-t-2 border-black flex-shrink-0">
           <button
             onClick={handleLogout}
-            className="w-full flex items-center gap-2.5 px-4 py-3 rounded-xl text-xs font-bold bg-[#1C1824] hover:bg-[#252030] border border-white/10 text-rose-300 transition-all cursor-pointer shadow-inner"
+            className="w-full flex items-center gap-2.5 px-4 py-3 rounded-xl text-xs font-bold bg-[#1C1824] hover:bg-[#252030] border-2 border-black text-rose-300 transition-all cursor-pointer shadow-inner"
           >
             <LogOut size={16} className="text-rose-400" />
             <span>Sign Out</span>
@@ -428,11 +428,11 @@ export default function TenantLayout() {
       </aside>
 
       {/* RIGHT CONTENT AREA */}
-      <div className="flex-1 flex flex-col h-full overflow-y-auto bg-slate-50">
-        <header className="sticky top-0 z-30 bg-[#022036] border-b border-[#FFC107]/20 px-4 sm:px-8 py-3 flex-shrink-0 shadow-xs text-white">
+      <div className="flex-1 flex flex-col h-full overflow-y-auto bg-white">
+        <header className="sticky top-0 z-30 bg-[#022036] border-b-2 border-black px-4 sm:px-8 py-3 flex-shrink-0 shadow-xs text-white">
           <div className="max-w-7xl mx-auto flex items-center justify-between">
             <button
-              className="lg:hidden p-2 text-white/80 hover:text-white bg-white/10 rounded-xl transition-all cursor-pointer"
+              className="lg:hidden p-2 text-white/80 hover:text-white bg-white/10 rounded-xl transition-all cursor-pointer border-2 border-white/20 hover:border-white/40"
               onClick={() => setSidebarOpen(true)}
             >
               <Menu size={22} />
@@ -441,7 +441,7 @@ export default function TenantLayout() {
             <div className="flex items-center gap-4 ml-auto">
               <div className="relative">
                 <button
-                  className="flex items-center gap-2 px-3 py-2 bg-white/10 hover:bg-white/20 border border-white/15 rounded-xl text-xs font-medium text-white transition-all cursor-pointer"
+                  className="flex items-center gap-2 px-3 py-2 bg-white/10 hover:bg-white/20 border-2 border-white/20 rounded-xl text-xs font-medium text-white transition-all cursor-pointer"
                   onClick={() => setShowLanguageDropdown((prev) => !prev)}
                 >
                   <Globe size={15} className="text-[#FFC107]" />
@@ -450,8 +450,8 @@ export default function TenantLayout() {
                 </button>
 
                 {showLanguageDropdown && (
-                  <div className="absolute right-0 mt-2 w-36 bg-[#022036] border border-[#FFC107]/20 rounded-2xl shadow-2xl py-2 z-50">
-                    <button onClick={() => changeLanguage("am")} className="w-full text-left px-4 py-2 text-xs text-white/80 hover:bg-white/5">🇪🇹 አማርኛ</button>
+                  <div className="absolute right-0 mt-2 w-36 bg-[#022036] border-2 border-black rounded-2xl shadow-2xl py-2 z-50">
+                    <button onClick={() => changeLanguage("am")} className="w-full text-left px-4 py-2 text-xs text-white/80 hover:bg-white/5 border-b border-white/10">🇪🇹 አማርኛ</button>
                     <button onClick={() => changeLanguage("en")} className="w-full text-left px-4 py-2 text-xs text-white/80 hover:bg-white/5">🇬🇧 English</button>
                   </div>
                 )}
@@ -460,7 +460,7 @@ export default function TenantLayout() {
               <NotificationsDropdown />
 
               <button
-                className="p-2.5 bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 rounded-xl text-red-400 hover:text-red-300 transition-all cursor-pointer"
+                className="p-2.5 bg-red-500/10 hover:bg-red-500/20 border-2 border-red-500/20 rounded-xl text-red-400 hover:text-red-300 transition-all cursor-pointer"
                 onClick={handleLogout}
                 title={t.logout}
               >
@@ -470,7 +470,7 @@ export default function TenantLayout() {
           </div>
         </header>
 
-        <main className="flex-1 flex flex-col bg-slate-50 overflow-y-auto">
+        <main className="flex-1 flex flex-col bg-white overflow-y-auto">
           <Outlet />
         </main>
       </div>

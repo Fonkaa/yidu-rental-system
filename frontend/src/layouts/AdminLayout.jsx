@@ -95,12 +95,7 @@ export default function AdminLayout() {
       icon: <Database size={19} />,
       path: "/admin/backup",
     },
-    {
-      id: "settings",
-      label: "Profile Settings",
-      icon: <SettingsIcon size={19} />,
-      path: "/admin/settings",
-    },
+   
   ];
 
   // =====================================================

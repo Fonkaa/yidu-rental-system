@@ -1,660 +1,1696 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import api from "../services/api";
-import { 
-  Building2, Home, ShieldCheck, DollarSign, Users, 
-  ArrowRight, MapPin, BedDouble, Sofa, Sparkles, LogIn, UserPlus, 
-  CheckCircle2, Lock, Cpu, BarChart3, Clock, MessageSquare, RefreshCw,
-  TrendingUp, Percent, Activity, Layers, Award, Star, Compass, Globe,
-  Eye, Zap, Check, ChevronRight, Play, Server, Database, Smartphone,
-  Sliders, Filter, Search, Phone, Mail, HelpCircle, FileText, Settings,
-  Maximize2, ShieldAlert
+
+import {
+  Home,
+  ShieldCheck,
+  Users,
+  ArrowRight,
+  MapPin,
+  BedDouble,
+  Sofa,
+  Sparkles,
+  LogIn,
+  UserPlus,
+  CheckCircle2,
+  Lock,
+  Cpu,
+  BarChart3,
+  Clock,
+  MessageSquare,
+  RefreshCw,
+  TrendingUp,
+  Percent,
+  Activity,
+  Layers,
+  Award,
+  Star,
+  Compass,
+  Globe,
+  Eye,
+  Zap,
+  Check,
+  ChevronRight,
+  Play,
+  Server,
+  Database,
+  Smartphone,
+  Sliders,
+  Filter,
+  Search,
+  Phone,
+  Mail,
+  HelpCircle,
+  FileText,
+  Settings,
+  Maximize2,
+  Building2,
 } from "lucide-react";
 
 export default function PublicHome() {
   const navigate = useNavigate();
+
   const [activeTabRole, setActiveTabRole] = useState("tenant");
   const [activeMetricTab, setActiveMetricTab] = useState("yield");
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
-  const [viewMode3D, setViewMode3D] = useState(true);
-  const [systemStats, setSystemStats] = useState({
+
+  const heroRef = useRef(null);
+
+  const [systemStats] = useState({
     totalListings: 142,
     activeTenants: 850,
     verifiedLandlords: 64,
-    monthlyVolume: "12.4M ETB"
+    monthlyVolume: "12.4M ETB",
   });
 
-  const heroRef = useRef(null);
+  /* -------------------------------------------------------
+     HERO MOUSE EFFECT
+  ------------------------------------------------------- */
 
   useEffect(() => {
     const handleMouseMove = (e) => {
       if (!heroRef.current) return;
+
       const rect = heroRef.current.getBoundingClientRect();
-      const x = (e.clientX - rect.left) / rect.width - 0.5;
-      const y = (e.clientY - rect.top) / rect.height - 0.5;
-      setMousePosition({ x, y });
+
+      const x =
+        (e.clientX - rect.left) / rect.width - 0.5;
+
+      const y =
+        (e.clientY - rect.top) / rect.height - 0.5;
+
+      setMousePosition({
+        x,
+        y,
+      });
     };
 
-    const currentHero = heroRef.current;
-    if (currentHero) {
-      currentHero.addEventListener("mousemove", handleMouseMove);
+    const hero = heroRef.current;
+
+    if (hero) {
+      hero.addEventListener("mousemove", handleMouseMove);
     }
+
     return () => {
-      if (currentHero) {
-        currentHero.removeEventListener("mousemove", handleMouseMove);
+      if (hero) {
+        hero.removeEventListener("mousemove", handleMouseMove);
       }
     };
   }, []);
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-800 font-sans selection:bg-yellow-500 selection:text-[#022036] relative overflow-x-hidden">
-      
-      {/* 3D Ambient Dynamic Lighting & Glowing Nodes */}
-      <div className="absolute top-0 left-1/4 w-[800px] h-[800px] bg-yellow-500/10 rounded-full blur-[180px] pointer-events-none animate-pulse"></div>
-      <div className="absolute bottom-1/3 right-10 w-[700px] h-[700px] bg-sky-500/5 rounded-full blur-[180px] pointer-events-none"></div>
-      <div className="absolute top-2/3 left-10 w-[500px] h-[500px] bg-emerald-500/5 rounded-full blur-[150px] pointer-events-none"></div>
+    <div className="min-h-screen bg-[#f7f7f5] text-slate-800 overflow-x-hidden">
 
-      {/* TOP NOTIFICATION BAR */}
-      <div className="bg-[#022036] border-b border-yellow-500/20 px-4 py-2 text-[11px] font-semibold text-slate-200 flex items-center justify-between z-50 relative">
-        <div className="flex items-center gap-2 mx-auto sm:mx-0">
-          <span className="px-2 py-0.5 rounded-md bg-yellow-500 text-[#022036] font-black text-[9px] uppercase tracking-wider">System Live</span>
-          <span>Teamwork IT Solutions • House Rental & Portfolio Ecosystem v3.4</span>
-        </div>
-        <div className="hidden sm:flex items-center gap-4 text-slate-300">
-          <span className="flex items-center gap-1"><ShieldCheck size={12} className="text-emerald-400" /> Chapa Payment Integration Active</span>
-          <span className="flex items-center gap-1"><Server size={12} className="text-yellow-400" /> AWS Neon PostgreSQL Cluster</span>
-        </div>
-      </div>
+      {/* =====================================================
+          HERO
+      ====================================================== */}
 
-      {/* NAVBAR */}
-      <nav className="sticky top-0 z-50 bg-white/90 backdrop-blur-2xl border-b border-slate-200 px-6 py-4 transition-all shadow-xs">
-        <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-3 cursor-pointer group" onClick={() => navigate("/")}>
-            <div className="w-11 h-11 rounded-2xl bg-yellow-500 text-[#022036] flex items-center justify-center font-black shadow-md group-hover:scale-110 transition-transform">
-              <Home size={24} strokeWidth={2.5} />
-            </div>
-            <div>
-              <strong className="text-base tracking-tight leading-none block text-[#022036]">House Rental System</strong>
-              <span className="text-[10px] text-yellow-600 tracking-widest uppercase font-black">Spatial 3D Engine</span>
-            </div>
-          </div>
+      <section
+        ref={heroRef}
+        id="hero-section"
+        className="
+          relative
+          min-h-[760px]
+          h-[92vh]
+          max-h-[900px]
+          overflow-hidden
+          text-white
+        "
+      >
 
-          <div className="hidden md:flex items-center gap-8 text-xs font-bold text-slate-600">
-            <a href="#hero-section" className="hover:text-yellow-600 transition-colors">Overview</a>
-            <a href="#ecosystem-roles" className="hover:text-yellow-600 transition-colors">Role Portals</a>
-            <a href="#analytics-section" className="hover:text-yellow-600 transition-colors">Market Analytics</a>
-            <a href="#tech-specs" className="hover:text-yellow-600 transition-colors">Architecture</a>
-          </div>
-
-          <div className="flex items-center gap-3">
-            <Link 
-              to="/explore"
-              className="px-5 py-2.5 bg-yellow-500 hover:bg-yellow-400 text-[#022036] font-black rounded-xl text-xs shadow-sm transition-all flex items-center gap-1.5 cursor-pointer uppercase tracking-wider"
-            >
-              <Compass size={15} />
-              <span>Explore Properties</span>
-            </Link>
-            <Link 
-              to="/login"
-              className="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 transition-all flex items-center gap-1.5 cursor-pointer shadow-xs"
-            >
-              <LogIn size={15} className="text-yellow-600" />
-              <span>Login</span>
-            </Link>
-            <Link 
-              to="/register"
-              className="px-5 py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl text-xs shadow-xs transition-all flex items-center gap-1.5 cursor-pointer uppercase tracking-wider"
-            >
-              <UserPlus size={15} />
-              <span>Register</span>
-            </Link>
-          </div>
-        </div>
-      </nav>
-
-      {/* HERO SECTION WITH 3D INTERACTIVE TILT EFFECT */}
-      <section ref={heroRef} id="hero-section" className="relative max-w-7xl mx-auto px-6 pt-24 pb-20 text-center z-10">
-        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-yellow-50 border border-yellow-200 text-yellow-800 text-xs font-extrabold mb-6 shadow-inner">
-          <Sparkles size={14} className="animate-spin text-yellow-600" />
-          <span>Spatial 3D Virtual Tours & Instant Rental Verification</span>
-        </div>
-        
-        <h1 className="text-4xl sm:text-6xl lg:text-7xl font-black tracking-tight text-[#022036] mb-6 leading-tight">
-          Redefining House Rental System Through <br />
-          <span className="text-transparent bg-clip-text bg-gradient-to-r from-yellow-600 via-amber-500 to-yellow-600">
-            Advanced 3D Spatial Architecture
-          </span>
-        </h1>
-        
-        <p className="text-slate-600 text-sm sm:text-base max-w-3xl mx-auto mb-12 leading-relaxed font-light">
-          Explore immersive 3D property models, secure monthly rent transactions via Chapa, monitor landlord portfolio yields with real-time analytics, and connect instantly through our integrated tenant-landlord communication pipeline.
-        </p>
-
-        <div className="flex flex-wrap justify-center gap-4 mb-16">
-          <Link
-            to="/explore"
-            className="px-8 py-4 bg-yellow-500 hover:bg-yellow-400 text-[#022036] font-black rounded-2xl shadow-sm transition-all hover:scale-105 flex items-center gap-2 text-xs uppercase tracking-wider cursor-pointer"
-          >
-            <span>Open Explore Page (9 per page)</span>
-            <ArrowRight size={16} />
-          </Link>
-          <button
-            onClick={() => setViewMode3D(!viewMode3D)}
-            className="px-8 py-4 bg-slate-900 hover:bg-slate-800 border border-slate-800 text-white font-bold rounded-2xl backdrop-blur-xl transition-all hover:scale-105 text-xs uppercase tracking-wider cursor-pointer flex items-center gap-2 shadow-xs"
-          >
-            <BoxIcon size={16} className="text-yellow-400" />
-            <span>Toggle 3D Perspective ({viewMode3D ? "Active" : "Standard"})</span>
-          </button>
-        </div>
-
-        {/* 3D PERSPECTIVE CARD SHOWCASE */}
-        <div 
-          className="max-w-5xl mx-auto rounded-3xl bg-[#022036] border border-yellow-500/20 p-4 sm:p-8 backdrop-blur-2xl shadow-xl transition-transform duration-200 text-white"
+        {/* HERO IMAGE */}
+        <div
+          className="absolute inset-0 bg-cover bg-center"
           style={{
-            transform: `perspective(1000px) rotateX(${mousePosition.y * 10}deg) rotateY(${mousePosition.x * -10}deg)`,
-            transformStyle: 'preserve-3d'
+            backgroundImage:
+              "url('/images/house-hero.jpg')",
+            transform: `
+              scale(1.03)
+              translate(
+                ${mousePosition.x * -4}px,
+                ${mousePosition.y * -4}px
+              )
+            `,
+            transition: "transform 0.25s ease-out",
           }}
+        />
+
+        {/* DARK OVERLAY */}
+        <div className="absolute inset-0 bg-black/40" />
+
+        {/* LEFT DARK GRADIENT */}
+        <div
+          className="
+            absolute
+            inset-0
+            bg-gradient-to-r
+            from-black/70
+            via-black/30
+            to-black/10
+          "
+        />
+
+        {/* BOTTOM GRADIENT */}
+        <div
+          className="
+            absolute
+            inset-x-0
+            bottom-0
+            h-72
+            bg-gradient-to-t
+            from-black/75
+            via-black/25
+            to-transparent
+          "
+        />
+
+        {/* =====================================================
+            NAVBAR
+        ====================================================== */}
+
+        <nav className="relative z-20 px-5 sm:px-8 lg:px-10 pt-5">
+
+          <div className="flex items-center justify-between">
+
+            {/* LOGO */}
+
+            <div
+              onClick={() => navigate("/")}
+              className="flex items-center gap-3 cursor-pointer"
+            >
+
+              <div
+                className="
+                  w-11
+                  h-11
+                  rounded-full
+                  bg-white
+                  text-[#111]
+                  flex
+                  items-center
+                  justify-center
+                  shadow-xl
+                "
+              >
+                <Home size={22} />
+              </div>
+
+              <div>
+
+                <div className="text-[15px] font-semibold tracking-tight">
+                  Yidu Housing
+                </div>
+
+                <div className="text-[8px] tracking-[0.28em] uppercase text-white/70">
+                  House Rental System
+                </div>
+
+              </div>
+
+            </div>
+
+            {/* DESKTOP MENU */}
+
+            <div
+              className="
+                hidden
+                lg:flex
+                items-center
+                gap-9
+                text-[13px]
+                font-medium
+                text-white/90
+              "
+            >
+
+              <a
+                href="#about"
+                className="hover:text-white transition"
+              >
+                About
+              </a>
+
+              <a
+                href="#features"
+                className="hover:text-white transition"
+              >
+                Features
+              </a>
+
+              <a
+                href="#services"
+                className="hover:text-white transition"
+              >
+                Services
+              </a>
+
+              <a
+                href="#tech-specs"
+                className="hover:text-white transition"
+              >
+                Technology
+              </a>
+
+              <a
+                href="#properties"
+                className="hover:text-white transition"
+              >
+                Properties
+              </a>
+
+            </div>
+
+            {/* RIGHT BUTTONS */}
+
+            <div className="flex items-center gap-2">
+
+              <Link
+                to="/login"
+                className="
+                  px-5
+                  py-2.5
+                  rounded-full
+                  border
+                  border-white/40
+                  bg-white/5
+                  backdrop-blur-md
+                  text-white
+                  text-xs
+                  font-medium
+                  hover:bg-white/15
+                  transition
+                "
+              >
+                Login
+              </Link>
+
+              <Link
+                to="/register"
+                className="
+                  hidden
+                  sm:flex
+                  items-center
+                  gap-2
+                  px-5
+                  py-2.5
+                  rounded-full
+                  bg-white
+                  text-[#111]
+                  text-xs
+                  font-bold
+                  hover:bg-white/90
+                  transition
+                "
+              >
+                Get Started
+                <ArrowRight size={14} />
+              </Link>
+
+            </div>
+
+          </div>
+
+        </nav>
+
+        {/* =====================================================
+            HERO CONTENT
+        ====================================================== */}
+
+        <div
+          className="
+            relative
+            z-10
+            max-w-[1500px]
+            mx-auto
+            h-[calc(100%-90px)]
+            px-5
+            sm:px-8
+            lg:px-10
+            flex
+            items-center
+          "
         >
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-left">
-            <div className="p-6 rounded-2xl bg-white/5 border border-white/10 flex flex-col justify-between">
-              <div>
-                <span className="text-[10px] text-yellow-400 uppercase tracking-widest font-black">Tenant Experience</span>
-                <h3 className="text-lg font-bold mt-1 text-white">Spatial Virtual Tours</h3>
-                <p className="text-xs text-slate-300 mt-2 font-light">Walk through properties virtually before submitting a verified lease request.</p>
-              </div>
-              <div className="mt-6 pt-4 border-t border-white/10 flex items-center justify-between text-xs text-sky-400 font-bold">
-                <span>Interactive Rooms</span>
-                <ChevronRight size={14} />
-              </div>
-            </div>
 
-            <div className="p-6 rounded-2xl bg-white/5 border border-white/10 flex flex-col justify-between">
-              <div>
-                <span className="text-[10px] text-yellow-400 uppercase tracking-widest font-black">Landlord Hub</span>
-                <h3 className="text-lg font-bold mt-1 text-white">Yield Analytics & ERDs</h3>
-                <p className="text-xs text-slate-300 mt-2 font-light">Monitor annual projections, occupancy ratios, and automated invoice settlements.</p>
-              </div>
-              <div className="mt-6 pt-4 border-t border-white/10 flex items-center justify-between text-xs text-emerald-400 font-bold">
-                <span>Live Database Sync</span>
-                <ChevronRight size={14} />
-              </div>
-            </div>
+          <div className="w-full grid grid-cols-1 lg:grid-cols-[1fr_280px] gap-10 items-center">
 
-            <div className="p-6 rounded-2xl bg-white/5 border border-white/10 flex flex-col justify-between">
-              <div>
-                <span className="text-[10px] text-yellow-400 uppercase tracking-widest font-black">Secure Gateway</span>
-                <h3 className="text-lg font-bold mt-1 text-white">Chapa Financials</h3>
-                <p className="text-xs text-slate-300 mt-2 font-light">Fully encrypted transaction processing with instant webhook validation.</p>
-              </div>
-              <div className="mt-6 pt-4 border-t border-white/10 flex items-center justify-between text-xs text-purple-400 font-bold">
-                <span>Bank Grade Security</span>
-                <ChevronRight size={14} />
-              </div>
-            </div>
-          </div>
-        </div>
+            {/* LEFT CONTENT */}
 
-        {/* METRICS BANNER */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mt-16 max-w-5xl mx-auto">
-          {[
-            { label: "Total Platform Listings", value: systemStats.totalListings, highlight: "+12% this month" },
-            { label: "Active Verified Tenants", value: systemStats.activeTenants, highlight: "99.4% satisfaction" },
-            { label: "Registered Landlords", value: systemStats.verifiedLandlords, highlight: "Fayda ID Verified" },
-            { label: "Monthly Volume", value: systemStats.monthlyVolume, highlight: "Secured via Chapa" },
-          ].map((stat, i) => (
-            <div key={i} className="p-6 rounded-3xl bg-white border border-slate-200 shadow-xs">
-              <span className="text-[10px] text-slate-400 uppercase font-extrabold tracking-widest block mb-1">{stat.label}</span>
-              <strong className="text-2xl font-black text-[#022036] font-mono">{stat.value}</strong>
-              <span className="text-[11px] text-emerald-600 font-bold block mt-1">{stat.highlight}</span>
-            </div>
-          ))}
-        </div>
-      </section>
+            <div className="max-w-[850px]">
 
-      {/* COMPREHENSIVE MARKET ANALYTICS & CHARTS SECTION */}
-      <section id="analytics-section" className="max-w-7xl mx-auto px-6 py-20 border-t border-slate-200">
-        <div className="text-center mb-12">
-          <span className="text-xs font-black text-yellow-600 tracking-widest uppercase">Real-Time Intelligence</span>
-          <h2 className="text-3xl sm:text-4xl font-black text-[#022036] mt-1">Platform Market Analytics & Financial Yields</h2>
-          <p className="text-slate-500 text-xs sm:text-sm mt-2 max-w-xl mx-auto font-light">
-            Dynamic visual breakdowns of market pricing trends, regional demand, and investment returns across Addis Ababa.
-          </p>
-        </div>
+              {/* SMALL LABEL */}
 
-        {/* Analytics Interactive Tabs */}
-        <div className="flex justify-center gap-3 mb-8 flex-wrap">
-          {[
-            { id: "yield", label: "Rental Yield Projections" },
-            { id: "demand", label: "Regional Demand Index" },
-            { id: "occupancy", label: "Portfolio Occupancy Curves" },
-          ].map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveMetricTab(tab.id)}
-              className={`px-5 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer shadow-xs ${
-                activeMetricTab === tab.id 
-                  ? 'bg-yellow-500 text-[#022036] font-extrabold shadow-sm' 
-                  : 'bg-white hover:bg-slate-100 text-slate-600 border border-slate-200'
-              }`}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </div>
+              <div
+                className="
+                  inline-flex
+                  items-center
+                  gap-2
+                  px-4
+                  py-2
+                  rounded-full
+                  border
+                  border-white/35
+                  bg-black/20
+                  backdrop-blur-md
+                  text-[10px]
+                  sm:text-[11px]
+                  tracking-[0.2em]
+                  uppercase
+                  text-white/90
+                  mb-5
+                "
+              >
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Main Visual Chart Simulation Box */}
-          <div className="lg:col-span-2 bg-white border border-slate-200 rounded-3xl p-8 shadow-xs flex flex-col justify-between">
-            <div className="flex items-center justify-between mb-6">
-              <div>
-                <h3 className="text-lg font-black text-[#022036]">
-                  {activeMetricTab === 'yield' && "Annualized Return on Investment (ROI) by District"}
-                  {activeMetricTab === 'demand' && "Tenant Inquiry Volume & Search Heatmap"}
-                  {activeMetricTab === 'occupancy' && "Historical Occupancy vs. Vacancy Ratios"}
-                </h3>
-                <p className="text-xs text-slate-400 mt-1 font-light">Aggregated live data from Neon PostgreSQL transaction records.</p>
+                <Sparkles size={13} />
+
+                Smart House Rental Platform
+
               </div>
-              <span className="px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 text-xs font-extrabold border border-emerald-200">Live Feed</span>
-            </div>
 
-            {/* Simulated Chart Bars */}
-            <div className="space-y-4 my-6">
-              {[
-                { label: "Bole District", val: "88%", amount: "14.2% Yield", color: "bg-emerald-500" },
-                { label: "Kazanchis", val: "76%", amount: "11.8% Yield", color: "bg-blue-500" },
-                { label: "CMC / Ayat", val: "64%", amount: "9.5% Yield", color: "bg-amber-500" },
-                { label: "Piassa / Arat Kilo", val: "81%", amount: "12.6% Yield", color: "bg-purple-500" },
-                { label: "Summit / Gurd Shola", val: "70%", amount: "10.2% Yield", color: "bg-sky-500" },
-              ].map((bar, idx) => (
-                <div key={idx} className="space-y-1.5">
-                  <div className="flex justify-between text-xs font-bold text-slate-700">
-                    <span>{bar.label}</span>
-                    <span className="text-yellow-600 font-mono font-extrabold">{bar.amount}</span>
-                  </div>
-                  <div className="h-3 w-full bg-slate-100 rounded-full overflow-hidden flex shadow-inner">
-                    <div style={{ width: bar.val }} className={`${bar.color} h-full transition-all duration-1000 rounded-full`} />
-                  </div>
-                </div>
-              ))}
-            </div>
+              {/* MAIN TITLE */}
 
-            <div className="grid grid-cols-3 gap-4 pt-6 border-t border-slate-100 text-center font-mono">
-              <div className="p-3 bg-slate-50 rounded-2xl border border-slate-200">
-                <span className="text-[10px] text-slate-400 uppercase font-black block">Average Rent</span>
-                <strong className="text-sm font-black text-[#022036]">18,500 ETB</strong>
-              </div>
-              <div className="p-3 bg-slate-50 rounded-2xl border border-slate-200">
-                <span className="text-[10px] text-slate-400 uppercase font-black block">Growth Rate</span>
-                <strong className="text-sm font-black text-emerald-600">+14.2% YoY</strong>
-              </div>
-              <div className="p-3 bg-slate-50 rounded-2xl border border-slate-200">
-                <span className="text-[10px] text-slate-400 uppercase font-black block">Liquidity</span>
-                <strong className="text-sm font-black text-sky-600">14 Days Avg</strong>
-              </div>
-            </div>
-          </div>
+              <h1
+                className="
+                  font-serif
+                  italic
+                  font-light
+                  text-[54px]
+                  sm:text-[70px]
+                  md:text-[82px]
+                  lg:text-[92px]
+                  xl:text-[105px]
+                  leading-[0.82]
+                  tracking-[-0.045em]
+                  text-white
+                  max-w-[850px]
+                "
+              >
 
-          {/* Analytics Sidebar Summary */}
-          <div className="bg-white border border-slate-200 rounded-3xl p-8 shadow-xs flex flex-col justify-between space-y-6">
-            <div>
-              <div className="flex items-center gap-2 mb-3">
-                <BarChart3 size={20} className="text-yellow-600" />
-                <h3 className="text-base font-black text-[#022036]">Ecosystem Health</h3>
-              </div>
-              <p className="text-xs text-slate-500 leading-relaxed font-light">
-                Our automated scoring model evaluates landlord response rates, tenant background verification, and lease payment punctuality.
+                Redefining
+
+                <br />
+
+                House Rental
+
+                <br />
+
+                Through 3D
+
+              </h1>
+
+              {/* DESCRIPTION */}
+
+              <p
+                className="
+                  mt-7
+                  max-w-[670px]
+                  text-sm
+                  sm:text-[15px]
+                  leading-7
+                  text-white/85
+                  font-light
+                "
+              >
+                Explore immersive 3D property models, secure monthly
+                rent transactions via Chapa, monitor landlord portfolio
+                yields with real-time analytics, and connect instantly
+                through our integrated tenant-landlord communication
+                pipeline.
               </p>
-            </div>
 
-            <div className="space-y-4">
-              <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-1">
-                <div className="flex justify-between text-xs font-bold">
-                  <span className="text-slate-600">Verified Landlord Trust</span>
-                  <span className="text-emerald-600 font-mono">99.1%</span>
-                </div>
-                <div className="h-1.5 w-full bg-slate-200 rounded-full overflow-hidden">
-                  <div className="bg-emerald-500 h-full w-[99.1%]" />
-                </div>
+              {/* BUTTONS */}
+
+              <div className="flex flex-wrap items-center gap-3 mt-7">
+
+                <Link
+                  to="/explore"
+                  className="
+                    inline-flex
+                    items-center
+                    gap-2
+                    px-6
+                    py-3.5
+                    rounded-full
+                    bg-white
+                    text-[#111]
+                    text-xs
+                    font-bold
+                    hover:bg-white/90
+                    transition
+                    shadow-xl
+                  "
+                >
+
+                  Explore Properties
+
+                  <ArrowRight size={15} />
+
+                </Link>
+
+                <a
+                  href="#features"
+                  className="
+                    inline-flex
+                    items-center
+                    gap-2
+                    px-6
+                    py-3.5
+                    rounded-full
+                    border
+                    border-white/40
+                    bg-white/5
+                    backdrop-blur-md
+                    text-white
+                    text-xs
+                    font-semibold
+                    hover:bg-white/15
+                    transition
+                  "
+                >
+
+                  <Play size={14} />
+
+                  Discover Platform
+
+                </a>
+
               </div>
 
-              <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-1">
-                <div className="flex justify-between text-xs font-bold">
-                  <span className="text-slate-600">Chapa Success Rate</span>
-                  <span className="text-yellow-600 font-mono">100%</span>
-                </div>
-                <div className="h-1.5 w-full bg-slate-200 rounded-full overflow-hidden">
-                  <div className="bg-yellow-500 h-full w-full" />
-                </div>
-              </div>
-
-              <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-1">
-                <div className="flex justify-between text-xs font-bold">
-                  <span className="text-slate-600">Lease Renewal Compliance</span>
-                  <span className="text-sky-600 font-mono">92.4%</span>
-                </div>
-                <div className="h-1.5 w-full bg-slate-200 rounded-full overflow-hidden">
-                  <div className="bg-sky-500 h-full w-[92.4%]" />
-                </div>
-              </div>
             </div>
 
-            <div className="p-4 rounded-2xl bg-yellow-50 border border-yellow-200 text-xs text-yellow-800 font-semibold flex items-center gap-2">
-              <Sparkles size={16} className="flex-shrink-0 text-yellow-600" />
-              <span>All metrics update in real-time via Prisma ORM event triggers.</span>
-            </div>
-          </div>
-        </div>
-      </section>
+            {/* =================================================
+                RIGHT FEATURE PILLS
+            ================================================== */}
 
-      {/* DEEP DIVE INTO ECOSYSTEM ROLES */}
-      <section id="ecosystem-roles" className="max-w-7xl mx-auto px-6 py-20 border-t border-slate-200">
-        <div className="text-center mb-12">
-          <span className="text-xs font-black text-yellow-600 tracking-widest uppercase">Multi-Tier Architecture</span>
-          <h2 className="text-3xl sm:text-4xl font-black text-[#022036] mt-1">Deep Dive Into System Roles & Workflows</h2>
-          <p className="text-slate-500 text-xs sm:text-sm mt-2 max-w-xl mx-auto font-light">
-            Comprehensive breakdown of permissions, operational dashboards, and specialized tooling for every user.
-          </p>
-        </div>
-
-        {/* Role Tabs Navigation */}
-        <div className="flex justify-center gap-3 mb-10 flex-wrap">
-          {[
-            { id: 'tenant', label: 'Tenant Portal Workflow' },
-            { id: 'landlord', label: 'Landlord Hub & Portfolio' },
-            { id: 'admin', label: 'Admin Command Center' },
-          ].map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTabRole(tab.id)}
-              className={`px-6 py-3 rounded-2xl text-xs font-bold transition-all cursor-pointer shadow-xs ${
-                activeTabRole === tab.id 
-                  ? 'bg-yellow-500 text-[#022036] font-extrabold shadow-sm scale-105' 
-                  : 'bg-white hover:bg-slate-100 text-slate-700 border border-slate-200'
-              }`}
+            <div
+              className="
+                hidden
+                lg:flex
+                flex-col
+                items-stretch
+                gap-2.5
+                self-center
+              "
             >
-              {tab.label}
-            </button>
-          ))}
+
+              {[
+                "Modern Living",
+                "Verified Homes",
+                "3D Property Tours",
+                "Secure Rentals",
+              ].map((item) => (
+
+                <div
+                  key={item}
+                  className="
+                    px-6
+                    py-3
+                    rounded-full
+                    border
+                    border-white/40
+                    bg-black/15
+                    backdrop-blur-md
+                    text-center
+                    text-xs
+                    font-semibold
+                    text-white
+                    hover:bg-white/15
+                    transition
+                  "
+                >
+                  {item}
+                </div>
+
+              ))}
+
+            </div>
+
+          </div>
+
         </div>
 
-        {/* Role Content Card */}
-        <div className="bg-white border border-slate-200 rounded-3xl p-8 sm:p-12 shadow-xs max-w-5xl mx-auto">
-          {activeTabRole === 'tenant' && (
-            <div className="space-y-8 animate-fadeIn">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-slate-100">
-                <div className="flex items-center gap-4 text-yellow-600">
-                  <div className="p-4 rounded-2xl bg-sky-50 border border-sky-200 text-sky-600">
-                    <Users size={32} />
-                  </div>
-                  <div>
-                    <h3 className="text-2xl font-black text-[#022036]">Tenant Portal Workflow</h3>
-                    <span className="text-xs text-slate-500 font-light">Designed for seamless home discovery and transparent lease agreements.</span>
-                  </div>
-                </div>
-                <Link to="/register" className="px-5 py-2.5 bg-sky-600 text-white font-extrabold rounded-xl text-xs shadow-sm hover:bg-sky-500 transition-all text-center uppercase tracking-wider">
-                  Register as Tenant
-                </Link>
+        {/* =====================================================
+            BOTTOM PROPERTY INFORMATION
+        ====================================================== */}
+
+        <div
+          className="
+            absolute
+            z-20
+            bottom-5
+            left-0
+            right-0
+            px-5
+            sm:px-8
+            lg:px-10
+          "
+        >
+
+          <div
+            className="
+              max-w-[1500px]
+              mx-auto
+              grid
+              grid-cols-1
+              sm:grid-cols-3
+              gap-6
+              border-t
+              border-white/30
+              pt-5
+            "
+          >
+
+            {/* RENTAL */}
+
+            <div>
+
+              <div className="flex items-center gap-2 text-[9px] uppercase tracking-[0.2em] text-white/60">
+                <Clock size={12} />
+                Rental Period
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="p-6 rounded-2xl bg-slate-50 border border-slate-200 space-y-2 shadow-xs">
-                  <span className="text-[10px] text-sky-600 font-black uppercase tracking-widest">Step 1</span>
-                  <h4 className="text-base font-extrabold text-[#022036]">Advanced Search & 3D</h4>
-                  <p className="text-xs text-slate-600 leading-relaxed font-light">Filter database properties by room count, furnished status, price thresholds, and view immersive 3D spatial previews.</p>
-                </div>
-                <div className="p-6 rounded-2xl bg-slate-50 border border-slate-200 space-y-2 shadow-xs">
-                  <span className="text-[10px] text-sky-600 font-black uppercase tracking-widest">Step 2</span>
-                  <h4 className="text-base font-extrabold text-[#022036]">Rental Inquiries</h4>
-                  <p className="text-xs text-slate-600 leading-relaxed font-light">Submit formal rental requests with custom messages and track their approval status directly from your tenant dashboard.</p>
-                </div>
-                <div className="p-6 rounded-2xl bg-slate-50 border border-slate-200 space-y-2 shadow-xs">
-                  <span className="text-[10px] text-sky-600 font-black uppercase tracking-widest">Step 3</span>
-                  <h4 className="text-base font-extrabold text-[#022036]">Direct Messaging</h4>
-                  <p className="text-xs text-slate-600 leading-relaxed font-light">Communicate securely with verified property landlords via our built-in real-time messaging pipeline.</p>
-                </div>
+              <div className="mt-2 text-sm font-semibold">
+                Flexible Monthly
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4">
-                {[
-                  "Interactive Property Search & 3D Cards",
-                  "Direct In-App Messaging with Landlords",
-                  "Rental Request Tracking & Status History",
-                  "Fayda ID verification and profile control"
-                ].map((feat, idx) => (
-                  <div key={idx} className="flex items-center gap-2.5 text-xs text-slate-700 font-medium p-3 rounded-xl bg-slate-50 border border-slate-200">
-                    <CheckCircle2 size={16} className="text-yellow-600 flex-shrink-0" />
-                    <span>{feat}</span>
-                  </div>
-                ))}
-              </div>
             </div>
-          )}
 
-          {activeTabRole === 'landlord' && (
-            <div className="space-y-8 animate-fadeIn">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-slate-100">
-                <div className="flex items-center gap-4 text-yellow-600">
-                  <div className="p-4 rounded-2xl bg-yellow-50 border border-yellow-200 text-yellow-700">
-                    <Building2 size={32} />
-                  </div>
-                  <div>
-                    <h3 className="text-2xl font-black text-[#022036]">Landlord Hub & Portfolio Management</h3>
-                    <span className="text-xs text-slate-500 font-light">Powerful asset management tools for property owners and managers.</span>
-                  </div>
-                </div>
-                <Link to="/register" className="px-5 py-2.5 bg-yellow-500 text-[#022036] font-extrabold rounded-xl text-xs shadow-sm hover:bg-yellow-400 transition-all text-center uppercase tracking-wider">
-                  Register as Landlord
-                </Link>
+            {/* LOCATION */}
+
+            <div>
+
+              <div className="flex items-center gap-2 text-[9px] uppercase tracking-[0.2em] text-white/60">
+                <MapPin size={12} />
+                Location
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="p-6 rounded-2xl bg-slate-50 border border-slate-200 space-y-2 shadow-xs">
-                  <span className="text-[10px] text-yellow-600 font-black uppercase tracking-widest">Financials</span>
-                  <h4 className="text-base font-extrabold text-[#022036]">Yield & Income Tracking</h4>
-                  <p className="text-xs text-slate-600 leading-relaxed font-light">View monthly rental incomes, annualized yield projections, and portfolio valuation metrics in real-time.</p>
-                </div>
-                <div className="p-6 rounded-2xl bg-slate-50 border border-slate-200 space-y-2 shadow-xs">
-                  <span className="text-[10px] text-yellow-600 font-black uppercase tracking-widest">Operations</span>
-                  <h4 className="text-base font-extrabold text-[#022036]">Photo & Listing Control</h4>
-                  <p className="text-xs text-slate-600 leading-relaxed font-light">Upload multiple high-resolution photos, update specifications, and toggle status between active, rented, or unavailable.</p>
-                </div>
-                <div className="p-6 rounded-2xl bg-slate-50 border border-slate-200 space-y-2 shadow-xs">
-                  <span className="text-[10px] text-yellow-600 font-black uppercase tracking-widest">Compliance</span>
-                  <h4 className="text-base font-extrabold text-[#022036]">Automated Expiry & Renewal</h4>
-                  <p className="text-xs text-slate-600 leading-relaxed font-light">Listings automatically expire after 30 days of publication, with seamless one-click renewal workflows.</p>
-                </div>
+              <div className="mt-2 text-sm font-semibold">
+                Addis Ababa, Ethiopia
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4">
-                {[
-                  "Real-Time Portfolio Analytics & Occupancy Charts",
-                  "Photo Management & Multi-Image Uploads",
-                  "Automatic 30-Day Listing Expiry & Renewal",
-                  "Direct Tenant Inquiry & Lease Approval Workflow"
-                ].map((feat, idx) => (
-                  <div key={idx} className="flex items-center gap-2.5 text-xs text-slate-700 font-medium p-3 rounded-xl bg-slate-50 border border-slate-200">
-                    <CheckCircle2 size={16} className="text-yellow-600 flex-shrink-0" />
-                    <span>{feat}</span>
-                  </div>
-                ))}
-              </div>
             </div>
-          )}
 
-          {activeTabRole === 'admin' && (
-            <div className="space-y-8 animate-fadeIn">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-slate-100">
-                <div className="flex items-center gap-4 text-emerald-700">
-                  <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-700">
-                    <ShieldCheck size={32} />
-                  </div>
-                  <div>
-                    <h3 className="text-2xl font-black text-[#022036]">Admin Command Center & Moderation</h3>
-                    <span className="text-xs text-slate-500 font-light">Total oversight, security compliance, and platform governance.</span>
-                  </div>
-                </div>
-                <Link to="/login" className="px-5 py-2.5 bg-emerald-600 text-white font-extrabold rounded-xl text-xs shadow-sm hover:bg-emerald-500 transition-all text-center uppercase tracking-wider">
-                  Admin Sign In
-                </Link>
+            {/* SECURITY */}
+
+            <div>
+
+              <div className="flex items-center gap-2 text-[9px] uppercase tracking-[0.2em] text-white/60">
+                <ShieldCheck size={12} />
+                Security
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="p-6 rounded-2xl bg-slate-50 border border-slate-200 space-y-2 shadow-xs">
-                  <span className="text-[10px] text-emerald-700 font-black uppercase tracking-widest">Moderation</span>
-                  <h4 className="text-base font-extrabold text-[#022036]">Listing Review Pipeline</h4>
-                  <p className="text-xs text-slate-600 leading-relaxed font-light">Inspect newly submitted landlord properties, verify Fayda identification numbers, and approve or reject listings.</p>
-                </div>
-                <div className="p-6 rounded-2xl bg-slate-50 border border-slate-200 space-y-2 shadow-xs">
-                  <span className="text-[10px] text-emerald-700 font-black uppercase tracking-widest">Security</span>
-                  <h4 className="text-base font-extrabold text-[#022036]">User Access Governance</h4>
-                  <p className="text-xs text-slate-600 leading-relaxed font-light">Manage user roles, handle permission elevations, and monitor secure authentication tokens across the cluster.</p>
-                </div>
-                <div className="p-6 rounded-2xl bg-slate-50 border border-slate-200 space-y-2 shadow-xs">
-                  <span className="text-[10px] text-emerald-700 font-black uppercase tracking-widest">Notifications</span>
-                  <h4 className="text-base font-extrabold text-[#022036]">Automated Alerts</h4>
-                  <p className="text-xs text-slate-600 leading-relaxed font-light">Broadcast system announcements and receive instant alerts when new properties await moderation review.</p>
-                </div>
+              <div className="mt-2 text-sm font-semibold">
+                Verified & Secure
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4">
-                {[
-                  "Listing Moderation (Approve / Reject)",
-                  "User Role & Compliance Management",
-                  "Automated Notification Dispatch System",
-                  "Full Database Oversight via Prisma ORM"
-                ].map((feat, idx) => (
-                  <div key={idx} className="flex items-center gap-2.5 text-xs text-slate-700 font-medium p-3 rounded-xl bg-slate-50 border border-slate-200">
-                    <CheckCircle2 size={16} className="text-yellow-600 flex-shrink-0" />
-                    <span>{feat}</span>
-                  </div>
-                ))}
-              </div>
             </div>
-          )}
+
+          </div>
+
         </div>
+
       </section>
 
-      {/* TECHNICAL ARCHITECTURE & STACK SECTION */}
-      <section id="tech-specs" className="max-w-7xl mx-auto px-6 py-20 border-t border-slate-200">
-        <div className="text-center mb-16">
-          <span className="text-xs font-black text-yellow-600 tracking-widest uppercase">System Engineering</span>
-          <h2 className="text-3xl sm:text-4xl font-black text-[#022036] mt-1">Enterprise Tech Stack & Security Specifications</h2>
-          <p className="text-slate-500 text-xs sm:text-sm mt-2 max-w-xl mx-auto font-light">
-            Engineered with industry-standard protocols, robust ORM querying, and bulletproof middleware protection.
+
+      {/* =====================================================
+          ABOUT SECTION
+      ====================================================== */}
+
+      <section
+        id="about"
+        className="max-w-7xl mx-auto px-6 py-24"
+      >
+
+        <div className="text-center mb-14">
+
+          <span className="text-[10px] font-bold tracking-[0.25em] uppercase text-amber-600">
+            About Yidu Housing
+          </span>
+
+          <h2
+            className="
+              mt-3
+              text-3xl
+              sm:text-4xl
+              font-bold
+              text-[#13232f]
+            "
+            
+          >
+            A smarter way to find and manage homes
+          </h2>
+
+          <p className="max-w-2xl mx-auto mt-4 text-sm leading-7 text-slate-500">
+            Yidu Housing connects tenants, landlords, and administrators
+            through one secure digital rental ecosystem.
           </p>
+
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+
           {[
             {
-              title: "Frontend Experience",
-              desc: "React 19, Vite, Tailwind CSS v4, Lucide Icons, and Axios interceptor token management.",
-              icon: Smartphone,
-              color: "text-sky-600"
+              icon: Eye,
+              title: "Explore Visually",
+              text: "Discover properties through rich images and immersive property experiences.",
             },
             {
-              title: "Backend Engine",
-              desc: "Node.js, Express REST API, JWT stateless authentication, and Multer multi-image file handling.",
-              icon: Server,
-              color: "text-yellow-600"
-            },
-            {
-              title: "Database & ORM",
-              desc: "Prisma ORM schema mappings connected directly to AWS Neon serverless PostgreSQL clusters.",
-              icon: Database,
-              color: "text-emerald-600"
-            },
-            {
-              title: "Payment Gateway",
-              desc: "Chapa financial API integration for secure rent settlements, commissions, and webhook validation.",
               icon: ShieldCheck,
-              color: "text-purple-600"
-            }
-          ].map((spec, i) => {
-            const Icon = spec.icon;
+              title: "Rent Securely",
+              text: "Verified users and secure payment workflows help create a safer rental process.",
+            },
+            {
+              icon: BarChart3,
+              title: "Manage Smarter",
+              text: "Landlords can monitor properties, rental performance and tenant activity.",
+            },
+          ].map((item, index) => {
+
+            const Icon = item.icon;
+
             return (
-              <div key={i} className="p-8 rounded-3xl bg-white border border-slate-200 shadow-xs space-y-4">
-                <div className={`w-12 h-12 rounded-2xl bg-slate-50 border border-slate-200 ${spec.color} flex items-center justify-center shadow-xs`}>
-                  <Icon size={24} />
+              <div
+                key={index}
+                className="
+                  bg-white
+                  border
+                  border-slate-200
+                  rounded-3xl
+                  p-7
+                  hover:-translate-y-1
+                  transition
+                  shadow-sm
+                "
+              >
+
+                <div
+                  className="
+                    w-12
+                    h-12
+                    rounded-2xl
+                    bg-amber-50
+                    text-amber-600
+                    flex
+                    items-center
+                    justify-center
+                    mb-5
+                  "
+                >
+                  <Icon size={23} />
                 </div>
-                <h3 className="text-base font-black text-[#022036]">{spec.title}</h3>
-                <p className="text-xs text-slate-500 leading-relaxed font-light">{spec.desc}</p>
+
+                <h3 className="font-bold text-lg text-[#13232f]">
+                  {item.title}
+                </h3>
+
+                <p className="mt-2 text-sm leading-6 text-slate-500">
+                  {item.text}
+                </p>
+
               </div>
             );
           })}
+
         </div>
+
       </section>
 
-      {/* COMPREHENSIVE FOOTER */}
-      <footer className="border-t border-slate-200 py-16 px-6 bg-[#022036] text-slate-300">
-        <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-10 mb-12">
-          <div className="space-y-4 md:col-span-1">
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-xl bg-yellow-500 text-[#022036] flex items-center justify-center font-black shadow-md">
-                <Home size={20} />
+
+      {/* =====================================================
+          FEATURES
+      ====================================================== */}
+
+      <section
+        id="features"
+        className="bg-[#f0f0ed] py-24"
+      >
+
+        <div className="max-w-7xl mx-auto px-6">
+
+          <div className="text-center mb-14">
+
+            <span className="text-[10px] font-bold tracking-[0.25em] uppercase text-amber-600">
+              Platform Features
+            </span>
+
+            <h2 className="mt-3 text-3xl sm:text-4xl font-bold text-[#13232f]">
+              Everything you need for modern renting
+            </h2>
+
+          </div>
+
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+
+            {[
+              {
+                icon: Layers,
+                title: "3D Property Experience",
+                text: "Explore property spaces before making a rental decision.",
+              },
+              {
+                icon: Lock,
+                title: "Secure Rentals",
+                text: "Secure rental transactions with trusted payment workflows.",
+              },
+              {
+                icon: MessageSquare,
+                title: "Instant Communication",
+                text: "Tenants and landlords can communicate directly.",
+              },
+              {
+                icon: TrendingUp,
+                title: "Portfolio Analytics",
+                text: "Track rental income and portfolio performance.",
+              },
+            ].map((feature, index) => {
+
+              const Icon = feature.icon;
+
+              return (
+                <div
+                  key={index}
+                  className="
+                    bg-white
+                    rounded-3xl
+                    p-7
+                    border
+                    border-slate-200
+                    hover:shadow-lg
+                    transition
+                  "
+                >
+
+                  <Icon
+                    size={25}
+                    className="text-amber-600 mb-5"
+                  />
+
+                  <h3 className="font-bold text-[#13232f]">
+                    {feature.title}
+                  </h3>
+
+                  <p className="text-xs text-slate-500 leading-6 mt-2">
+                    {feature.text}
+                  </p>
+
+                </div>
+              );
+            })}
+
+          </div>
+
+        </div>
+
+      </section>
+
+
+      {/* =====================================================
+          ANALYTICS
+      ====================================================== */}
+
+      <section
+        id="services"
+        className="max-w-7xl mx-auto px-6 py-24"
+      >
+
+        <div className="text-center mb-12">
+
+          <span className="text-[10px] font-bold tracking-[0.25em] uppercase text-amber-600">
+            Market Intelligence
+          </span>
+
+          <h2 className="mt-3 text-3xl sm:text-4xl font-bold text-[#13232f]">
+            Platform Analytics
+          </h2>
+
+          <p className="max-w-xl mx-auto mt-3 text-sm text-slate-500">
+            Understand rental demand, yields and platform activity.
+          </p>
+
+        </div>
+
+
+        <div className="flex justify-center gap-2 flex-wrap mb-8">
+
+          {[
+            {
+              id: "yield",
+              label: "Rental Yield",
+            },
+            {
+              id: "demand",
+              label: "Regional Demand",
+            },
+            {
+              id: "occupancy",
+              label: "Occupancy",
+            },
+          ].map((tab) => (
+
+            <button
+              key={tab.id}
+              onClick={() =>
+                setActiveMetricTab(tab.id)
+              }
+              className={`
+                px-5
+                py-2.5
+                rounded-full
+                text-xs
+                font-semibold
+                transition
+                ${
+                  activeMetricTab === tab.id
+                    ? "bg-[#13232f] text-white"
+                    : "bg-white border border-slate-200 text-slate-600"
+                }
+              `}
+            >
+              {tab.label}
+            </button>
+
+          ))}
+
+        </div>
+
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+          <div
+            className="
+              lg:col-span-2
+              bg-white
+              border
+              border-slate-200
+              rounded-3xl
+              p-7
+              shadow-sm
+            "
+          >
+
+            <div className="flex items-center justify-between">
+
+              <div>
+
+                <h3 className="font-bold text-[#13232f]">
+                  {activeMetricTab === "yield"
+                    ? "Rental Yield by District"
+                    : activeMetricTab === "demand"
+                    ? "Tenant Demand by District"
+                    : "Portfolio Occupancy"}
+                </h3>
+
+                <p className="text-xs text-slate-400 mt-1">
+                  Platform overview
+                </p>
+
               </div>
-              <strong className="text-base text-white">House Rental System</strong>
+
+              <span
+                className="
+                  px-3
+                  py-1
+                  rounded-full
+                  bg-emerald-50
+                  text-emerald-600
+                  text-[10px]
+                  font-bold
+                "
+              >
+                LIVE
+              </span>
+
             </div>
-            <p className="text-xs text-slate-400 leading-relaxed font-light">
-              Spatial 3D real estate platform engineered by software engineering students and development interns at Teamwork IT Solutions.
+
+
+            <div className="space-y-5 mt-8">
+
+              {[
+                ["Bole", "88%", "14.2%"],
+                ["Kazanchis", "76%", "11.8%"],
+                ["CMC / Ayat", "64%", "9.5%"],
+                ["Piassa", "81%", "12.6%"],
+                ["Summit", "70%", "10.2%"],
+              ].map(([name, width, value]) => (
+
+                <div key={name}>
+
+                  <div className="flex justify-between text-xs mb-2">
+
+                    <span className="font-semibold text-slate-700">
+                      {name}
+                    </span>
+
+                    <span className="font-bold text-amber-600">
+                      {value}
+                    </span>
+
+                  </div>
+
+                  <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
+
+                    <div
+                      className="h-full bg-amber-500 rounded-full"
+                      style={{
+                        width,
+                      }}
+                    />
+
+                  </div>
+
+                </div>
+
+              ))}
+
+            </div>
+
+          </div>
+
+
+          {/* SIDE CARD */}
+
+          <div
+            className="
+              bg-[#13232f]
+              rounded-3xl
+              p-7
+              text-white
+            "
+          >
+
+            <BarChart3
+              size={25}
+              className="text-amber-400"
+            />
+
+            <h3 className="mt-5 text-xl font-bold">
+              Ecosystem Health
+            </h3>
+
+            <p className="mt-3 text-sm leading-6 text-white/60">
+              Monitor platform reliability, landlord activity,
+              tenant verification and payment performance.
             </p>
+
+
+            <div className="space-y-5 mt-8">
+
+              {[
+                ["Verified Landlords", "99.1%"],
+                ["Payment Success", "100%"],
+                ["Lease Compliance", "92.4%"],
+              ].map(([label, value]) => (
+
+                <div key={label}>
+
+                  <div className="flex justify-between text-xs mb-2">
+
+                    <span className="text-white/70">
+                      {label}
+                    </span>
+
+                    <span className="font-bold">
+                      {value}
+                    </span>
+
+                  </div>
+
+                  <div className="h-1.5 bg-white/10 rounded-full overflow-hidden">
+
+                    <div
+                      className="h-full bg-amber-400 rounded-full"
+                      style={{
+                        width: value,
+                      }}
+                    />
+
+                  </div>
+
+                </div>
+
+              ))}
+
+            </div>
+
           </div>
 
-          <div className="space-y-3">
-            <h4 className="text-xs font-extrabold text-yellow-400 uppercase tracking-wider">Quick Navigation</h4>
-            <ul className="space-y-2 text-xs text-slate-400">
-              <li><a href="#hero-section" className="hover:text-white transition-colors">Platform Overview</a></li>
-              <li><a href="#ecosystem-roles" className="hover:text-white transition-colors">Role Portals</a></li>
-              <li><a href="#analytics-section" className="hover:text-white transition-colors">Market Analytics</a></li>
-              <li><Link to="/explore" className="hover:text-white transition-colors">Explore Properties</Link></li>
-            </ul>
-          </div>
-
-          <div className="space-y-3">
-            <h4 className="text-xs font-extrabold text-yellow-400 uppercase tracking-wider">System Security</h4>
-            <ul className="space-y-2 text-xs text-slate-400 font-mono">
-              <li><span>JWT Bearer Tokens</span></li>
-              <li><span>Fayda ID Validation</span></li>
-              <li><span>Chapa Webhook Verification</span></li>
-              <li><span>Prisma Migration Sync</span></li>
-            </ul>
-          </div>
-
-          <div className="space-y-3">
-            <h4 className="text-xs font-extrabold text-yellow-400 uppercase tracking-wider">Teamwork IT Support</h4>
-            <p className="text-xs text-slate-400 leading-relaxed font-light">
-              Need assistance? Contact our engineering administrators or reach out via the in-app messaging portal.
-            </p>
-            <div className="text-xs text-yellow-400 font-semibold font-mono">support@yiduhousing.et</div>
-          </div>
         </div>
 
-        <div className="max-w-7xl mx-auto pt-8 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-400">
-          <p>© 2026 House Rental System • All rights reserved.</p>
-          <p className="mt-2 sm:mt-0 font-light">Built with React, Node.js, Prisma, and PostgreSQL.</p>
+      </section>
+
+
+      {/* =====================================================
+          ROLES
+      ====================================================== */}
+
+      <section
+        id="properties"
+        className="bg-[#f0f0ed] py-24"
+      >
+
+        <div className="max-w-7xl mx-auto px-6">
+
+          <div className="text-center mb-12">
+
+            <span className="text-[10px] font-bold tracking-[0.25em] uppercase text-amber-600">
+              User Experience
+            </span>
+
+            <h2 className="mt-3 text-3xl sm:text-4xl font-bold text-[#13232f]">
+              Built for everyone
+            </h2>
+
+          </div>
+
+
+          <div className="flex justify-center gap-2 flex-wrap mb-10">
+
+            {[
+              ["tenant", "Tenant"],
+              ["landlord", "Landlord"],
+              ["admin", "Administrator"],
+            ].map(([id, label]) => (
+
+              <button
+                key={id}
+                onClick={() =>
+                  setActiveTabRole(id)
+                }
+                className={`
+                  px-6
+                  py-3
+                  rounded-full
+                  text-xs
+                  font-bold
+                  transition
+                  ${
+                    activeTabRole === id
+                      ? "bg-[#13232f] text-white"
+                      : "bg-white text-slate-600 border border-slate-200"
+                  }
+                `}
+              >
+                {label}
+              </button>
+
+            ))}
+
+          </div>
+
+
+          <div
+            className="
+              bg-white
+              rounded-3xl
+              border
+              border-slate-200
+              p-8
+              md:p-10
+              max-w-5xl
+              mx-auto
+            "
+          >
+
+            {activeTabRole === "tenant" && (
+
+              <RoleContent
+                icon={Users}
+                title="Tenant Portal"
+                description="Find your next home with a simple, transparent rental experience."
+                color="sky"
+                items={[
+                  "Advanced property search",
+                  "Property images and details",
+                  "Rental request tracking",
+                  "Direct landlord messaging",
+                  "Fayda ID profile verification",
+                  "Secure rental payments",
+                ]}
+              />
+
+            )}
+
+
+            {activeTabRole === "landlord" && (
+
+              <RoleContent
+                icon={Building2}
+                title="Landlord Hub"
+                description="Manage properties, tenants and rental performance from one dashboard."
+                color="amber"
+                items={[
+                  "Property listing management",
+                  "Multiple property images",
+                  "Tenant inquiry management",
+                  "Rental income tracking",
+                  "Portfolio analytics",
+                  "Listing renewal management",
+                ]}
+              />
+
+            )}
+
+
+            {activeTabRole === "admin" && (
+
+              <RoleContent
+                icon={ShieldCheck}
+                title="Admin Command Center"
+                description="Maintain platform quality, security and user governance."
+                color="emerald"
+                items={[
+                  "Property approval and rejection",
+                  "User management",
+                  "Role management",
+                  "Platform monitoring",
+                  "Notification management",
+                  "Database oversight",
+                ]}
+              />
+
+            )}
+
+          </div>
+
         </div>
+
+      </section>
+
+
+      {/* =====================================================
+          TECHNOLOGY
+      ====================================================== */}
+
+      <section
+        id="tech-specs"
+        className="max-w-7xl mx-auto px-6 py-24"
+      >
+
+        <div className="text-center mb-14">
+
+          <span className="text-[10px] font-bold tracking-[0.25em] uppercase text-amber-600">
+            Technology
+          </span>
+
+          <h2 className="mt-3 text-3xl sm:text-4xl font-bold text-[#13232f]">
+            Modern technology stack
+          </h2>
+
+        </div>
+
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+
+          {[
+            {
+              icon: Smartphone,
+              title: "Frontend",
+              text: "React, Vite, Tailwind CSS and modern responsive interfaces.",
+            },
+            {
+              icon: Server,
+              title: "Backend",
+              text: "Node.js, Express REST APIs and JWT authentication.",
+            },
+            {
+              icon: Database,
+              title: "Database",
+              text: "Prisma ORM with PostgreSQL for reliable data management.",
+            },
+            {
+              icon: ShieldCheck,
+              title: "Payments",
+              text: "Chapa integration for secure Ethiopian rental payments.",
+            },
+          ].map((item, index) => {
+
+            const Icon = item.icon;
+
+            return (
+              <div
+                key={index}
+                className="
+                  border
+                  border-slate-200
+                  bg-white
+                  rounded-3xl
+                  p-7
+                  shadow-sm
+                "
+              >
+
+                <div
+                  className="
+                    w-12
+                    h-12
+                    rounded-2xl
+                    bg-[#f5f1e8]
+                    flex
+                    items-center
+                    justify-center
+                    text-amber-600
+                  "
+                >
+                  <Icon size={23} />
+                </div>
+
+                <h3 className="mt-5 font-bold text-[#13232f]">
+                  {item.title}
+                </h3>
+
+                <p className="mt-2 text-xs leading-6 text-slate-500">
+                  {item.text}
+                </p>
+
+              </div>
+            );
+          })}
+
+        </div>
+
+      </section>
+
+
+      {/* =====================================================
+          STATS
+      ====================================================== */}
+
+      <section className="max-w-7xl mx-auto px-6 pb-24">
+
+        <div
+          className="
+            bg-[#13232f]
+            rounded-[2rem]
+            p-8
+            md:p-10
+            grid
+            grid-cols-2
+            lg:grid-cols-4
+            gap-6
+            text-white
+          "
+        >
+
+          {[
+            [
+              "Listings",
+              systemStats.totalListings,
+            ],
+            [
+              "Active Tenants",
+              systemStats.activeTenants,
+            ],
+            [
+              "Landlords",
+              systemStats.verifiedLandlords,
+            ],
+            [
+              "Monthly Volume",
+              systemStats.monthlyVolume,
+            ],
+          ].map(([label, value]) => (
+
+            <div
+              key={label}
+              className="text-center"
+            >
+
+              <div className="text-2xl md:text-3xl font-bold">
+                {value}
+              </div>
+
+              <div className="text-[10px] uppercase tracking-[0.18em] text-white/50 mt-2">
+                {label}
+              </div>
+
+            </div>
+
+          ))}
+
+        </div>
+
+      </section>
+
+
+      {/* =====================================================
+          CTA
+      ====================================================== */}
+
+      <section className="px-6 pb-24">
+
+        <div
+          className="
+            max-w-6xl
+            mx-auto
+            rounded-[2rem]
+            overflow-hidden
+            relative
+            min-h-[380px]
+            flex
+            items-center
+          "
+        >
+
+          <div
+            className="
+              absolute
+              inset-0
+              bg-cover
+              bg-center
+            "
+            style={{
+              backgroundImage:
+                "url('/images/house-hero.jpg')",
+            }}
+          />
+
+          <div className="absolute inset-0 bg-black/60" />
+
+          <div className="relative z-10 p-8 md:p-14 max-w-2xl">
+
+            <span className="text-[10px] uppercase tracking-[0.25em] text-amber-300 font-bold">
+              Find Your Next Home
+            </span>
+
+            <h2
+              className="
+                mt-4
+                text-4xl
+                md:text-5xl
+                font-serif
+                italic
+                text-white
+              "
+            >
+              Your next home
+              <br />
+              starts here.
+            </h2>
+
+            <p className="mt-5 text-sm leading-6 text-white/70">
+              Discover verified homes, connect with landlords,
+              and manage your rental journey from one platform.
+            </p>
+
+            <Link
+              to="/explore"
+              className="
+                inline-flex
+                items-center
+                gap-2
+                mt-7
+                px-6
+                py-3
+                rounded-full
+                bg-white
+                text-[#13232f]
+                text-xs
+                font-bold
+              "
+            >
+              Explore Properties
+              <ArrowRight size={15} />
+            </Link>
+
+          </div>
+
+        </div>
+
+      </section>
+
+
+      {/* =====================================================
+          FOOTER
+      ====================================================== */}
+
+      <footer className="bg-[#13232f] text-white">
+
+        <div className="max-w-7xl mx-auto px-6 py-16">
+
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-10">
+
+            {/* BRAND */}
+
+            <div>
+
+              <div className="flex items-center gap-3">
+
+                <div
+                  className="
+                    w-10
+                    h-10
+                    rounded-full
+                    bg-white
+                    text-[#13232f]
+                    flex
+                    items-center
+                    justify-center
+                  "
+                >
+                  <Home size={19} />
+                </div>
+
+                <div>
+
+                  <div className="font-bold">
+                    Yidu Housing
+                  </div>
+
+                  <div className="text-[8px] tracking-[0.2em] uppercase text-white/40">
+                    House Rental System
+                  </div>
+
+                </div>
+
+              </div>
+
+              <p className="text-xs text-white/50 leading-6 mt-5">
+                A modern digital house rental ecosystem connecting
+                tenants, landlords and administrators.
+              </p>
+
+            </div>
+
+
+            {/* NAVIGATION */}
+
+            <div>
+
+              <h4 className="text-xs font-bold uppercase tracking-wider text-amber-300">
+                Navigation
+              </h4>
+
+              <div className="space-y-3 mt-5 text-xs text-white/55">
+
+                <a
+                  href="#about"
+                  className="block hover:text-white"
+                >
+                  About
+                </a>
+
+                <a
+                  href="#features"
+                  className="block hover:text-white"
+                >
+                  Features
+                </a>
+
+                <a
+                  href="#services"
+                  className="block hover:text-white"
+                >
+                  Services
+                </a>
+
+                <Link
+                  to="/explore"
+                  className="block hover:text-white"
+                >
+                  Properties
+                </Link>
+
+              </div>
+
+            </div>
+
+
+            {/* SECURITY */}
+
+            <div>
+
+              <h4 className="text-xs font-bold uppercase tracking-wider text-amber-300">
+                Security
+              </h4>
+
+              <div className="space-y-3 mt-5 text-xs text-white/55">
+
+                <div>JWT Authentication</div>
+                <div>Fayda ID Verification</div>
+                <div>Secure Chapa Payments</div>
+                <div>PostgreSQL Database</div>
+
+              </div>
+
+            </div>
+
+
+            {/* CONTACT */}
+
+            <div>
+
+              <h4 className="text-xs font-bold uppercase tracking-wider text-amber-300">
+                Contact
+              </h4>
+
+              <div className="space-y-4 mt-5 text-xs text-white/55">
+
+                <div className="flex gap-2 items-center">
+                  <Mail size={14} />
+                  support@yiduhousing.et
+                </div>
+
+                <div className="flex gap-2 items-center">
+                  <MapPin size={14} />
+                  Addis Ababa, Ethiopia
+                </div>
+
+              </div>
+
+            </div>
+
+          </div>
+
+
+          <div
+            className="
+              border-t
+              border-white/10
+              mt-12
+              pt-7
+              flex
+              flex-col
+              sm:flex-row
+              justify-between
+              gap-3
+              text-[10px]
+              text-white/35
+            "
+          >
+
+            <span>
+              © 2026 Yidu Housing. All rights reserved.
+            </span>
+
+            <span>
+              Built with React • Node.js • Prisma • PostgreSQL
+            </span>
+
+          </div>
+
+        </div>
+
       </footer>
 
     </div>
   );
 }
 
-function BoxIcon({ size, className }) {
+
+/* =========================================================
+   ROLE CONTENT COMPONENT
+========================================================= */
+
+function RoleContent({
+  icon: Icon,
+  title,
+  description,
+  items,
+  color,
+}) {
+  const iconClasses = {
+    sky: "bg-sky-50 text-sky-600 border-sky-100",
+    amber: "bg-amber-50 text-amber-600 border-amber-100",
+    emerald:
+      "bg-emerald-50 text-emerald-600 border-emerald-100",
+  };
+
+  const checkClasses = {
+    sky: "text-sky-600",
+    amber: "text-amber-600",
+    emerald: "text-emerald-600",
+  };
+
   return (
-    <svg 
-      width={size} 
-      height={size} 
-      viewBox="0 0 24 24" 
-      fill="none" 
-      stroke="currentColor" 
-      strokeWidth="2" 
-      strokeLinecap="round" 
-      strokeLinejoin="round" 
-      className={className}
-    >
-      <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
-      <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
-      <line x1="12" y1="22.08" x2="12" y2="12"></line>
-    </svg>
+    <div>
+
+      <div className="flex flex-col sm:flex-row sm:items-center gap-5 pb-7 border-b border-slate-100">
+
+        <div
+          className={`
+            w-14
+            h-14
+            rounded-2xl
+            border
+            flex
+            items-center
+            justify-center
+            ${iconClasses[color]}
+          `}
+        >
+          <Icon size={27} />
+        </div>
+
+        <div>
+
+          <h3 className="text-2xl font-bold text-[#13232f]">
+            {title}
+          </h3>
+
+          <p className="text-sm text-slate-500 mt-1">
+            {description}
+          </p>
+
+        </div>
+
+      </div>
+
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-7">
+
+        {items.map((item) => (
+
+          <div
+            key={item}
+            className="
+              flex
+              items-center
+              gap-3
+              p-4
+              rounded-2xl
+              bg-slate-50
+              border
+              border-slate-100
+            "
+          >
+
+            <CheckCircle2
+              size={17}
+              className={checkClasses[color]}
+            />
+
+            <span className="text-xs font-medium text-slate-700">
+              {item}
+            </span>
+
+          </div>
+
+        ))}
+
+      </div>
+
+    </div>
   );
 }

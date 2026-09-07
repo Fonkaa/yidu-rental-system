@@ -68,7 +68,7 @@ function TenantAIAssistant({ isOpen, setIsOpen }) {
       ) : (
         <div className="w-[360px] sm:w-[400px] h-[520px] bg-white border border-slate-200 rounded-3xl shadow-2xl flex flex-col overflow-hidden">
           <div className="px-5 py-4 bg-[#022036] border-b border-[#FFC107]/20 flex items-center justify-between text-white">
-            <strong className="text-xs tracking-wider uppercase text-[#FFC107]">Yidu Smart Assistant</strong>
+            <strong className="text-xs tracking-wider uppercase text-[#FFC107]"></strong>
             <button onClick={() => setIsOpen(false)} className="p-1 text-white hover:bg-white/20 rounded-lg cursor-pointer">
               <X size={18} />
             </button>

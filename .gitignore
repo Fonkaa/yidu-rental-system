@@ -6,3 +6,4 @@ build/
 uploads/
 .env
 backend/.env
+backend/backups/
