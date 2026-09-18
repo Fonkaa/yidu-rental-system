@@ -27,13 +27,26 @@ export async function getPropertyById(propertyId) {
   return response.data;
 }
 
-export const createProperty = (data) => api.post('/properties', data);
-export const updateProperty = (id, data) => api.put(`/properties/${id}`, data);
+// --- UPDATED: createProperty now supports FormData (images, video, and ownershipDocument) ---
+export const createProperty = (formData) => 
+  api.post('/properties', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
+
+// --- UPDATED: updateProperty now supports FormData for updating text, dimensions, and files ---
+export const updateProperty = (id, formData) => 
+  api.put(`/properties/${id}`, formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
+
 export const uploadPropertyImages = (id, formData) =>
   api.post(`/properties/${id}/images`, formData, {
     headers: { 'Content-Type': 'multipart/form-data' },
   });
+
 export const updatePropertyStatus = (id, status) =>
   api.patch(`/properties/${id}/status`, { status });
+
 export const renewProperty = (id) => api.patch(`/properties/${id}/renew`);
+
 export const getMyProperties = () => api.get('/properties/mine');

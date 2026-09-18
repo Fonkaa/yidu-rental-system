@@ -515,7 +515,7 @@ export default function Register() {
                 onChange={handleChange}
                 className="w-full cursor-pointer rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 text-xs font-semibold text-slate-900 outline-none transition-all focus:border-yellow-500 focus:bg-white focus:ring-4 focus:ring-yellow-500/10 sm:text-sm"
               >
-                               <option value="TENANT">Tenant (Looking for a home)</option>
+               <option value="TENANT">Tenant (Looking for a home)</option>
                 <option value="LANDLORD">Landlord (Listing properties)</option>
               </select>
             </div>

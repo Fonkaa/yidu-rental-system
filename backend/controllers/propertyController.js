@@ -122,11 +122,26 @@ async function getProperties(req, res) {
 }
 
 // ==========================================
-// CREATE PROPERTY (Supports videoUrl upload)
+// CREATE PROPERTY (Supports videoUrl and ownershipDocument upload)
 // ==========================================
 async function createProperty(req, res) {
   try {
-    const { titleEn, titleAm, descriptionEn, descriptionAm, price, rooms, furnished, categoryId, locationId, landmarkDescription, gpsLat, gpsLng } = req.body;
+    const { 
+      titleEn, 
+      titleAm, 
+      descriptionEn, 
+      descriptionAm, 
+      price, 
+      rooms, 
+      furnished, 
+      categoryId, 
+      locationId, 
+      landmarkDescription, 
+      gpsLat, 
+      gpsLng,
+      houseLength,
+      houseWidth
+    } = req.body;
 
     if ((!titleEn && !titleAm) || (!descriptionEn && !descriptionAm) || !price || !rooms || !categoryId || !locationId) {
       return res.status(400).json({ error: 'title (English or Amharic), description (English or Amharic), price, rooms, categoryId, and locationId are required' });
@@ -143,13 +158,21 @@ async function createProperty(req, res) {
       return res.status(403).json({ error: 'You must add your ID number to your profile before creating a listing.', code: 'ID_REQUIRED' });
     }
 
-    // --- CHECK FOR VIDEO FILE UPLOAD ---
+    // --- CHECK FOR FILES (VIDEO & OWNERSHIP DOCUMENT) ---
     let videoUrl = null;
+    let ownershipDocumentUrl = null;
+
     if (req.files) {
-      if (req.files.video && req.files.video[0]) {
-        videoUrl = `/uploads/${req.files.video[0].filename}`;
-      } else if (req.files['video'] && req.files['video'][0]) {
-        videoUrl = `/uploads/${req.files['video'][0].filename}`;
+      // Handle Video
+      const vFile = req.files.video?.[0] || req.files['video']?.[0];
+      if (vFile) {
+        videoUrl = `/uploads/${vFile.filename}`;
+      }
+
+      // Handle Ownership Document (Map Plan / Certificate)
+      const docFile = req.files.ownershipDocument?.[0] || req.files['ownershipDocument']?.[0];
+      if (docFile) {
+        ownershipDocumentUrl = `/uploads/${docFile.filename}`;
       }
     }
 
@@ -168,7 +191,11 @@ async function createProperty(req, res) {
           landmarkDescription,
           gpsLat: gpsLat ? parseFloat(gpsLat) : null,
           gpsLng: gpsLng ? parseFloat(gpsLng) : null,
-          videoUrl, // Save video tour path if uploaded
+          houseLength: houseLength ? parseFloat(houseLength) : null,
+          houseWidth: houseWidth ? parseFloat(houseWidth) : null,
+          videoUrl,
+          ownershipDocumentUrl,
+          ownershipDocumentStatus: 'PENDING', // በነባሪ ሲመዘገብ PENDING ይላል
           landlordId: req.user.userId,
           status: 'PENDING',
         },
@@ -206,7 +233,7 @@ async function createProperty(req, res) {
 }
 
 // ==========================================
-// UPLOAD IMAGES & VIDEOS
+// UPLOAD IMAGES & VIDEOS & DOCUMENTS
 // ==========================================
 async function uploadImages(req, res) {
   try {
@@ -224,24 +251,28 @@ async function uploadImages(req, res) {
       return res.status(403).json({ error: 'You do not own this property' });
     }
 
-    // Check if video file or image files are attached
     const files = req.files || [];
     const videoFile = req.file || (files.video ? files.video[0] : null) || (files['video'] ? files['video'][0] : null);
+    const docFile = files.ownershipDocument?.[0] || files['ownershipDocument']?.[0];
     const imageFiles = files.images || files['images'] || (Array.isArray(files) ? files.filter(f => f.fieldname === 'images') : []);
 
-    let videoUpdateResult = null;
+    let updateData = {};
     if (videoFile) {
-      const videoUrl = `/uploads/${videoFile.filename}`;
-      videoUpdateResult = await executeWithRetry(() =>
-        prisma.property.update({
-          where: { id },
-          data: { videoUrl }
-        })
-      );
+      updateData.videoUrl = `/uploads/${videoFile.filename}`;
+    }
+    if (docFile) {
+      updateData.ownershipDocumentUrl = `/uploads/${docFile.filename}`;
+      updateData.ownershipDocumentStatus = 'PENDING'; // አዲስ ሰነድ ሲጫን እንደገና ማስተካከል እንዲያስፈልግ
     }
 
-    if (!imageFiles.length && !videoFile) {
-      return res.status(400).json({ error: 'At least one image or video is required' });
+    let updatedProperty = null;
+    if (Object.keys(updateData).length > 0) {
+      updatedProperty = await executeWithRetry(() =>
+        prisma.property.update({
+          where: { id },
+          data: updateData
+        })
+      );
     }
 
     let imageRecords = [];
@@ -260,7 +291,11 @@ async function uploadImages(req, res) {
       );
     }
 
-    res.status(201).json({ success: true, imageRecords, property: videoUpdateResult });
+    if (!imageFiles.length && !videoFile && !docFile) {
+      return res.status(400).json({ error: 'At least one image, video, or document is required' });
+    }
+
+    res.status(201).json({ success: true, imageRecords, property: updatedProperty || property });
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'Something went wrong uploading media', details: error.message });
@@ -290,7 +325,17 @@ async function updateProperty(req, res) {
       return res.status(403).json({ success: false, error: "Unauthorized" });
     }
 
-    const { titleEn, titleAm, descriptionEn, descriptionAm, price, rooms, furnished } = req.body || {};
+    const { 
+      titleEn, 
+      titleAm, 
+      descriptionEn, 
+      descriptionAm, 
+      price, 
+      rooms, 
+      furnished,
+      houseLength,
+      houseWidth 
+    } = req.body || {};
 
     const updateData = {};
     
@@ -305,16 +350,28 @@ async function updateProperty(req, res) {
     if (rooms !== undefined && rooms !== '' && !isNaN(rooms)) {
       updateData.rooms = parseInt(rooms, 10);
     }
+    if (houseLength !== undefined && houseLength !== '') {
+      updateData.houseLength = parseFloat(houseLength);
+    }
+    if (houseWidth !== undefined && houseWidth !== '') {
+      updateData.houseWidth = parseFloat(houseWidth);
+    }
     
     if (furnished !== undefined) {
       updateData.furnished = furnished === true || furnished === 'true' || furnished === 'on';
     }
 
-    // Handle video upload if provided in update request
+    // Handle files upload during update
     if (req.files) {
-      const vFile = req.files.video ? req.files.video[0] : (req.files['video'] ? req.files['video'][0] : null);
+      const vFile = req.files.video?.[0] || req.files['video']?.[0];
       if (vFile) {
         updateData.videoUrl = `/uploads/${vFile.filename}`;
+      }
+
+      const docFile = req.files.ownershipDocument?.[0] || req.files['ownershipDocument']?.[0];
+      if (docFile) {
+        updateData.ownershipDocumentUrl = `/uploads/${docFile.filename}`;
+        updateData.ownershipDocumentStatus = 'PENDING';
       }
     }
 
@@ -425,6 +482,7 @@ async function approveProperty(req, res) {
         data: {
           status: 'APPROVED',
           publishedAt: new Date(),
+          ownershipDocumentStatus: 'APPROVED' // ሲጸድቅ የሰነዱም ሁኔታ Approved ይሆናል
         },
       })
     );
@@ -462,7 +520,8 @@ async function rejectProperty(req, res) {
         where: { id },
         data: { 
           status: 'REJECTED',
-          rejectionReason: finalReason 
+          rejectionReason: finalReason,
+          ownershipDocumentStatus: 'REJECTED'
         },
       })
     );
@@ -567,7 +626,6 @@ async function getPropertyById(req, res) {
       })
     );
 
-    // --- HIDE PROPERTY DETAILS IF PROPERTY DOES NOT EXIST OR LANDLORD IS DEACTIVATED ---
     if (!property || !property.landlord?.isActive) {
       return res.status(404).json({ error: 'Property not found' });
     }

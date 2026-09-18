@@ -9,7 +9,7 @@ import { createRentalRequest } from "../services/rentalRequestService";
 
 export default function ExploreProperties() {
   const navigate = useNavigate();
-  const [properties, setProperties] = useState([]);
+  const [properties, setProperties] = useState([]);ug
   const [loading, setLoading] = useState(true);
 
   // Advanced Search and Filter States

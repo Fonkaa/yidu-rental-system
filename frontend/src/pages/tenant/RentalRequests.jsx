@@ -47,7 +47,7 @@ export default function RentalRequests() {
       if (successReturn && txRefReturn) {
         try {
           await api.get(`/payments/verify/${txRefReturn}`);
-          loadRequests(); 
+          loadRequests();
         } catch (err) {
           console.error("Verification call failed:", err);
         }
@@ -159,7 +159,7 @@ export default function RentalRequests() {
       <div className="absolute -top-40 -left-40 w-96 h-96 bg-yellow-500/10 rounded-full blur-3xl pointer-events-none"></div>
 
       <div className="max-w-4xl mx-auto space-y-6 relative z-10 pb-16">
-        
+
         <Link
           to={isLandlord ? "/landlord/properties" : "/dashboard"}
           className="inline-flex items-center gap-2 text-xs font-bold text-slate-600 hover:text-slate-950 bg-white border border-slate-200 px-4 py-2.5 rounded-xl transition-all shadow-xs"
@@ -222,7 +222,7 @@ export default function RentalRequests() {
               const isApproved = String(request.status || "").trim().toUpperCase() === "APPROVED";
               const isPayingThisOne = activePaymentRequestId === request.id;
               const isViewingReceipt = activeReceiptRequestId === request.id;
-              
+
               // Correctly evaluate paid status from database/backend record rather than URL query string
               const isPaid = request.isPaid || request.payment?.status === 'SUCCESS';
 
@@ -309,7 +309,7 @@ export default function RentalRequests() {
                           {isViewingReceipt && (
                             <div className="mt-4 p-4 bg-white border border-slate-200 rounded-2xl shadow-xs">
                               <PaymentScreen
-                                leaseId={request.leaseId || request.id}
+                                rentalRequestId={request.id}
                                 rentAmount={request.proposedPrice || property?.price || 5000}
                                 tenantEmail={tenant?.email || user?.email}
                                 tenantName={tenant?.fullName || user?.fullName}
@@ -341,7 +341,7 @@ export default function RentalRequests() {
                             </button>
                           </div>
                           <PaymentScreen
-                            leaseId={request.leaseId || request.id}
+                            rentalRequestId={request.id}
                             rentAmount={request.proposedPrice || property?.price || 5000}
                             tenantEmail={tenant?.email || user?.email}
                             tenantName={tenant?.fullName || user?.fullName}

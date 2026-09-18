@@ -683,4 +683,4 @@ export default function PropertyDetails() {
       )}
     </div>
   );
-}
+}    

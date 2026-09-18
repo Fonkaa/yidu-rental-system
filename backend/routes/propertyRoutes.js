@@ -17,28 +17,33 @@ const {
 const { verifyToken } = require('../middleware/authMiddleware');
 const upload = require('../middleware/upload');
 
-// 1. Static / specific routes MUST come completely before dynamic routes
 router.get('/', getProperties);
 router.get('/mine', verifyToken, getMyProperties);
 router.get('/financial-summary', verifyToken, getLandlordFinancialSummary);
 
-// 2. Dynamic parameter route comes AFTER specific routes
+// Approved properties for public Home page
+router.get('/approved', getProperties);
+
+// Dynamic parameter route comes AFTER specific routes
 router.get('/:id', getPropertyById);
 
-// 3. Action & modification routes (Updated with upload.fields to support optional video tour + images)
+// 3. Action & modification routes (Updated to include ownershipDocument)
 router.post('/', verifyToken, upload.fields([
   { name: 'images', maxCount: 10 },
-  { name: 'video', maxCount: 1 }
+  { name: 'video', maxCount: 1 },
+  { name: 'ownershipDocument', maxCount: 1 } // <--- አዲሱ የሰነድ ጫኝ (Map Plan Document)
 ]), createProperty);
 
 router.post('/:id/images', verifyToken, upload.fields([
   { name: 'images', maxCount: 10 },
-  { name: 'video', maxCount: 1 }
+  { name: 'video', maxCount: 1 },
+  { name: 'ownershipDocument', maxCount: 1 } // <--- አዲስ ሰነድ ለመጨመር/ለማሻሻል
 ]), uploadImages);
 
 router.put('/:id', verifyToken, upload.fields([
   { name: 'images', maxCount: 10 },
-  { name: 'video', maxCount: 1 }
+  { name: 'video', maxCount: 1 },
+  { name: 'ownershipDocument', maxCount: 1 } // <--- በ Update ጊዜ አብሮ እንዲላክ
 ]), updateProperty);
 
 router.patch('/:id/status', verifyToken, updatePropertyStatus);
